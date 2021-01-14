@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.2" baseProfile="tiny" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+	 x="0px" y="0px" viewBox="0 0 48 48" xml:space="preserve">
+<circle fill="#189747" stroke="#000000" stroke-width="0.8345" stroke-miterlimit="10" cx="24" cy="24" r="20"/>
+<g>
+	<path fill="#FFFFFF" stroke="#000000" stroke-width="0.8345" stroke-miterlimit="10" d="M11.7,24.3l2.9-3.1l6.1,6.1l12-11.9
+		l2.9,3.1L20.8,33.5L11.7,24.3z"/>
+</g>
+</svg>

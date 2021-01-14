@@ -1,0 +1,2 @@
+all:
+	for src in `find . -name "*::*"`; do dest=`echo $$src | sed 's/::/_/'`; echo $$dest; cp $$src $$dest; done

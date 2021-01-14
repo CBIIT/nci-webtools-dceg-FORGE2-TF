@@ -1,0 +1,43 @@
+{
+  "name": "forge2-tf",
+  "version": "1.0.0",
+  "homepage": ".",
+  "description": "Forge2 TF viewer client",
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "npm run format && react-scripts build",
+    "test": "react-scripts test --ci --reporters=default --reporters=jest-junit --watchAll=false",
+    "eject": "react-scripts eject",
+    "format": "prettier --single-quote --write \"src/**/*.{js,json,css,scss}\""
+  },
+  "author": "Alex Reynolds",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^0.16.1",
+    "d3": "^5.0.0",
+    "query-string": "^6",
+    "react": "^16.14.0",
+    "react-bootstrap": "^0.32.0",
+    "react-dom": "^16.14.0",
+    "react-icons": "^2.2.7",
+    "react-scripts": "^4.0.1",
+    "react-svg-spinner": "^1.0.1",
+    "react-table": "^6.7.6"
+  },
+  "devDependencies": {
+    "node-sass": "^5.0.0",
+    "prettier": "^2.2.1"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
