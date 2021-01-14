@@ -1,0 +1,5 @@
+transfac.human.meme.old is the original meme file from Transfac 2015. Contains motifs that have nsites=.99 and .999
+which ceqlogo argues with. Used fix.99.sh to round up .99 and .999 to 1. Updated file is transfac.human.meme.old to 
+transfac.human.meme.rounded  
+
+Taipale had 6 meme files. So concatinated the meme files

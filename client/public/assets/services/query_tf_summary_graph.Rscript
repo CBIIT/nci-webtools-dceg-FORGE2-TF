@@ -1,0 +1,68 @@
+#!/usr/bin/env Rscript
+
+library("optparse")
+option_list = list(
+  make_option(c("-i", "--input"), type="character", default=NULL, help="dataset file name", metavar="character"),
+	make_option(c("-o", "--output"), type="character", default="out.pdf", help="output file name [default= %default]", metavar="character"),
+	make_option(c("-s", "--strict"), type="numeric", default=NULL, help="dataset file name", metavar="numeric"),
+	make_option(c("-m", "--marginal"), type="numeric", default=NULL, help="dataset file name", metavar="numeric")
+);
+ 
+opt_parser = OptionParser(option_list=option_list);
+opt = parse_args(opt_parser);
+
+results <- read.table(opt$input, header=TRUE, sep='\t')
+
+# Order results by pValue
+results$TF <- factor(results$TF, levels = results$TF[order(results$pValue)])
+
+# Class splits the data by pValue into non-significant, marginally significant and significant breaks according to opt$marginal and opt$strict settings (in -log10 scale)
+results$Class <- cut(results$pValue, breaks=c(0, opt$strict, opt$marginal, 1)/length(unique(results[,'TF'])), labels=FALSE, include.lowest=TRUE)
+
+# Class splits the data by qValue (B-Y FDR adjusted) into non-significant, marginally significant and significant breaks
+results$Class2 <- cut(results$qValue, breaks=c(0, opt$strict, opt$marginal, 1), labels=FALSE, include.lowest=TRUE)
+
+# TF ordering object
+TFs.order <- results[order(results$pValue), c('TF', 'Database', 'Class2')]
+
+# Plot
+pdf(opt$output, width=16, height=8)
+ymax = max(-log10(results$pValue), na.rm=TRUE) * 1.1
+ymin = -0.1
+par(mar=c(15.5,4,3,1) + 0.1)
+plot(NA, ylab='', xlab='', main='Probeset TF Associations', ylim=c(ymin, ymax), las=2, pch=19, col = results$Class2, xaxt='n', xlim=c(0,length(levels(results$TF))), cex.main=2)
+
+# Horizontal and vertical demarcation lines
+abline(h=par('yaxp')[1]:par('yaxp')[2],lty=1, lwd=0.1, col='#e0e0e0')
+TFs <- c(0.5, 
+  length(results$Class2[results$Class2==1])+0.5, 
+  length(results$Class2[results$Class2==1])+length(results$Class2[results$Class2==2])+0.5,
+  length(results$Class2[results$Class2==1])+length(results$Class2[results$Class2==2])+length(results$Class2[results$Class2==3])+0.5)
+abline(v=TFs, lty=6, col='#e0e0e0')
+
+# Data points, positioned by pValue and colored by qValue
+palette(c("red", "palevioletred1", 'white'))
+points(results$TF, -log10(results$pValue), pch=19, col = results$Class2, xaxt='n')
+#
+palette(c('black', "palevioletred1", "steelblue3"))
+points(results$TF, -log10(results$pValue), pch=1, col = results$Class2, xaxt='n')
+
+# Axis tick mark and tick labels
+axis(1, seq(1, length(results$Class2[results$Class2==1])), labels=TFs.order[TFs.order$Class2==1,1], las=2, cex.axis=0.6, font=2)
+axis(1, seq(length(results$Class2[results$Class2==1])+1, length(results$Class2[results$Class2==1])+length(results$Class2[results$Class2==2])), labels=TFs.order[TFs.order$Class2==2,1], las=2, cex.axis=0.6, col.axis="#333333")
+axis(1, seq(length(results$Class2[results$Class2==1])+length(results$Class2[results$Class2==2])+1, length(TFs.order[,1])), labels=TFs.order[TFs.order$Class2==3,1], las=2, cex.axis=0.6, col.axis="#888888")
+
+# Axis labels
+mtext(1, text='Transcription factor', line=12, cex=1.4)
+mtext(2, text='-log10 hypergeometric p-value', line=2, cex=1.4)
+
+# Add legend (internal color first)
+palette(c('white', "palevioletred1", "red"))
+legend('topright', pch=19, legend=c(paste('q < ',opt$strict,sep=''), paste('q < ',opt$marginal, sep=''), 'non-sig'), col = 3:1, cex=0.8, inset=c(0.001, 0.005), box.col='white', title='B-Y FDR 0.1% q-value', text.col='white', bg='white')
+
+# Add contour to the points in the legend
+palette(c("steelblue3", "palevioletred1", 'black'))
+legend('topright', pch=1, legend=c(paste('q < ',opt$strict,sep=''), paste('q < ',opt$marginal, sep=''), 'non-sig'), col = 3:1, cex=0.8, inset=c(0.001, 0.005), box.col='darkgrey', title='B-Y FDR 0.1% q-value')
+
+palette('default')
+dev.off()
