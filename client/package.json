@@ -2,6 +2,7 @@
   "name": "forge2-tf",
   "version": "1.0.0",
   "homepage": ".",
+  "proxy": "http://localhost:8101",
   "description": "Forge2 TF viewer client",
   "scripts": {
     "start": "react-scripts start",

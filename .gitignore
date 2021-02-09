@@ -1,4 +1,7 @@
+# app
 **/node_modules/
+
+# client
 client/build/
 **/data/
 **/pts-line-bisect/
@@ -6,3 +9,7 @@ client/build/
 # misc
 **/.eslintcache
 **/.vscode
+
+# server
+server/config.json
+**/logs/

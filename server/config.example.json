@@ -1,0 +1,10 @@
+{
+    "server": {
+        "port": 8101,
+        "client": "../client/build"
+    },
+    "logs": {
+        "folder": "logs",
+        "level": "debug"
+    }
+}
