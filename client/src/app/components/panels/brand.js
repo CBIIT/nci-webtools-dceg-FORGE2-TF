@@ -1,7 +1,6 @@
 import React from 'react';
 
 class Brand extends React.Component {
-
   constructor(props) {
     super(props);
   }
@@ -17,7 +16,6 @@ class Brand extends React.Component {
       </div>
     );
   }
-
 }
 
 export default Brand;

@@ -13,3 +13,6 @@ client/build/
 # server
 server/config.json
 **/logs/
+**/data/
+**/apache_logs/
+**/tmp/

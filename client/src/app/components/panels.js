@@ -1,7 +1,6 @@
 import React from 'react';
 
 class Panels extends React.Component {
-
   constructor(props) {
     super(props);
   }
@@ -13,7 +12,6 @@ class Panels extends React.Component {
       </div>
     );
   }
-
 }
 
 export default Panels;
