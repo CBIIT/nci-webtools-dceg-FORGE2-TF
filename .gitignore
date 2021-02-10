@@ -5,6 +5,8 @@
 client/build/
 **/data/
 **/pts-line-bisect/
+client/public/assets/services/tmp/
+client/public/assets/services/motif-logos/
 
 # misc
 **/.eslintcache
