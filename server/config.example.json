@@ -1,6 +1,6 @@
 {
     "server": {
-        "port": 8101,
+        "port": 8000,
         "client": "../client/build"
     },
     "logs": {
