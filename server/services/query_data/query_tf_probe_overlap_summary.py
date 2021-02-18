@@ -11,9 +11,9 @@ data_dir = os.path.join(root_dir, 'data')
 offsets_dir = '/net/seq/data/projects/eForge/www/forge2-tf/browser/src/client/assets/services/data/All/offsets'
 offsets_fn = os.path.join(offsets_dir, 'offsets.txt')
 pts_bin = os.path.join(root_dir, 'pts-line-bisect', 'pts_lbsearch')
-bedops_dir = '/net/module/sw/bedops/2.4.35-typical/bin'
-bedops_bin = os.path.join(bedops_dir, 'bedops')
-htslib_dir = '/net/module/sw/htslib/1.7/bin'
+# bedops_dir = '/net/module/sw/bedops/2.4.35-typical/bin'
+# bedops_bin = os.path.join(bedops_dir, 'bedops')
+# htslib_dir = '/net/module/sw/htslib/1.7/bin'
 tabix_bin = os.path.join('tabix')
 
 probe_fns = {

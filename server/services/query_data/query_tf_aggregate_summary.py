@@ -9,9 +9,9 @@ from operator import add
 root_dir = '/var/www/eforge/forge2-tf/browser/src/client/assets/services'
 data_dir = os.path.join(root_dir, 'data')
 pts_bin = os.path.join(root_dir, 'pts-line-bisect', 'pts_lbsearch')
-bedops_dir = '/net/module/sw/bedops/2.4.35-typical/bin'
-bedops_bin = os.path.join(bedops_dir, 'bedops')
-htslib_dir = '/net/module/sw/htslib/1.7/bin'
+# bedops_dir = '/net/module/sw/bedops/2.4.35-typical/bin'
+# bedops_bin = os.path.join(bedops_dir, 'bedops')
+# htslib_dir = '/net/module/sw/htslib/1.7/bin'
 tabix_bin = os.path.join('tabix')
 
 probe_fns = {
