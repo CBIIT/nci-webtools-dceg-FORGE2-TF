@@ -120,10 +120,12 @@ class Viewer extends React.Component {
     var settings = this.props.settings;
     console.log('viewer - updateAssociationData() - settings');
     console.log(settings);
-    var single_sample_query =
-      'https://forge2-tf.altiusinstitute.org/assets/services/query.py';
-    var aggregate_sample_query =
-      'https://forge2-tf.altiusinstitute.org/assets/services/query_aggregate.py';
+    // var single_sample_query =
+    //   'https://forge2-tf.altiusinstitute.org/assets/services/query.py';
+    // var aggregate_sample_query =
+    //   'https://forge2-tf.altiusinstitute.org/assets/services/query_aggregate.py';
+    var single_sample_query = '/api/query';
+    var aggregate_sample_query = '/api/query-aggregate';
     var sample_label = settings.sample;
     var se = sample_label.split('-');
     var sample = se[0];
@@ -144,7 +146,7 @@ class Viewer extends React.Component {
         });
       },
       (err) => {
-        //        console.log("viewer - updateAssociationData() - error");
+        console.log("viewer - updateAssociationData() - error");
         // console.log(err.response.data.msg);
         console.log('NO DATA');
         self.setState({
@@ -167,8 +169,9 @@ class Viewer extends React.Component {
     tf_summary['nTests'] = AppConst.settings.tf.n;
     console.log('viewer - updateSummaryData() - tf_summary');
     console.log(tf_summary);
-    var tf_summary_query =
-      'https://forge2-tf.altiusinstitute.org/assets/services/query_tf_summary.py';
+    // var tf_summary_query =
+    //   'https://forge2-tf.altiusinstitute.org/assets/services/query_tf_summary.py';
+    var tf_summary_query = '/api/query-tf-summary';
     var self = this;
     axios.post(tf_summary_query, { tf_summary }).then(
       (res) => {
@@ -217,21 +220,22 @@ class Viewer extends React.Component {
         tf_aggregate_summary['signalType'] = settings.signalType;
         console.log('viewer - updateSelectedTF() - tf_aggregate_summary');
         console.log(tf_aggregate_summary);
-        var tf_aggregate_summary_query =
-          'https://forge2-tf.altiusinstitute.org/assets/services/query_tf_aggregate_summary.py';
+        // var tf_aggregate_summary_query =
+        //   'https://forge2-tf.altiusinstitute.org/assets/services/query_tf_aggregate_summary.py';
+        var tf_aggregate_summary_query = '/api/query-tf-aggregate-summary';
         var self = this;
         axios.post(tf_aggregate_summary_query, { tf_aggregate_summary }).then(
           (agg_result) => {
             console.log('viewer - updateSelectedTF() - agg_result');
             console.log(agg_result.data);
-            var tf_probe_overlap_query =
-              'https://forge2-tf.altiusinstitute.org/assets/services/query_tf_probe_overlap_summary.py';
+            // var tf_probe_overlap_query =
+            //   'https://forge2-tf.altiusinstitute.org/assets/services/query_tf_probe_overlap_summary.py';
+            var tf_probe_overlap_query = '/api/query-tf-probe-overlap-summary';
             var tf_probe_overlap_summary = {};
             tf_probe_overlap_summary['array'] = settings.array;
             tf_probe_overlap_summary['tfModel'] = tfModel;
             tf_probe_overlap_summary['padding'] = 20;
-            axios
-              .post(tf_probe_overlap_query, { tf_probe_overlap_summary })
+            axios.post(tf_probe_overlap_query, { tf_probe_overlap_summary })
               .then(
                 (overlap_result) => {
                   console.log('viewer - updateSelectedTF() - overlap_result');

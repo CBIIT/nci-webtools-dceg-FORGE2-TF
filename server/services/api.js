@@ -20,7 +20,70 @@ apiRouter.use((request, response, next) => {
 
 // healthcheck route
 apiRouter.get('/ping', (request, response) => {
-    response.json(true)
+    response.json('monkeys');
+});
+
+// query-probe-names route (query_probe_names.py)
+apiRouter.post('/query-probe-names', ({ body }, response) => {
+    console.log("HIT QUERY-PROBE-NAMES");
+    console.log("POST BODY", body);
+    // temporarily return error code 500
+    response.status(500);
+    response.json('monkeys');
+});
+
+// query route (query.py)
+apiRouter.post('/query', ({ body }, response) => {
+    console.log("HIT QUERY");
+    console.log("POST BODY", body);
+    // temporarily return error code 500
+    response.status(500);
+    response.json('monkeys');
+});
+
+// query-aggregate route (query_aggregate.py)
+apiRouter.post('/query-aggregate', ({ body }, response) => {
+    console.log("HIT QUERY-AGGREGATE");
+    console.log("POST BODY", body);
+    // temporarily return error code 500
+    response.status(500);
+    response.json('monkeys');
+});
+
+// query-tf-summary route (query_tf_summary.py)
+apiRouter.post('/query-tf-summary', ({ body }, response) => {
+    console.log("HIT QUERY-TF-SUMMARY");
+    console.log("POST BODY", body);
+    // temporarily return error code 500
+    response.status(500);
+    response.json('monkeys');
+});
+
+// query-tf-summary-graph route (query_tf_summary_graph.py)
+apiRouter.post('/query-tf-summary-graph', ({ body }, response) => {
+    console.log("HIT QUERY-TF-SUMMARY-GRAPH");
+    console.log("POST BODY", body);
+    // temporarily return error code 500
+    response.status(500);
+    response.json('monkeys');
+});
+
+// query-tf-aggregate-summary route (query_tf_aggregate_summary.py)
+apiRouter.post('/query-tf-aggregate-summary', ({ body }, response) => {
+    console.log("HIT QUERY-TF-AGGREGATE-SUMMARY");
+    console.log("POST BODY", body);
+    // temporarily return error code 500
+    response.status(500);
+    response.json('monkeys');
+});
+
+// query-tf-probe-overlap-summary route (query_tf_probe_overlap_summary.py)
+apiRouter.post('/query-tf-probe-overlap-summary', ({ body }, response) => {
+    console.log("HIT QUERY-TF-PROBE-OVERLAP-SUMMARY");
+    console.log("POST BODY", body);
+    // temporarily return error code 500
+    response.status(500);
+    response.json('monkeys');
 });
 
 module.exports = { apiRouter };

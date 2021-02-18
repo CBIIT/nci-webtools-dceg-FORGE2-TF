@@ -8,7 +8,6 @@ import {
 } from 'react-bootstrap';
 import * as AppConst from '../../appConstants';
 import axios from 'axios';
-import { query } from '../../services/query';
 
 class Settings extends React.Component {
   constructor(props) {
@@ -88,9 +87,17 @@ class Settings extends React.Component {
   }
 
   async handlePing() {
-    const result = await query('api/ping');
-    console.log('result', result);
-    window.alert(`server status: ${result}`);
+    axios.get('api/ping').then(
+      (res) => {
+        console.log('result', res);
+        window.alert(`server status: ${res.data}`);
+      },
+      (err) => {
+        console.log('PING ERROR');
+        console.log(err);
+        window.alert(`server status: PING ERROR`);
+      }
+    );
   }
 
   componentDidMount() {
@@ -133,8 +140,9 @@ class Settings extends React.Component {
 
   renderSettings() {
     console.log('rendering settings in current state...');
-    var query_probe_names =
-      'https://forge2-tf.altiusinstitute.org/assets/services/query_probe_names.py';
+    // var query_probe_names =
+    //   'https://forge2-tf.altiusinstitute.org/assets/services/query_probe_names.py';
+    var query_probe_names = '/api/query-probe-names';
     var probesArray = this.state.probesString.split(/[,|\n|\r\n]/);
     var uniq = (arr) => Array.from(new Set(arr));
     let uniqProbesArray = uniq(probesArray);
@@ -363,8 +371,8 @@ class Settings extends React.Component {
         className="settings-panel-slider"
         type="text"
         name="padding"
-        value=""
-        data-slider-slideStop={this.handleSlideStop}
+        // value=""
+        // data-slider-slideStop={this.handleSlideStop}
         data-slider-ticks="[0, 1, 2, 3, 4]"
         data-slider-ticks-labels={
           '[' + AppConst.settings.paddings.toString() + ']'
@@ -385,8 +393,8 @@ class Settings extends React.Component {
         className="settings-panel-slider"
         type="text"
         name="smoothing"
-        value=""
-        data-slider-slideStop={this.handleSlideStop}
+        // value=""
+        // data-slider-slideStop={this.handleSlideStop}
         data-slider-ticks="[0, 1, 2, 3, 4]"
         data-slider-ticks-labels={
           '[' + AppConst.settings.smoothings.toString() + ']'
@@ -516,7 +524,7 @@ class Settings extends React.Component {
     var pingButton = (
       <Button
         name="render"
-        key="render"
+        key="ping"
         value="render"
         bsSize="xsmall"
         onClick={this.handlePing}

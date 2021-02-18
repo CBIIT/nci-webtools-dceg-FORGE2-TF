@@ -88,8 +88,9 @@ class TFSummaryTable extends React.Component {
     function convertToPDF(fName, summary) {
       summary['output'] = fName;
       var tf_summary = summary;
-      var tf_summary_graph_query =
-        'https://forge2-tf.altiusinstitute.org/assets/services/query_tf_summary_graph.py';
+      // var tf_summary_graph_query =
+      //   'https://forge2-tf.altiusinstitute.org/assets/services/query_tf_summary_graph.py';
+      var tf_summary_graph_query = '/api/query-tf-summary-graph';
       axios({
         method: 'post',
         url: tf_summary_graph_query,
