@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import sys
 import os
@@ -7,8 +7,8 @@ import subprocess
 from operator import add
 
 root_dir = '/var/www/eforge/forge2-tf/browser/src/client/assets/services'
-data_dir = os.path.join(root_dir, 'data')
-pts_bin = os.path.join(root_dir, 'pts-line-bisect', 'pts_lbsearch')
+# data_dir = os.path.join(root_dir, 'data')
+# pts_bin = os.path.join(root_dir, 'pts-line-bisect', 'pts_lbsearch')
 # bedops_dir = '/net/module/sw/bedops/2.4.35-typical/bin'
 # bedops_bin = os.path.join(bedops_dir, 'bedops')
 # htslib_dir = '/net/module/sw/htslib/1.7/bin'
@@ -18,9 +18,9 @@ probe_fns = {
   'All' : 'probes.bed.idsort.txt'
 }
 
-sample_md_fns = {
-  'All' : os.path.join(data_dir, 'All/fp/filtered_sample_aggregates.json')
-}
+# sample_md_fns = {
+#   'All' : os.path.join(data_dir, 'All/fp/filtered_sample_aggregates.json')
+# }
 
 tf_databases = [
   'jaspar',
@@ -30,17 +30,28 @@ tf_databases = [
 ]
 
 form = json.load(sys.stdin)
+# DEBUG
+print(json.dumps(form))
 
-def error(type, msg):
-  if type == 400:
-    sys.stdout.write('Status: 400 Bad Request\r\n')
-  else:
-    sys.stdout.write('Status: 400 Bad Request\r\n')
-  sys.stdout.write('Content-Type: application/json\r\n\r\n')
-  sys.stdout.write(json.dumps(
-    { 'msg' : '%s' % (msg) }
-  ))
-  sys.exit(os.EX_USAGE)
+# DEBUG
+def error(code, msg):
+  print(json.dumps({
+    "type": code,
+    "msg": msg
+  }))
+  # if type == 400:
+  #   sys.stdout.write('Status: 400 Bad Request\r\n')
+  # else:
+  #   sys.stdout.write('Status: 400 Bad Request\r\n')
+  # sys.stdout.write('Content-Type: application/json\r\n\r\n')
+  # sys.stdout.write(json.dumps(
+  #   { 'msg' : '%s' % (msg) }
+  # ))
+  # sys.exit(os.EX_USAGE)
+
+if not 'dataDir' in form:
+  error(400, 'Data directory not specified')
+data_dir = form['dataDir']
 
 if not 'settings' in form:
   error(400, 'Settings not specified')
@@ -73,6 +84,15 @@ signal_type = settings['signalType']
 if not 'annotationType' in settings:
   error(400, 'Annotation type not specified')
 annotation_type = settings['annotationType']
+
+sample_md_fns = {
+  'All' : os.path.join(data_dir, 'filtered_sample_aggregates.json')
+}
+
+# DEBUG
+print(json.dumps({
+  "sample_md_fns": sample_md_fns
+}))
 
 #
 # for processing samples in aggregate, we:
@@ -118,7 +138,8 @@ window = {}
 probes_fn = os.path.join(data_dir, array, 'probes', probe_fns[array])
 if not os.path.exists(probes_fn):
   error(400, 'could not find id-sorted probes BED file [%s]' % (probes_fn))
-cmd = "%s -p %s %s | cut -f2-" % (pts_bin, probes_fn, probe_name)
+# cmd = "%s -p %s %s | cut -f2-" % (pts_bin, probes_fn, probe_name)
+cmd = "%s -p %s %s | cut -f2-" % ('pts_lbsearch', probes_fn, probe_name)
 try:
   position_result = subprocess.check_output(cmd, shell=True)
   if position_result:
@@ -307,7 +328,7 @@ state_json = {
   'probe' : probe
 }
 
-sys.stdout.write('Status: 200 OK\r\n')
-sys.stdout.write('Content-Type: application/json; charset=utf-8\r\n\r\n')
-sys.stdout.write(json.dumps(state_json))
-sys.exit(os.EX_OK)
+# sys.stdout.write('Status: 200 OK\r\n')
+# sys.stdout.write('Content-Type: application/json; charset=utf-8\r\n\r\n')
+# sys.stdout.write(json.dumps(state_json))
+# sys.exit(os.EX_OK)

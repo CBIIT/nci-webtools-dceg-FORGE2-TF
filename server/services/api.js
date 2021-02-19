@@ -3,11 +3,16 @@ const compression = require('compression');
 const config = require('../config');
 const logger = require('./logger');
 const { PythonShell } = require('python-shell');
+const path = require('path');
 
 const apiRouter = express.Router();
 
-const pythonOptions = {
-    scriptPath: 'services/query_scripts/'
+const dataDir = path.resolve(config.data.folder)
+
+PythonShell.defaultOptions = { 
+    mode: 'json',
+    scriptPath: 'services/query_scripts/',
+    pythonOptions: ['-u'], // get print results in real-time
 };
 
 // parse json requests
@@ -49,15 +54,22 @@ apiRouter.post('/query', ({ body }, response) => {
 // query-aggregate route (query_aggregate.py)
 apiRouter.post('/query-aggregate', ({ body }, response) => {
     console.log("HIT QUERY-AGGREGATE");
-    console.log("POST BODY", body);
-    PythonShell.run('my_script.py', pythonOptions, function (err, results) {
-        if (err) throw err;
-        // results is an array consisting of messages collected during execution
-        console.log('results: %j', results);
+    // console.log("POST BODY", body);
+    const pythonProcess = new PythonShell('query_aggregate.py');
+    pythonProcess.send({...body, dataDir});
+    pythonProcess.on('message', results => {
+        if (results){
+            console.log("message : ", results);
+        }
     });
-    // // temporarily return error code 500
-    // response.status(500);
-    // response.json('monkeys');
+    pythonProcess.end(err => {
+        if (err) {
+            console.log("error : ", err);
+        }
+    });
+    // temporarily return error code 500
+    response.status(500);
+    response.json('monkeys');
 });
 
 // query-tf-summary route (query_tf_summary.py)
