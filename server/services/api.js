@@ -7,7 +7,8 @@ const path = require('path');
 
 const apiRouter = express.Router();
 
-const dataDir = path.resolve(config.data.folder)
+const dataDir = path.resolve(config.data.folder);
+const awsInfo = config.aws;
 
 PythonShell.defaultOptions = { 
     mode: 'json',
@@ -53,23 +54,30 @@ apiRouter.post('/query', ({ body }, response) => {
 
 // query-aggregate route (query_aggregate.py)
 apiRouter.post('/query-aggregate', ({ body }, response) => {
-    console.log("HIT QUERY-AGGREGATE");
+    logger.debug("Execute /query-aggregate");
     // console.log("POST BODY", body);
     const pythonProcess = new PythonShell('query_aggregate.py');
-    pythonProcess.send({...body, dataDir});
+    pythonProcess.send({...body, dataDir, awsInfo});
     pythonProcess.on('message', results => {
-        if (results){
+        if (results) {
             console.log("message : ", results);
         }
     });
-    pythonProcess.end(err => {
+    pythonProcess.on('stderr', stderr => {
+        try {
+            let errorResponse = JSON.parse(stderr);
+            response.status(errorResponse['code']);
+            response.json(errorResponse);
+        } catch(e) {
+            response.status(400);
+            response.json(stderr);
+        }
+    })
+    pythonProcess.end((err, code, signal) => {
         if (err) {
-            console.log("error : ", err);
+            logger.info(err);
         }
     });
-    // temporarily return error code 500
-    response.status(500);
-    response.json('monkeys');
 });
 
 // query-tf-summary route (query_tf_summary.py)
