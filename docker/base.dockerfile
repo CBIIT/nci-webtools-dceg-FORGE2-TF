@@ -14,6 +14,8 @@ RUN dnf -y update \
       python3 \
       bzip2 \
       bzip2-devel \
+      libcurl-devel \
+      openssl-devel \
       zlib-devel \
       xz-devel \
       git \
@@ -26,7 +28,7 @@ RUN pip3 install boto3
 RUN cd /tmp \
    && curl -L https://github.com/samtools/htslib/releases/download/1.11/htslib-1.11.tar.bz2 | tar xj \
    && cd htslib-1.11 \
-   && ./configure --prefix=/tmp/htslib-1.11 \
+   && ./configure --enable-libcurl --prefix=/tmp/htslib-1.11 \
    && make && make install \
    && cd ./bin && mv * /usr/local/bin
 
