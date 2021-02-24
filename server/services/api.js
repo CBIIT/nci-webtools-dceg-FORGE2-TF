@@ -31,7 +31,8 @@ apiRouter.use((request, response, next) => {
 
 // healthcheck route
 apiRouter.get('/ping', (request, response) => {
-    response.json('monkeys');
+    response.status(200);
+    response.json('true');
 });
 
 // query-probe-names route (query_probe_names.py)

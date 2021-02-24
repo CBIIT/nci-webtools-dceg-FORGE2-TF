@@ -648,8 +648,8 @@ class Settings extends React.Component {
           <p className="spacer"></p>
           {renderButton}
 
-          <p className="spacer"></p>
-          {pingButton}
+          {/* <p className="spacer"></p>
+          {pingButton} */}
         </div>
       </div>
     );
