@@ -171,7 +171,7 @@ if not checkS3File(aws_info['s3']['bucket'], sequences_filePath):
 sequences_idx_filePath = os.path.join(data_dir, array, 'sequence') 
 
 #cmd = "echo -e '%s\t%s\t%s' | %s -e 1 --chrom %s %s - | cut -f1,6-8" % (position['chromosome'], position['start'], position['stop'], bedops_bin, position['chromosome'], sequences_fn)
-cmd = "(cd %s; %s %s %s:%d-%d %s | cut -f1,6-8)" % (sequences_idx_filePath, tabix_bin, sequences_fn, position['chromosome'], position['start'], position['stop'], '-D')
+cmd = "(export AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s; cd %s; %s %s %s:%d-%d %s | cut -f1,6-8)" % (aws_info['aws_access_key_id'], aws_info['aws_secret_access_key'], sequences_idx_filePath, tabix_bin, sequences_fn, position['chromosome'], position['start'], position['stop'], '-D')
 try:
   sequence_result = subprocess.check_output(cmd, shell=True).decode('utf-8')
   if sequence_result:
@@ -205,7 +205,7 @@ for per_experiment_sample in per_experiment_samples:
     error(400, 'could not find signal archive file [%s]' % (signal_fn))
   signal_idx_filePath = os.path.join(data_dir, array, 'signal', per_experiment_sample) 
 
-  cmd = "(cd %s; %s %s %s:%d-%d %s| cut -f1,6-8)" % (signal_idx_filePath, tabix_bin, signal_fn, position['chromosome'], position['start'], position['stop'], '-D')
+  cmd = "(export AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s; cd %s; %s %s %s:%d-%d %s| cut -f1,6-8)" % (aws_info['aws_access_key_id'], aws_info['aws_secret_access_key'], signal_idx_filePath, tabix_bin, signal_fn, position['chromosome'], position['start'], position['stop'], '-D')
 
   try:
     signal_result = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT).decode('utf-8')
@@ -254,7 +254,7 @@ for db_name in tf_databases:
   db_idx_filePath = os.path.join(data_dir, array, 'tf', db_name) 
 
   #cmd = "echo -e '%s\t%s\t%s' | %s -e 1 --chrom %s %s - " % (position['chromosome'], position['start'], position['stop'], bedops_bin, position['chromosome'], db_fn)
-  cmd = "(cd %s; %s %s %s:%d-%d %s)" % (db_idx_filePath, tabix_bin, db_fn, position['chromosome'], position['start'], position['stop'], '-D')
+  cmd = "(export AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s; cd %s; %s %s %s:%d-%d %s)" % (aws_info['aws_access_key_id'], aws_info['aws_secret_access_key'], db_idx_filePath, tabix_bin, db_fn, position['chromosome'], position['start'], position['stop'], '-D')
   try:
     probe['tf_overlaps'][db_name] = []
     db_query_result = subprocess.check_output(cmd, shell=True).decode('utf-8')
@@ -302,7 +302,7 @@ for per_experiment_sample in per_experiment_samples:
     error(400, 'could not find footprint archive file [%s]' % (fp_fn))
   fp_idx_filePath = os.path.join(data_dir, array, 'fp', per_experiment_sample) 
 
-  cmd = "(cd %s; %s %s %s:%d-%d %s)" % (fp_idx_filePath, tabix_bin, fp_fn, position['chromosome'], position['start'], position['stop'], '-D')
+  cmd = "(export AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s; cd %s; %s %s %s:%d-%d %s)" % (aws_info['aws_access_key_id'], aws_info['aws_secret_access_key'], fp_idx_filePath, tabix_bin, fp_fn, position['chromosome'], position['start'], position['stop'], '-D')
   try:
     probe['fp_overlaps'] = []
     fp_result = subprocess.check_output(cmd, shell=True).decode('utf-8')
