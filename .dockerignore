@@ -6,4 +6,4 @@
 **/tmp/
 **.gz.tbi
 client/build
-
+**data.zip
