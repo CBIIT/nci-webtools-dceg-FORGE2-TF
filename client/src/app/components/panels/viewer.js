@@ -128,8 +128,8 @@ class Viewer extends React.Component {
     //   'https://forge2-tf.altiusinstitute.org/assets/services/query.py';
     // var aggregate_sample_query =
     //   'https://forge2-tf.altiusinstitute.org/assets/services/query_aggregate.py';
-    var single_sample_query = '/api/query';
-    var aggregate_sample_query = '/api/query-aggregate';
+    var single_sample_query = 'api/query';
+    var aggregate_sample_query = 'api/query-aggregate';
     var sample_label = settings.sample;
     var se = sample_label.split('-');
     var sample = se[0];
@@ -181,7 +181,7 @@ class Viewer extends React.Component {
     console.log(tf_summary);
     // var tf_summary_query =
     //   'https://forge2-tf.altiusinstitute.org/assets/services/query_tf_summary.py';
-    var tf_summary_query = '/api/query-tf-summary';
+    var tf_summary_query = 'api/query-tf-summary';
     var self = this;
     axios.post(tf_summary_query, { tf_summary }).then(
       (res) => {
@@ -232,7 +232,7 @@ class Viewer extends React.Component {
         console.log(tf_aggregate_summary);
         // var tf_aggregate_summary_query =
         //   'https://forge2-tf.altiusinstitute.org/assets/services/query_tf_aggregate_summary.py';
-        var tf_aggregate_summary_query = '/api/query-tf-aggregate-summary';
+        var tf_aggregate_summary_query = 'api/query-tf-aggregate-summary';
         var self = this;
         axios.post(tf_aggregate_summary_query, { tf_aggregate_summary }).then(
           (agg_result) => {
@@ -240,7 +240,7 @@ class Viewer extends React.Component {
             console.log(agg_result.data);
             // var tf_probe_overlap_query =
             //   'https://forge2-tf.altiusinstitute.org/assets/services/query_tf_probe_overlap_summary.py';
-            var tf_probe_overlap_query = '/api/query-tf-probe-overlap-summary';
+            var tf_probe_overlap_query = 'api/query-tf-probe-overlap-summary';
             var tf_probe_overlap_summary = {};
             tf_probe_overlap_summary['array'] = settings.array;
             tf_probe_overlap_summary['tfModel'] = tfModel;

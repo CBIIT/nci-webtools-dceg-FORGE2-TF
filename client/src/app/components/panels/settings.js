@@ -142,7 +142,7 @@ class Settings extends React.Component {
     console.log('rendering settings in current state...');
     // var query_probe_names =
     //   'https://forge2-tf.altiusinstitute.org/assets/services/query_probe_names.py';
-    var query_probe_names = '/api/query-probe-names';
+    var query_probe_names = 'api/query-probe-names';
     var probesArray = this.state.probesString.split(/[,|\n|\r\n]/);
     var uniq = (arr) => Array.from(new Set(arr));
     let uniqProbesArray = uniq(probesArray);
