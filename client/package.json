@@ -14,6 +14,7 @@
   "author": "Alex Reynolds",
   "license": "ISC",
   "dependencies": {
+    "@reduxjs/toolkit": "^1.5.0",
     "axios": "^0.16.1",
     "d3": "^5.0.0",
     "query-string": "^6",
@@ -21,6 +22,7 @@
     "react-bootstrap": "^0.32.0",
     "react-dom": "^16.14.0",
     "react-icons": "^2.2.7",
+    "react-redux": "^7.2.2",
     "react-scripts": "^4.0.1",
     "react-svg-spinner": "^1.0.1",
     "react-table": "^6.7.6"

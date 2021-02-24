@@ -63,19 +63,11 @@ apiRouter.post('/query-aggregate', ({ body }, response) => {
             console.log("message : ", results);
         }
     });
-    pythonProcess.on('stderr', stderr => {
-        try {
-            let errorResponse = JSON.parse(stderr);
-            response.status(errorResponse['code']);
-            response.json(errorResponse);
-        } catch(e) {
-            response.status(400);
-            response.json(stderr);
-        }
-    })
     pythonProcess.end((err, code, signal) => {
         if (err) {
-            logger.info(err);
+            logger.error(err);
+            response.status(400);
+            response.json(err);
         }
     });
 });

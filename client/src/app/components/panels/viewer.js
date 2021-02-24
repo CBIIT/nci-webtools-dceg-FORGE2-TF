@@ -12,6 +12,10 @@ import TFPlot from './tfPlot';
 
 import * as AppConst from '../../appConstants';
 
+import { useSelector, useDispatch } from 'react-redux';
+import { actions } from '../../services/store';
+
+
 class Viewer extends React.Component {
   constructor(props) {
     super(props);
@@ -147,8 +151,14 @@ class Viewer extends React.Component {
       },
       (err) => {
         console.log("viewer - updateAssociationData() - error");
-        // console.log(err.response.data.msg);
-        console.log('NO DATA');
+        console.log("error response : ", err.response);
+        // const dispatch = useDispatch();
+        // actions.updateKey({ 
+        //   key: 'errorModal', 
+        //   data: { 
+        //     visible: true 
+        //   }
+        // });
         self.setState({
           associationData: {},
           associationDataAvailable: false,

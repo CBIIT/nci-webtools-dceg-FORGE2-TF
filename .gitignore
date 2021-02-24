@@ -11,6 +11,7 @@ client/public/assets/services/motif-logos/
 # misc
 **/.eslintcache
 **/.vscode
+**.gz.tbi
 
 # server
 server/config.json

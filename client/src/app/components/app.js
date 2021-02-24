@@ -4,6 +4,7 @@ import Brand from './panels/brand';
 import Settings from './panels/settings';
 import Viewer from './panels/viewer';
 import * as AppConst from '../appConstants';
+import { ErrorModal } from './controls/error-modal/error-modal';
 
 export default class App extends React.Component {
   constructor(props) {
@@ -146,8 +147,10 @@ export default class App extends React.Component {
   }
 
   render() {
+
     return (
       <div className="parent-container">
+        <ErrorModal />
         <Panels
           panelSide="right-side"
           id="right-side-container"
