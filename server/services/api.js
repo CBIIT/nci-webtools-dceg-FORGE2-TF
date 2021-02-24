@@ -13,7 +13,7 @@ const awsInfo = config.aws;
 PythonShell.defaultOptions = { 
     mode: 'json',
     scriptPath: 'services/query_scripts/',
-    pythonOptions: ['-u'], // get print results in real-time
+    // pythonOptions: ['-u'], // get print results in real-time
 };
 
 // parse json requests
@@ -55,12 +55,12 @@ apiRouter.post('/query', ({ body }, response) => {
 // query-aggregate route (query_aggregate.py)
 apiRouter.post('/query-aggregate', ({ body }, response) => {
     logger.debug("Execute /query-aggregate");
-    // console.log("POST BODY", body);
     const pythonProcess = new PythonShell('query_aggregate.py');
     pythonProcess.send({...body, dataDir, awsInfo});
     pythonProcess.on('message', results => {
         if (results) {
-            console.log("message : ", results);
+            logger.debug("/query-aggregate", results);
+            response.json(results);
         }
     });
     pythonProcess.end((err, code, signal) => {
@@ -69,6 +69,7 @@ apiRouter.post('/query-aggregate', ({ body }, response) => {
             response.status(400);
             response.json(err);
         }
+        response.status(200);
     });
 });
 

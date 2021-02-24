@@ -22,31 +22,14 @@ tf_databases = [
 ]
 
 form = json.load(sys.stdin)
-# DEBUG
-print(json.dumps({"debug" : form}))
 
-# DEBUG
 def error(code, message):
   raise SystemExit(json.dumps({
     "code": code,
     "message": message
   }))
-  # print(json.dumps({
-  #   "code": code,
-  #   "message": message
-  # }))
-  # if type == 400:
-  #   sys.stdout.write('Status: 400 Bad Request\r\n')
-  # else:
-  #   sys.stdout.write('Status: 400 Bad Request\r\n')
-  # sys.stdout.write('Content-Type: application/json\r\n\r\n')
-  # sys.stdout.write(json.dumps(
-  #   { 'msg' : '%s' % (msg) }
-  # ))
-  # sys.exit(os.EX_USAGE)
 
 def checkS3File(bucket, filePath):
-  print(json.dumps({"debug": {"bucket": bucket, "filePath": filePath}}))
   s3 = boto3.resource('s3')
   try:
     s3.Object(bucket, filePath).load()
@@ -150,8 +133,6 @@ if not os.path.exists(probes_fn):
 cmd = "%s -p %s %s | cut -f2-" % ('pts_lbsearch', probes_fn, probe_name)
 try:
   position_result = subprocess.check_output(cmd, shell=True).decode('utf-8')
-  # DEBUG
-  print(json.dumps({"debug": position_result}))
   if position_result:
     elems = position_result.rstrip().split()
     if len(elems) < 3:
@@ -175,7 +156,6 @@ except subprocess.CalledProcessError as cpe:
 #     tabix sequences.gz <chr>:<start>-<stop>
 #
 #sequences_fn = os.path.join(data_dir, array, 'sequence', 'sequences.probe.starch')
-# sequences_fn = os.path.join(data_dir, array, 'sequence', 'sequences.probe.gz')
 
 sequences_filePath = "/".join([aws_info['s3']['subFolder'], 'data', array, 'sequence', 'sequences.probe.gz'])
 sequences_fn = "s3://%s/%s" % (aws_info['s3']['bucket'], sequences_filePath)
@@ -183,7 +163,7 @@ if not checkS3File(aws_info['s3']['bucket'], sequences_filePath):
   error(400, 'could not find sequences archive file [%s]' % (sequences_fn)) 
 
 #cmd = "echo -e '%s\t%s\t%s' | %s -e 1 --chrom %s %s - | cut -f1,6-8" % (position['chromosome'], position['start'], position['stop'], bedops_bin, position['chromosome'], sequences_fn)
-cmd = "%s %s %s:%d-%d | cut -f1,6-8" % (tabix_bin, sequences_fn, position['chromosome'], position['start'], position['stop'])
+cmd = "%s %s %s:%d-%d %s | cut -f1,6-8" % (tabix_bin, sequences_fn, position['chromosome'], position['start'], position['stop'], '-D')
 try:
   sequence_result = subprocess.check_output(cmd, shell=True).decode('utf-8')
   if sequence_result:
@@ -198,8 +178,6 @@ try:
     seq_l_index = seq_midpoint_index - padding
     seq_r_index = seq_midpoint_index + padding + 1
     window['sequence'] = sequence[seq_l_index:seq_r_index]
-    # DEBUG
-    print(json.dumps({"debug" : window}))
   else:
     error(400, 'empty result from sequences archive file query [%s]' % (cmd))
 except subprocess.CalledProcessError as cpe:
@@ -217,31 +195,16 @@ for per_experiment_sample in per_experiment_samples:
   signal_fn = "s3://%s/%s" % (aws_info['s3']['bucket'], signal_filePath)
   if not checkS3File(aws_info['s3']['bucket'], signal_filePath):
     error(400, 'could not find signal archive file [%s]' % (signal_fn))
-    
-  # signal_fn = os.path.join(data_dir, array, 'signal', per_experiment_sample, 'reduced.probe.gz')
-  # if not os.path.exists(signal_fn):
-  #   error(400, 'could not find signal archive file [%s]' % (signal_fn))
 
-  cmd = "%s %s %s:%d-%d | cut -f1,6-8" % (tabix_bin, signal_fn, position['chromosome'], position['start'], position['stop'])
-  
-  # DEBUG
-  print(json.dumps({"debug": cmd}))
+  cmd = "%s %s %s:%d-%d %s| cut -f1,6-8" % (tabix_bin, signal_fn, position['chromosome'], position['start'], position['stop'], '-D')
+
   try:
-    # DEBUG
-    # print(json.dumps({"debug": "reached1"}))
     signal_result = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT).decode('utf-8')
-    # DEBUG
-    # print(json.dumps({"debug": "reached2"}))
-    # DEBUG
-    print(json.dumps({"debug": signal_result}))
-    # DEBUG
-    # print(json.dumps({"debug": "reached3"}))
+
     if signal_result:
       elems = signal_result.rstrip().split()
       try:
         signal = [float(x) for x in elems[3].split(",")]
-        # DEBUG
-        # print(json.dumps({"debug": signal}))
         sig_length = len(signal)
         sig_midpoint_index = int(sig_length/2)
         sig_l_index = sig_midpoint_index - padding
@@ -250,7 +213,7 @@ for per_experiment_sample in per_experiment_samples:
         if len(per_experiment_sample_signal_accumulator) == 0:
           per_experiment_sample_signal_accumulator = signal[sig_l_index:sig_r_index]
         else:
-          per_experiment_sample_signal_accumulator = map(add, per_experiment_sample_signal_accumulator, signal[sig_l_index:sig_r_index])
+          per_experiment_sample_signal_accumulator = list(map(add, per_experiment_sample_signal_accumulator, signal[sig_l_index:sig_r_index]))
       except IndexError as ie:
         error(400, 'could not perform signal archive query [%s] [%s]' % (cmd, ie))
     else:
@@ -262,14 +225,12 @@ pesl = float(len(per_experiment_samples))
 per_experiment_sample_signal_accumulator = [x/pesl for x in per_experiment_sample_signal_accumulator]
 window['signal'] = per_experiment_sample_signal_accumulator
 
-# DEBUG
-# print(json.dumps({"debug" : window['signal']}))
-
 #
 # query TF binding sites by coordinates
 # eg. echo -e 'position_result' | bedops -e 1 --chrom <chr> <db_name>/probe.db.starch -
 #     tabix <db_name>/probe.db.gz <chr>:<start>-<stop>
 #
+
 for db_name in tf_databases:
   #db_fn = os.path.join(data_dir, array, 'tf', db_name, 'probe.db.starch')
   if annotation_type == 'Probe-only':
@@ -277,17 +238,13 @@ for db_name in tf_databases:
   elif annotation_type == 'All':
     probe_db_fn = 'probe.db.%d.gz' % (int(padding))
 
-  # db_fn = os.path.join(data_dir, array, 'tf', db_name, probe_db_fn)
   db_filePath = "/".join([aws_info['s3']['subFolder'], 'data', array, 'tf', db_name, probe_db_fn])
   db_fn = "s3://%s/%s" % (aws_info['s3']['bucket'], db_filePath)
   if not checkS3File(aws_info['s3']['bucket'], db_filePath):
     error(400, 'could not find TF archive [%s]' % (db_fn))
 
-  # if not os.path.exists(db_fn):
-  #   error(400, 'could not find TF archive [%s]' % (db_fn))
-
   #cmd = "echo -e '%s\t%s\t%s' | %s -e 1 --chrom %s %s - " % (position['chromosome'], position['start'], position['stop'], bedops_bin, position['chromosome'], db_fn)
-  cmd = "%s %s %s:%d-%d" % (tabix_bin, db_fn, position['chromosome'], position['start'], position['stop'])
+  cmd = "%s %s %s:%d-%d %s" % (tabix_bin, db_fn, position['chromosome'], position['start'], position['stop'], '-D')
   try:
     probe['tf_overlaps'][db_name] = []
     db_query_result = subprocess.check_output(cmd, shell=True).decode('utf-8')
@@ -329,16 +286,12 @@ for per_experiment_sample in per_experiment_samples:
   #   probe_fp_fn = 'probe.fp.%d.gz' % (int(padding))
   probe_fp_fn = 'probe.fp.%d.gz' % (int(padding))
 
-  # fp_fn = os.path.join(data_dir, array, 'fp', per_experiment_sample, probe_fp_fn)
   fp_filePath = "/".join([aws_info['s3']['subFolder'], 'data', array, 'fp', per_experiment_sample, probe_fp_fn])
   fp_fn = "s3://%s/%s" % (aws_info['s3']['bucket'], fp_filePath)
   if not checkS3File(aws_info['s3']['bucket'], fp_filePath):
     error(400, 'could not find footprint archive file [%s]' % (fp_fn))
 
-  # if not os.path.exists(fp_fn):
-  #   error(400, 'could not find footprint archive file [%s]' % (fp_fn))
-
-  cmd = "%s %s %s:%d-%d" % (tabix_bin, fp_fn, position['chromosome'], position['start'], position['stop'])
+  cmd = "%s %s %s:%d-%d %s" % (tabix_bin, fp_fn, position['chromosome'], position['start'], position['stop'], '-D')
   try:
     probe['fp_overlaps'] = []
     fp_result = subprocess.check_output(cmd, shell=True).decode('utf-8')
@@ -380,7 +333,4 @@ state_json = {
 }
 
 print(json.dumps(state_json))
-# sys.stdout.write('Status: 200 OK\r\n')
-# sys.stdout.write('Content-Type: application/json; charset=utf-8\r\n\r\n')
-# sys.stdout.write(json.dumps(state_json))
-sys.exit(os.EX_OK)
+sys.exit(0)
