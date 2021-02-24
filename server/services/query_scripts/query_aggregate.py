@@ -23,24 +23,6 @@ tf_databases = [
 
 form = json.load(sys.stdin)
 
-def error(code, message):
-  raise SystemExit(json.dumps({
-    "code": code,
-    "message": message
-  }))
-
-def checkS3File(bucket, filePath):
-  s3 = boto3.resource('s3')
-  try:
-    s3.Object(bucket, filePath).load()
-  except botocore.exceptions.ClientError as e:
-    if e.response['Error']['Code'] == "404":
-      return False
-    else:
-      return False
-  else: 
-    return True
-
 if not 'dataDir' in form:
   error(400, 'Data directory not specified')
 data_dir = form['dataDir']
@@ -84,6 +66,31 @@ annotation_type = settings['annotationType']
 sample_md_fns = {
   'All' : os.path.join(data_dir, 'All/fp/filtered_sample_aggregates.json')
 }
+
+def error(code, message):
+  raise SystemExit(json.dumps({
+    "code": code,
+    "message": message
+  }))
+
+def checkS3File(bucket, filePath):
+  if ('aws_access_key_id' in aws_info and len(aws_info['aws_access_key_id']) > 0 and 'aws_secret_access_key' in aws_info and len(aws_info['aws_secret_access_key']) > 0):
+    session = boto3.Session(
+      aws_access_key_id=aws_info['aws_access_key_id'],
+      aws_secret_access_key=aws_info['aws_secret_access_key'],
+    )
+    s3 = session.resource('s3')
+  else: 
+    s3 = boto3.resource('s3')
+  try:
+    s3.Object(bucket, filePath).load()
+  except botocore.exceptions.ClientError as e:
+    if e.response['Error']['Code'] == "404":
+      return False
+    else:
+      return False
+  else: 
+    return True
 
 #
 # for processing samples in aggregate, we:
