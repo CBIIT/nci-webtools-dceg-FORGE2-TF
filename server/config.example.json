@@ -4,11 +4,11 @@
         "client": "../client/build"
     },
     "logs": {
-        "folder": "logs",
+        "folder": "../logs",
         "level": "debug"
     },
     "data": {
-        "folder": ""
+        "folder": "../data"
     },
     "aws": {
         "region": "us-east-1",

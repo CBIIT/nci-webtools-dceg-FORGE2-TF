@@ -9,6 +9,7 @@ import botocore
 from operator import add
 
 tabix_bin = os.path.join('tabix')
+pts_bin = os.path.join('pts_lbsearch')
 
 probe_fns = {
   'All' : 'probes.bed.idsort.txt'
@@ -142,7 +143,7 @@ probes_fn = os.path.join(data_dir, array, 'probes', probe_fns[array])
 if not os.path.exists(probes_fn):
   error(400, 'could not find id-sorted probes BED file [%s]' % (probes_fn))
 # cmd = "%s -p %s %s | cut -f2-" % (pts_bin, probes_fn, probe_name)
-cmd = "%s -p %s %s | cut -f2-" % ('pts_lbsearch', probes_fn, probe_name)
+cmd = "%s -p %s %s | cut -f2-" % (pts_bin, probes_fn, probe_name)
 try:
   position_result = subprocess.check_output(cmd, shell=True).decode('utf-8')
   if position_result:
