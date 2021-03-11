@@ -37,11 +37,23 @@ apiRouter.get('/ping', (request, response) => {
 
 // query-probe-names route (query_probe_names.py)
 apiRouter.post('/query-probe-names', ({ body }, response) => {
-    console.log("HIT QUERY-PROBE-NAMES");
-    console.log("POST BODY", body);
-    // temporarily return error code 500
-    response.status(500);
-    response.json('monkeys');
+    logger.debug("Execute /query-probe-names");
+    const pythonProcess = new PythonShell('query_probe_names.py');
+    pythonProcess.send({...body, dataDir});
+    pythonProcess.on('message', results => {
+        if (results) {
+            logger.debug("/query-probe-names", results);
+            response.json(results);
+        }
+    });
+    pythonProcess.end((err, code, signal) => {
+        if (err) {
+            logger.error(err);
+            response.status(400);
+            response.json(err);
+        }
+        response.status(200);
+    });
 });
 
 // query route (query.py)
