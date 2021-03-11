@@ -151,7 +151,7 @@ class Viewer extends React.Component {
       },
       (err) => {
         console.log("viewer - updateAssociationData() - error");
-        console.log("error response : ", err.response);
+        console.log("error response : ", err);
         // const dispatch = useDispatch();
         // actions.updateKey({ 
         //   key: 'errorModal', 
@@ -196,7 +196,7 @@ class Viewer extends React.Component {
       },
       (err) => {
         // console.log(err.response.data.msg);
-        console.log('NO DATA');
+        console.log("error response : ", err);
         self.setState({
           summaryData: {},
           summaryDataAvailable: false,

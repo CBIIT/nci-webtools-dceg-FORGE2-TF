@@ -124,7 +124,7 @@ class TFSummaryTable extends React.Component {
         (err) => {
           console.log('tfSummaryTable - exportGraph() - error');
           // console.log(err.response.data.msg);
-          console.log('NO DATA');
+          console.log("error response : ", err);
         }
       );
     }

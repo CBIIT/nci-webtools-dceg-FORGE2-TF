@@ -94,7 +94,7 @@ class Settings extends React.Component {
       },
       (err) => {
         console.log('PING ERROR');
-        console.log(err);
+        console.log("error response : ", err);
         window.alert(`server status: PING ERROR`);
       }
     );
@@ -188,7 +188,7 @@ class Settings extends React.Component {
         (err) => {
           console.log('settings - handleInputChange() - error');
           // console.log(err.response.data.msg);
-          console.log('NO DATA');
+          console.log("error response : ", err);
         }
       );
     }
