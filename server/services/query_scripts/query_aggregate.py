@@ -7,6 +7,14 @@ import subprocess
 import boto3
 import botocore
 from operator import add
+from multiprocessing import Pool
+
+def tabix_call(cmd):
+  try:
+    return subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT).decode('utf-8')
+  except subprocess.CalledProcessError as cpe:
+    return None
+    # error(400, 'could not perform signal archive query [%s] [%s]' % (cmd, cpe))
 
 tabix_bin = os.path.join('tabix')
 pts_bin = os.path.join('pts_lbsearch')
@@ -203,6 +211,9 @@ except subprocess.CalledProcessError as cpe:
 #     tabix <sample_name>/reduced.probe.gz <chr>:<start>-<stop>
 #
 per_experiment_sample_signal_accumulator = []
+# print("per_experiment_samples", per_experiment_samples)
+# parallelize tabix calls
+cmd_list = []
 for per_experiment_sample in per_experiment_samples:
   #signal_fn = os.path.join(data_dir, array, 'signal', sample, 'reduced.probe.starch')
   signal_filePath = "/".join([aws_info['s3']['subFolder'], 'data', array, 'signal', per_experiment_sample, 'reduced.probe.gz'])
@@ -212,29 +223,54 @@ for per_experiment_sample in per_experiment_samples:
   signal_idx_filePath = os.path.join(data_dir, array, 'signal', per_experiment_sample) 
 
   cmd = "(%s cd %s; %s %s %s:%d-%d %s| cut -f1,6-8)" % (export_s3_keys, signal_idx_filePath, tabix_bin, signal_fn, position['chromosome'], position['start'], position['stop'], '-D')
+  cmd_list.append(cmd)
+  
+# print("cmd_list", cmd_list)
+with Pool() as p:
+  signal_result_pooled = p.map(tabix_call, cmd_list)
+# print("signal_result_pooled", signal_result_pooled)
+  # try:
+  #   signal_result = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT).decode('utf-8')
+  
+for i, per_experiment_sample in enumerate(per_experiment_samples):
+  # try:
+    # signal_result = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT).decode('utf-8')
+  signal_result = signal_result_pooled[i]
+  if signal_result and signal_result is not None:
+    elems = signal_result.rstrip().split()
+    try:
+      signal = [float(x) for x in elems[3].split(",")]
+      sig_length = len(signal)
+      sig_midpoint_index = int(sig_length/2)
+      sig_l_index = sig_midpoint_index - padding
+      sig_r_index = sig_midpoint_index + padding + 1
+      #window['signal'] = signal[sig_l_index:sig_r_index]
+      if len(per_experiment_sample_signal_accumulator) == 0:
+        per_experiment_sample_signal_accumulator = signal[sig_l_index:sig_r_index]
+      else:
+        per_experiment_sample_signal_accumulator = list(map(add, per_experiment_sample_signal_accumulator, signal[sig_l_index:sig_r_index]))
+    except IndexError as ie:
+      error(400, 'could not perform signal archive query')
+  else:
+    error(400, 'empty result from signal archive file query')
+  # except subprocess.CalledProcessError as cpe:
+  #   error(400, 'could not perform signal archive query')
 
-  try:
-    signal_result = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT).decode('utf-8')
-
-    if signal_result:
-      elems = signal_result.rstrip().split()
-      try:
-        signal = [float(x) for x in elems[3].split(",")]
-        sig_length = len(signal)
-        sig_midpoint_index = int(sig_length/2)
-        sig_l_index = sig_midpoint_index - padding
-        sig_r_index = sig_midpoint_index + padding + 1
-        #window['signal'] = signal[sig_l_index:sig_r_index]
-        if len(per_experiment_sample_signal_accumulator) == 0:
-          per_experiment_sample_signal_accumulator = signal[sig_l_index:sig_r_index]
-        else:
-          per_experiment_sample_signal_accumulator = list(map(add, per_experiment_sample_signal_accumulator, signal[sig_l_index:sig_r_index]))
-      except IndexError as ie:
-        error(400, 'could not perform signal archive query [%s] [%s]' % (cmd, ie))
-    else:
-      error(400, 'empty result from signal archive file query [%s]' % (cmd))
-  except subprocess.CalledProcessError as cpe:
-    error(400, 'could not perform signal archive query [%s] [%s]' % (cmd, cpe))
+# perform option on pooled results
+# for per_experiment_sample in per_experiment_samples:
+#   try:
+#     signal = [float(x) for x in elems[3].split(",")]
+#     sig_length = len(signal)
+#     sig_midpoint_index = int(sig_length/2)
+#     sig_l_index = sig_midpoint_index - padding
+#     sig_r_index = sig_midpoint_index + padding + 1
+#     #window['signal'] = signal[sig_l_index:sig_r_index]
+#     if len(per_experiment_sample_signal_accumulator) == 0:
+#       per_experiment_sample_signal_accumulator = signal[sig_l_index:sig_r_index]
+#     else:
+#       per_experiment_sample_signal_accumulator = list(map(add, per_experiment_sample_signal_accumulator, signal[sig_l_index:sig_r_index]))
+#   except IndexError as ie:
+#     error(400, 'could not perform signal archive query [%s] [%s]' % (cmd, ie))
 
 pesl = float(len(per_experiment_samples))
 per_experiment_sample_signal_accumulator = [x/pesl for x in per_experiment_sample_signal_accumulator]
@@ -246,6 +282,8 @@ window['signal'] = per_experiment_sample_signal_accumulator
 #     tabix <db_name>/probe.db.gz <chr>:<start>-<stop>
 #
 
+# print("tf_databases", tf_databases)
+cmd_list = []
 for db_name in tf_databases:
   #db_fn = os.path.join(data_dir, array, 'tf', db_name, 'probe.db.starch')
   if annotation_type == 'Probe-only':
@@ -261,33 +299,39 @@ for db_name in tf_databases:
 
   #cmd = "echo -e '%s\t%s\t%s' | %s -e 1 --chrom %s %s - " % (position['chromosome'], position['start'], position['stop'], bedops_bin, position['chromosome'], db_fn)
   cmd = "(%s cd %s; %s %s %s:%d-%d %s)" % (export_s3_keys, db_idx_filePath, tabix_bin, db_fn, position['chromosome'], position['start'], position['stop'], '-D')
-  try:
-    probe['tf_overlaps'][db_name] = []
-    db_query_result = subprocess.check_output(cmd, shell=True).decode('utf-8')
-    if db_query_result:
-      elems = db_query_result.rstrip().split('|')
-      hits = elems[1]
-      perhits = []
-      for hit in hits.split(';'):
-        perhit_elems = hit.split('\t')
-        perhit = {}
-        perhit['chromosome'] = perhit_elems[0]
-        perhit['start'] = int(perhit_elems[1])
-        perhit['stop'] = int(perhit_elems[2])
-        perhit['id'] = perhit_elems[3]
-        perhit['score'] = float(perhit_elems[4])
-        perhit['strand'] = perhit_elems[5]
+  cmd_list.append(cmd)
+
+with Pool() as p:
+  db_query_result_pooled = p.map(tabix_call, cmd_list)
+  
+for i, db_name in enumerate(tf_databases):
+  # try:
+  probe['tf_overlaps'][db_name] = []
+  db_query_result = db_query_result_pooled[i]
+  if db_query_result and db_query_result is not None:
+    elems = db_query_result.rstrip().split('|')
+    hits = elems[1]
+    perhits = []
+    for hit in hits.split(';'):
+      perhit_elems = hit.split('\t')
+      perhit = {}
+      perhit['chromosome'] = perhit_elems[0]
+      perhit['start'] = int(perhit_elems[1])
+      perhit['stop'] = int(perhit_elems[2])
+      perhit['id'] = perhit_elems[3]
+      perhit['score'] = float(perhit_elems[4])
+      perhit['strand'] = perhit_elems[5]
 #         perhit['sequence'] = perhit_elems[6]
-        if annotation_type == 'Probe-only':
-          if perhit['start'] <= position['start'] and perhit['stop'] > position['stop']:
-            perhits.append(perhit)
-        elif annotation_type == 'All':
+      if annotation_type == 'Probe-only':
+        if perhit['start'] <= position['start'] and perhit['stop'] > position['stop']:
           perhits.append(perhit)
-      probe['tf_overlaps'][db_name] = perhits
-    else:
-      pass
-  except subprocess.CalledProcessError as cpe:
-    error(400, 'could not perform TF query [%s] [%s]' % (cmd, cpe))
+      elif annotation_type == 'All':
+        perhits.append(perhit)
+    probe['tf_overlaps'][db_name] = perhits
+  else:
+    pass
+  # except subprocess.CalledProcessError as cpe:
+  #   error(400, 'could not perform TF query [%s] [%s]' % (cmd, cpe))
 
 #
 # query per-experiment footprint sites by coordinates and per-experiment metadata
@@ -295,6 +339,7 @@ for db_name in tf_databases:
 #     tabix <sample_name>/reduced.probe.gz <chr>:<start>-<stop>
 #
 per_experiment_sample_fp_overlaps_accumulator = []
+cmd_list = []
 for per_experiment_sample in per_experiment_samples:
   # if annotation_type == 'Probe-only':
   #   probe_fp_fn = 'probe.fp.20.gz'
@@ -309,35 +354,41 @@ for per_experiment_sample in per_experiment_samples:
   fp_idx_filePath = os.path.join(data_dir, array, 'fp', per_experiment_sample) 
 
   cmd = "(%s cd %s; %s %s %s:%d-%d %s)" % (export_s3_keys, fp_idx_filePath, tabix_bin, fp_fn, position['chromosome'], position['start'], position['stop'], '-D')
-  try:
-    probe['fp_overlaps'] = []
-    fp_result = subprocess.check_output(cmd, shell=True).decode('utf-8')
-    if fp_result:
-      try:
-        elems = fp_result.rstrip().split('|')
-        hits = elems[1]
-        perhits = []
-        for hit in hits.split(';'):
-          perhit_elems = hit.split('\t')
-          perhit = {}
-          perhit['chromosome'] = perhit_elems[0]
-          perhit['start'] = int(perhit_elems[1])
-          perhit['stop'] = int(perhit_elems[2])
-          perhits.append(perhit)
-  #         if annotation_type == 'Probe-only':
-  #           if perhit['start'] <= position['start'] and perhit['stop'] > position['stop']:
-  #             perhits.append(perhit)
-  #         elif annotation_type == 'All':
-  #           perhits.append(perhit)
-        #probe['fp_overlaps'] = perhits
-        per_experiment_sample_fp_overlaps_accumulator.extend(perhits)
-      except IndexError as ie:
-        pass
-    else:
-      #error(400, 'empty result from footprint archive file query [%s]' % (cmd))
+  cmd_list.append(cmd)
+
+with Pool() as p:
+  fp_result_pooled = p.map(tabix_call, cmd_list)
+
+for i, per_experiment_sample in enumerate(per_experiment_samples):
+  # try:
+  probe['fp_overlaps'] = []
+  fp_result = fp_result_pooled[i]
+  if fp_result and fp_result is not None:
+    try:
+      elems = fp_result.rstrip().split('|')
+      hits = elems[1]
+      perhits = []
+      for hit in hits.split(';'):
+        perhit_elems = hit.split('\t')
+        perhit = {}
+        perhit['chromosome'] = perhit_elems[0]
+        perhit['start'] = int(perhit_elems[1])
+        perhit['stop'] = int(perhit_elems[2])
+        perhits.append(perhit)
+#         if annotation_type == 'Probe-only':
+#           if perhit['start'] <= position['start'] and perhit['stop'] > position['stop']:
+#             perhits.append(perhit)
+#         elif annotation_type == 'All':
+#           perhits.append(perhit)
+      #probe['fp_overlaps'] = perhits
+      per_experiment_sample_fp_overlaps_accumulator.extend(perhits)
+    except IndexError as ie:
       pass
-  except subprocess.CalledProcessError as cpe:
-    error(400, 'could not perform footprint archive query [%s] [%s]' % (cmd, cpe))
+  else:
+    #error(400, 'empty result from footprint archive file query [%s]' % (cmd))
+    pass
+  # except subprocess.CalledProcessError as cpe:
+  #   error(400, 'could not perform footprint archive query [%s] [%s]' % (cmd, cpe))
 
 probe['fp_overlaps'] = per_experiment_sample_fp_overlaps_accumulator
 
