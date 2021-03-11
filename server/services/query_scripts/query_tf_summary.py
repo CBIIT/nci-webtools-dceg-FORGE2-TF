@@ -6,25 +6,35 @@ import json
 import subprocess
 import tempfile
 
-root_dir = '/var/www/eforge/forge2-tf/browser/src/client/assets/services'
-data_dir = os.path.join(root_dir, 'data')
-
 array_probe_counts = {
   'All' : 37964763
 }
 
 form = json.load(sys.stdin)
 
-def error(type, msg):
-  if type == 400:
-    sys.stdout.write('Status: 400 Bad Request\r\n')
-  else:
-    sys.stdout.write('Status: 400 Bad Request\r\n')
-  sys.stdout.write('Content-Type: application/json\r\n\r\n')
-  sys.stdout.write(json.dumps(
-    { 'msg' : '%s' % (msg) }
-  ))
-  sys.exit(os.EX_USAGE)
+# def error(type, msg):
+#   if type == 400:
+#     sys.stdout.write('Status: 400 Bad Request\r\n')
+#   else:
+#     sys.stdout.write('Status: 400 Bad Request\r\n')
+#   sys.stdout.write('Content-Type: application/json\r\n\r\n')
+#   sys.stdout.write(json.dumps(
+#     { 'msg' : '%s' % (msg) }
+#   ))
+#   sys.exit(os.EX_USAGE)
+def error(code, message):
+  raise SystemExit(json.dumps({
+    "code": code,
+    "message": message
+  }))
+
+if not 'dataDir' in form:
+  error(400, 'Data directory not specified')
+data_dir = form['dataDir']
+
+if not 'tmpDir' in form:
+  error(400, 'Tmp directory not specified')
+tmp_dir = form['tmpDir']
 
 if not 'tf_summary' in form:
   error(400, 'TF summary not specified')
@@ -38,7 +48,7 @@ n_tests = int(tf_summary['nTests'])
 
 tf_bin = os.path.join(data_dir, array, 'tf', 'query_probes.py')
 tmp = tempfile.NamedTemporaryFile()
-probes_fn = os.path.join(root_dir, 'tmp', os.path.basename(tmp.name))
+probes_fn = os.path.join(tmp_dir, os.path.basename(tmp.name))
 with open(probes_fn, 'w') as f:
   json.dump(probes_obj, f)
 
@@ -54,7 +64,11 @@ summary_json = {
   'summary' : pvals_result
 }
 
-sys.stdout.write('Status: 200 OK\r\n')
-sys.stdout.write('Content-Type: application/json; charset=utf-8\r\n\r\n')
-sys.stdout.write(json.dumps(pvals_result))
-sys.exit(os.EX_OK)
+# sys.stdout.write('Status: 200 OK\r\n')
+# sys.stdout.write('Content-Type: application/json; charset=utf-8\r\n\r\n')
+# sys.stdout.write(json.dumps(pvals_result))
+# sys.exit(os.EX_OK)
+
+print(json.dumps(pvals_result))
+sys.exit(0)
+

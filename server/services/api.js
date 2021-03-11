@@ -8,6 +8,7 @@ const path = require('path');
 const apiRouter = express.Router();
 
 const dataDir = path.resolve(config.data.folder);
+const tmpDir = path.resolve(config.tmp.folder);
 const awsInfo = config.aws;
 
 PythonShell.defaultOptions = { 
@@ -82,10 +83,21 @@ apiRouter.post('/query-aggregate', ({ body }, response) => {
 
 // query-tf-summary route (query_tf_summary.py)
 apiRouter.post('/query-tf-summary', ({ body }, response) => {
-    console.log("HIT QUERY-TF-SUMMARY");
-    console.log("POST BODY", body);
-    // temporarily return error code 500
-    response.status(500).json('monkeys');
+    logger.debug("Execute /query-tf-summary");
+    const pythonProcess = new PythonShell('query_tf_summary.py');
+    pythonProcess.send({...body, dataDir, tmpDir});
+    pythonProcess.on('message', results => {
+        if (results) {
+            logger.debug("/query-tf-summary", results);
+            response.status(200).json(results);
+        }
+    });
+    pythonProcess.end((err, code, signal) => {
+        if (err) {
+            logger.error(err);
+            response.status(400).json(err);
+        }
+    });
 });
 
 // query-tf-summary-graph route (query_tf_summary_graph.py)
