@@ -19,7 +19,6 @@ RUN dnf -y update \
       zlib-devel \
       xz-devel \
       git \
-      awscli \
    && dnf clean all
 
 # Install Python packages
