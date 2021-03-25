@@ -10,6 +10,7 @@ const apiRouter = express.Router();
 const dataDir = path.resolve(config.data.folder);
 const tmpDir = path.resolve(config.tmp.folder);
 const awsInfo = config.aws;
+const numProcesses = config.numProcesses;
 
 PythonShell.defaultOptions = { 
     mode: 'json',
@@ -66,7 +67,7 @@ apiRouter.post('/query', ({ body }, response) => {
 apiRouter.post('/query-aggregate', ({ body }, response) => {
     logger.debug("Execute /query-aggregate");
     const pythonProcess = new PythonShell('query_aggregate.py');
-    pythonProcess.send({...body, dataDir, awsInfo});
+    pythonProcess.send({...body, dataDir, awsInfo, numProcesses});
     pythonProcess.on('message', results => {
         if (results) {
             logger.debug("/query-aggregate", results);

@@ -33,6 +33,10 @@ if not 'awsInfo' in form:
   error(400, 'AWS info not specified')
 aws_info = form['awsInfo']
 
+if not 'numProcesses' in form:
+  error(400, 'Max number of parallel subprocesses not specified')
+numProcesses = form['numProcesses']
+
 if not 'settings' in form:
   error(400, 'Settings not specified')
 settings = form['settings']
@@ -225,7 +229,7 @@ for per_experiment_sample in per_experiment_samples:
   cmd = "(%s cd %s; %s %s %s:%d-%d %s| cut -f1,6-8)" % (export_s3_keys, signal_idx_filePath, tabix_bin, signal_fn, position['chromosome'], position['start'], position['stop'], '-D')
   cmd_list.append(cmd)
   
-with Pool() as p:
+with Pool(numProcesses) as p:
   signal_result_pooled = p.map(tabix_call, cmd_list)
   
 for i, per_experiment_sample in enumerate(per_experiment_samples):
@@ -280,7 +284,7 @@ for db_name in tf_databases:
   cmd = "(%s cd %s; %s %s %s:%d-%d %s)" % (export_s3_keys, db_idx_filePath, tabix_bin, db_fn, position['chromosome'], position['start'], position['stop'], '-D')
   cmd_list.append(cmd)
 
-with Pool() as p:
+with Pool(numProcesses) as p:
   db_query_result_pooled = p.map(tabix_call, cmd_list)
   
 for i, db_name in enumerate(tf_databases):
@@ -337,7 +341,7 @@ for per_experiment_sample in per_experiment_samples:
   cmd = "(%s cd %s; %s %s %s:%d-%d %s)" % (export_s3_keys, fp_idx_filePath, tabix_bin, fp_fn, position['chromosome'], position['start'], position['stop'], '-D')
   cmd_list.append(cmd)
 
-with Pool() as p:
+with Pool(numProcesses) as p:
   fp_result_pooled = p.map(tabix_call, cmd_list)
 
 for i, per_experiment_sample in enumerate(per_experiment_samples):
