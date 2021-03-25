@@ -75,7 +75,7 @@ apiRouter.post('/getImageS3', async ({ body }, response) => {
 
         res.setHeader('Content-Type', 'image/png');
         s3.getObject({
-        Bucket: config.data.bucket,
+        Bucket: config.aws.s3.bucket,
         Key: key,
         })
         .createReadStream()
