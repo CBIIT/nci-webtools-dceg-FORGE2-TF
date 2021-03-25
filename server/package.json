@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "aws-sdk": "^2.872.0",
     "compression": "^1.7.4",
     "express": "^4.17.1",
     "python-shell": "^2.0.3",

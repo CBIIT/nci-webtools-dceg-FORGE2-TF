@@ -3,6 +3,7 @@ const compression = require('compression');
 const config = require('../config');
 const logger = require('./logger');
 const { PythonShell } = require('python-shell');
+const AWS = require('aws-sdk');
 const path = require('path');
 
 const apiRouter = express.Router();
@@ -10,7 +11,7 @@ const apiRouter = express.Router();
 const dataDir = path.resolve(config.data.folder);
 const tmpDir = path.resolve(config.tmp.folder);
 const awsInfo = config.aws;
-const numProcesses = config.numProcesses;
+const numProcesses = config.numProcesses || 8;
 
 PythonShell.defaultOptions = { 
     mode: 'json',
@@ -53,6 +54,41 @@ apiRouter.post('/query-probe-names', ({ body }, response) => {
             response.status(400).json(err);
         }
     });
+});
+
+// query route (query.py)
+apiRouter.post('/query', ({ body }, response) => {
+    console.log("HIT QUERY");
+    console.log("POST BODY", body);
+    // temporarily return error code 500
+    response.status(500).json('monkeys');
+});
+
+apiRouter.post('/getImageS3', async ({ body }, response) => {
+    console.log("HIT IMAGE S3 QUERY");
+    console.log("POST BODY", body);
+
+    const key = body.path;
+
+    // if (production) {
+        const s3 = new AWS.S3();
+
+        res.setHeader('Content-Type', 'image/png');
+        s3.getObject({
+        Bucket: config.data.bucket,
+        Key: key,
+        })
+        .createReadStream()
+        .on('error', next)
+        .pipe(res);
+    // } else {
+    //     res.setHeader('Content-Type', 'image/svg+xml');
+    //     fs.createReadStream(path.resolve(key.replace('msigportal', '../data')))
+    //     .on('error', next)
+    //     .pipe(res);
+    // }
+    // // temporarily return error code 500
+    // response.status(500).json('monkeys');
 });
 
 // query route (query.py)

@@ -52,7 +52,7 @@ probes_fn = os.path.join(tmp_dir, os.path.basename(tmp.name))
 with open(probes_fn, 'w') as f:
   json.dump(probes_obj, f)
 
-cmd = "%s %s %d %f %d" % (tf_bin, probes_fn, count, fdr_threshold, n_tests)
+cmd = "%s %s %d %f %d %s" % (tf_bin, probes_fn, count, fdr_threshold, n_tests, data_dir)
 try:
   pvals_result = subprocess.check_output(cmd, shell=True)
 except subprocess.CalledProcessError as cpe:
