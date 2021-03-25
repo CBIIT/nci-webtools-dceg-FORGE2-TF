@@ -22,7 +22,7 @@ RUN dnf -y update \
    && dnf clean all
 
 # Install Python packages
-RUN pip3 install boto3 simplejson
+RUN pip3 install boto3 simplejson numpy scipy patsy pandas statsmodels
 
 # Download and install htslib-1.11 (tabix)
 RUN cd /tmp \
