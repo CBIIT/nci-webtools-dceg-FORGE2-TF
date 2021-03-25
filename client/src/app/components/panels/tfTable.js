@@ -143,22 +143,25 @@ class TFTable extends React.Component {
           },
           body: JSON.stringify({ path }),
         });
+      console.log(response);
+      if (!response.ok) {
+        // console
+        // const msg = await response.text();
+        // mergeError(msg);
+        return 'assets/img/blank.png'
+      } else {
+        const pic = await response.blob();
+        const objectURL = URL.createObjectURL(pic);
 
-      // if (!response.ok) {
-      //   const msg = await response.text();
-      //   mergeError(msg);
-      // } else {
-      const pic = await response.blob();
-      const objectURL = URL.createObjectURL(pic);
+        if (plotURL.length) URL.revokeObjectURL(plotURL);
 
-      if (plotURL.length) URL.revokeObjectURL(plotURL);
-
-      console.log("objectURL", objectURL);
-      // mergeMutationalProfiles({
-      //   plotURL: objectURL,
-      // });
-      // }
-      return objectURL;
+        console.log("objectURL", objectURL);
+        // mergeMutationalProfiles({
+        //   plotURL: objectURL,
+        // });
+        // }
+        return objectURL;
+      }
     } catch (err) {
       // mergeError(err.message);
       console.log("error getLogo", err);
@@ -207,7 +210,7 @@ class TFTable extends React.Component {
         width: 150,
         height: 100,
         Cell: async (row) => {
-          const logoPath = `assets/services/motif-logos/logos/${row.value.database}/${row.value.name}.png`;
+          const logoPath = `forge2-tf/motif-logos/logos/${row.value.database}/${row.value.name}.png`;
           const logoURL = this.getLogo(logoPath);
           return (
             <div
