@@ -6,41 +6,28 @@ import json
 import subprocess
 from operator import add
 
-root_dir = '/var/www/eforge/forge2-tf/browser/src/client/assets/services'
-data_dir = os.path.join(root_dir, 'data')
-pts_bin = os.path.join(root_dir, 'pts-line-bisect', 'pts_lbsearch')
-# bedops_dir = '/net/module/sw/bedops/2.4.35-typical/bin'
-# bedops_bin = os.path.join(bedops_dir, 'bedops')
-# htslib_dir = '/net/module/sw/htslib/1.7/bin'
-tabix_bin = os.path.join('tabix')
-
-probe_fns = {
-  'All' : 'probes.bed.idsort.txt'
-}
-
-sample_md_fns = {
-  'All' : os.path.join(data_dir, 'All/fp/filtered_sample_aggregates.json')
-}
-
-tf_databases = [
-  'jaspar',
-  'taipale',
-  'uniprobe',
-  'xfac'
-]
-
 form = json.load(sys.stdin)
 
-def error(type, msg):
-  if type == 400:
-    sys.stdout.write('Status: 400 Bad Request\r\n')
-  else:
-    sys.stdout.write('Status: 400 Bad Request\r\n')
-  sys.stdout.write('Content-Type: application/json\r\n\r\n')
-  sys.stdout.write(json.dumps(
-    { 'msg' : '%s' % (msg) }
-  ))
-  sys.exit(os.EX_USAGE)
+# def error(type, msg):
+#   if type == 400:
+#     sys.stdout.write('Status: 400 Bad Request\r\n')
+#   else:
+#     sys.stdout.write('Status: 400 Bad Request\r\n')
+#   sys.stdout.write('Content-Type: application/json\r\n\r\n')
+#   sys.stdout.write(json.dumps(
+#     { 'msg' : '%s' % (msg) }
+#   ))
+#   sys.exit(os.EX_USAGE)
+
+def error(code, message):
+  raise SystemExit(json.dumps({
+    "code": code,
+    "message": message
+  }))
+
+if not 'dataDir' in form:
+  error(400, 'Data directory not specified')
+data_dir = form['dataDir']
   
 if not 'tf_aggregate_summary' in form:
   error(400, 'TF aggregate summary not specified')
@@ -69,6 +56,21 @@ smoothing = tfAggregateSummary['smoothing']
 if not 'signalType' in tfAggregateSummary:
   error(400, 'Signal type not specified')
 signalType = tfAggregateSummary['signalType']
+
+probe_fns = {
+  'All' : 'probes.bed.idsort.txt'
+}
+
+sample_md_fns = {
+  'All' : os.path.join(data_dir, 'All/fp/filtered_sample_aggregates.json')
+}
+
+tf_databases = [
+  'jaspar',
+  'taipale',
+  'uniprobe',
+  'xfac'
+]
 
 #
 # for processing samples in aggregate, we:
@@ -155,7 +157,10 @@ aggregate_json = {
   'aggregate' : aggregate
 }
 
-sys.stdout.write('Status: 200 OK\r\n')
-sys.stdout.write('Content-Type: application/json; charset=utf-8\r\n\r\n')
-sys.stdout.write(json.dumps(aggregate_json))
-sys.exit(os.EX_OK)
+# sys.stdout.write('Status: 200 OK\r\n')
+# sys.stdout.write('Content-Type: application/json; charset=utf-8\r\n\r\n')
+# sys.stdout.write(json.dumps(aggregate_json))
+# sys.exit(os.EX_OK)
+
+print(json.dumps(aggregate_json))
+sys.exit(0)

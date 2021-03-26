@@ -57,14 +57,14 @@ apiRouter.post('/query-probe-names', ({ body }, response) => {
 });
 
 // query route (query.py)
-apiRouter.post('/query', ({ body }, response) => {
-    console.log("HIT QUERY");
-    console.log("POST BODY", body);
-    // temporarily return error code 500
-    response.status(500).json('monkeys');
-});
+// apiRouter.post('/query', ({ body }, response) => {
+//     console.log("HIT QUERY");
+//     console.log("POST BODY", body);
+//     // temporarily return error code 500
+//     response.status(500).json('monkeys');
+// });
 
-apiRouter.post('/getImageS3', async ({ body }, response) => {
+apiRouter.post('/getImageS3', async ({ body }, response, next) => {
     console.log("HIT IMAGE S3 QUERY");
     console.log("POST BODY", body);
 
@@ -73,14 +73,14 @@ apiRouter.post('/getImageS3', async ({ body }, response) => {
     // if (production) {
         const s3 = new AWS.S3();
 
-        res.setHeader('Content-Type', 'image/png');
+        response.setHeader('Content-Type', 'image/png');
         s3.getObject({
         Bucket: config.aws.s3.bucket,
         Key: key,
         })
         .createReadStream()
         .on('error', next)
-        .pipe(res);
+        .pipe(response);
     // } else {
     //     res.setHeader('Content-Type', 'image/svg+xml');
     //     fs.createReadStream(path.resolve(key.replace('msigportal', '../data')))
@@ -92,12 +92,12 @@ apiRouter.post('/getImageS3', async ({ body }, response) => {
 });
 
 // query route (query.py)
-apiRouter.post('/query', ({ body }, response) => {
-    console.log("HIT QUERY");
-    console.log("POST BODY", body);
-    // temporarily return error code 500
-    response.status(500).json('monkeys');
-});
+// apiRouter.post('/query', ({ body }, response) => {
+//     console.log("HIT QUERY");
+//     console.log("POST BODY", body);
+//     // temporarily return error code 500
+//     response.status(500).json('monkeys');
+// });
 
 // query-aggregate route (query_aggregate.py)
 apiRouter.post('/query-aggregate', ({ body }, response) => {
@@ -139,26 +139,59 @@ apiRouter.post('/query-tf-summary', ({ body }, response) => {
 
 // query-tf-summary-graph route (query_tf_summary_graph.py)
 apiRouter.post('/query-tf-summary-graph', ({ body }, response) => {
-    console.log("HIT QUERY-TF-SUMMARY-GRAPH");
-    console.log("POST BODY", body);
-    // temporarily return error code 500
-    response.status(500).json('monkeys');
+    logger.debug("Execute /query-tf-summary-graph");
+    const pythonProcess = new PythonShell('query_tf_summary_graph.py');
+    pythonProcess.send({...body, dataDir, tmpDir});
+    pythonProcess.on('message', results => {
+        if (results) {
+            logger.debug("/query-tf-summary-graph", results);
+            response.status(200).json(results);
+        }
+    });
+    pythonProcess.end((err, code, signal) => {
+        if (err) {
+            logger.error(err);
+            response.status(400).json(err);
+        }
+    });
 });
 
 // query-tf-aggregate-summary route (query_tf_aggregate_summary.py)
 apiRouter.post('/query-tf-aggregate-summary', ({ body }, response) => {
-    console.log("HIT QUERY-TF-AGGREGATE-SUMMARY");
-    console.log("POST BODY", body);
-    // temporarily return error code 500
-    response.status(500).json('monkeys');
+    logger.debug("Execute /query-tf-aggregate-summary");
+    const pythonProcess = new PythonShell('query_tf_aggregate_summary.py');
+    pythonProcess.send({...body, dataDir});
+    pythonProcess.on('message', results => {
+        if (results) {
+            logger.debug("/query-tf-aggregate-summary", results);
+            response.status(200).json(results);
+        }
+    });
+    pythonProcess.end((err, code, signal) => {
+        if (err) {
+            logger.error(err);
+            response.status(400).json(err);
+        }
+    });
 });
 
 // query-tf-probe-overlap-summary route (query_tf_probe_overlap_summary.py)
 apiRouter.post('/query-tf-probe-overlap-summary', ({ body }, response) => {
-    console.log("HIT QUERY-TF-PROBE-OVERLAP-SUMMARY");
-    console.log("POST BODY", body);
-    // temporarily return error code 500
-    response.status(500).json('monkeys');
+    logger.debug("Execute /query-tf-probe-overlap-summary");
+    const pythonProcess = new PythonShell('query_tf_probe_overlap_summary.py');
+    pythonProcess.send({...body, dataDir});
+    pythonProcess.on('message', results => {
+        if (results) {
+            logger.debug("/query-tf-probe-overlap-summary", results);
+            response.status(200).json(results);
+        }
+    });
+    pythonProcess.end((err, code, signal) => {
+        if (err) {
+            logger.error(err);
+            response.status(400).json(err);
+        }
+    });
 });
 
 module.exports = { apiRouter };

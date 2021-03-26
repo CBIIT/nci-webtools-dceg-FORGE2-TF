@@ -6,30 +6,7 @@ import json
 import subprocess
 import ast
 
-root_dir = '/var/www/eforge/forge2-tf/browser/src/client/assets/services'
-data_dir = os.path.join(root_dir, 'data')
-offsets_dir = '/net/seq/data/projects/eForge/www/forge2-tf/browser/src/client/assets/services/data/All/offsets'
-offsets_fn = os.path.join(offsets_dir, 'offsets.txt')
-pts_bin = os.path.join(root_dir, 'pts-line-bisect', 'pts_lbsearch')
-# bedops_dir = '/net/module/sw/bedops/2.4.35-typical/bin'
-# bedops_bin = os.path.join(bedops_dir, 'bedops')
-# htslib_dir = '/net/module/sw/htslib/1.7/bin'
-tabix_bin = os.path.join('tabix')
-
-probe_fns = {
-  'All' : 'probes.bed.idsort.txt'
-}
-
-sample_md_fns = {
-  'All' : os.path.join(data_dir, 'All/fp/filtered_sample_aggregates.json')
-}
-
-tf_databases = [
-  'jaspar',
-  'taipale',
-  'uniprobe',
-  'xfac'
-]
+pts_bin = os.path.join('pts_lbsearch')
 
 form = json.load(sys.stdin)
 
@@ -43,6 +20,10 @@ def error(type, msg):
     { 'msg' : '%s' % (msg) }
   ))
   sys.exit(os.EX_USAGE)
+
+if not 'dataDir' in form:
+  error(400, 'Data directory not specified')
+data_dir = form['dataDir']
   
 if not 'tf_probe_overlap_summary' in form:
   error(400, 'Overlap summary not specified')
@@ -59,6 +40,23 @@ tfModel = overlapSummary['tfModel']
 if not 'padding' in overlapSummary:
   error(400, 'Padding not specified')
 padding = overlapSummary['padding']
+
+offsets_fn = os.path.join(data_dir, 'All/offsets/offsets.txt')
+
+probe_fns = {
+  'All' : 'probes.bed.idsort.txt'
+}
+
+sample_md_fns = {
+  'All' : os.path.join(data_dir, 'All/fp/filtered_sample_aggregates.json')
+}
+
+tf_databases = [
+  'jaspar',
+  'taipale',
+  'uniprobe',
+  'xfac'
+]
 
 #
 # query
@@ -91,7 +89,10 @@ overlaps_json = {
   'overlaps' : overlaps
 }
 
-sys.stdout.write('Status: 200 OK\r\n')
-sys.stdout.write('Content-Type: application/json; charset=utf-8\r\n\r\n')
-sys.stdout.write(json.dumps(overlaps_json))
-sys.exit(os.EX_OK)
+# sys.stdout.write('Status: 200 OK\r\n')
+# sys.stdout.write('Content-Type: application/json; charset=utf-8\r\n\r\n')
+# sys.stdout.write(json.dumps(overlaps_json))
+# sys.exit(os.EX_OK)
+
+print(json.dumps(overlaps_json))
+sys.exit(0)

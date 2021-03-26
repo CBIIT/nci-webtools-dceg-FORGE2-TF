@@ -22,6 +22,7 @@ form = json.load(sys.stdin)
 #     { 'msg' : '%s' % (msg) }
 #   ))
 #   sys.exit(os.EX_USAGE)
+
 def error(code, message):
   raise SystemExit(json.dumps({
     "code": code,
@@ -54,7 +55,7 @@ with open(probes_fn, 'w') as f:
 
 cmd = "python3 %s %s %d %f %d %s" % (tf_bin, probes_fn, count, fdr_threshold, n_tests, data_dir)
 try:
-  pvals_result = subprocess.check_output(cmd, shell=True)
+  pvals_result = subprocess.check_output(cmd, shell=True).decode('utf-8')
 except subprocess.CalledProcessError as cpe:
   error(400, 'could not perform p-value/q-value query [%s] [%s] [%s]' % (cmd, probes_fn, cpe))
 finally:
