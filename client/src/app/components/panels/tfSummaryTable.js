@@ -96,7 +96,6 @@ class TFSummaryTable extends React.Component {
         url: tf_summary_graph_query,
         data: { tf_summary },
         responseType: 'arraybuffer',
-        headers: { 'Content-Type': 'application/pdf' },
       }).then(
         (res) => {
           console.log('tfSummaryTable - exportGraph() - result');

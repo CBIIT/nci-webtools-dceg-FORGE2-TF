@@ -5,6 +5,7 @@ const logger = require('./logger');
 const { PythonShell } = require('python-shell');
 const AWS = require('aws-sdk');
 const path = require('path');
+const fs = require('fs');
 
 const apiRouter = express.Router();
 
@@ -141,11 +142,21 @@ apiRouter.post('/query-tf-summary', ({ body }, response) => {
 apiRouter.post('/query-tf-summary-graph', ({ body }, response) => {
     logger.debug("Execute /query-tf-summary-graph");
     const pythonProcess = new PythonShell('query_tf_summary_graph.py');
-    pythonProcess.send({...body, dataDir, tmpDir});
+    pythonProcess.send({...body, tmpDir});
     pythonProcess.on('message', results => {
         if (results) {
             logger.debug("/query-tf-summary-graph", results);
-            response.status(200).json(results);
+            const file = fs.createReadStream(results.output);
+            const stat = fs.statSync(results.output);
+            response.setHeader('Content-Length', stat.size);
+            response.setHeader('Content-Type', 'application/pdf');
+            response.setHeader('Content-Disposition', 'attachment; filename=export.pdf');
+            file.on('end', function() {
+            fs.unlink(results.output, function() {
+                // file deleted
+            });
+            });
+            file.pipe(response);
         }
     });
     pythonProcess.end((err, code, signal) => {

@@ -10,16 +10,11 @@ pts_bin = os.path.join('pts_lbsearch')
 
 form = json.load(sys.stdin)
 
-def error(type, msg):
-  if type == 400:
-    sys.stdout.write('Status: 400 Bad Request\r\n')
-  else:
-    sys.stdout.write('Status: 400 Bad Request\r\n')
-  sys.stdout.write('Content-Type: application/json\r\n\r\n')
-  sys.stdout.write(json.dumps(
-    { 'msg' : '%s' % (msg) }
-  ))
-  sys.exit(os.EX_USAGE)
+def error(code, message):
+  raise SystemExit(json.dumps({
+    "code": code,
+    "message": message
+  }))
 
 if not 'dataDir' in form:
   error(400, 'Data directory not specified')

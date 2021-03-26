@@ -8,17 +8,6 @@ from operator import add
 
 form = json.load(sys.stdin)
 
-# def error(type, msg):
-#   if type == 400:
-#     sys.stdout.write('Status: 400 Bad Request\r\n')
-#   else:
-#     sys.stdout.write('Status: 400 Bad Request\r\n')
-#   sys.stdout.write('Content-Type: application/json\r\n\r\n')
-#   sys.stdout.write(json.dumps(
-#     { 'msg' : '%s' % (msg) }
-#   ))
-#   sys.exit(os.EX_USAGE)
-
 def error(code, message):
   raise SystemExit(json.dumps({
     "code": code,

@@ -7,31 +7,13 @@ import subprocess
 import tempfile
 import shutil
 
-# root_dir = '/var/www/eforge/forge2-tf/browser/src/client/assets/services'
-# data_dir = os.path.join(root_dir, 'data')
-
 form = json.load(sys.stdin)
-
-# def error(type, msg):
-#   if type == 400:
-#     sys.stdout.write('Status: 400 Bad Request\r\n')
-#   else:
-#     sys.stdout.write('Status: 400 Bad Request\r\n')
-#   sys.stdout.write('Content-Type: application/json\r\n\r\n')
-#   sys.stdout.write(json.dumps(
-#     { 'msg' : '%s' % (msg) }
-#   ))
-#   sys.exit(os.EX_USAGE)
 
 def error(code, message):
   raise SystemExit(json.dumps({
     "code": code,
     "message": message
   }))
-
-if not 'dataDir' in form:
-  error(400, 'Data directory not specified')
-data_dir = form['dataDir']
 
 if not 'tmpDir' in form:
   error(400, 'Tmp directory not specified')
@@ -59,14 +41,19 @@ try:
   tf_result = subprocess.check_output(cmd, shell=True)
 except subprocess.CalledProcessError as cpe:
   error(400, 'could not perform PDF conversion')
-# finally:
-  # os.remove(tf_summary_fn)
+finally:
+  os.remove(tf_summary_fn)
 
-with open(os.path.abspath(tf_summary_output_fn), 'r') as fh:
-  # sys.stdout.write('Status: 200 OK\r\n')
-  # sys.stdout.write('Content-Type: application/pdf\r\n\r\n')
-  shutil.copyfileobj(fh, sys.stdout)
+result = {
+  'output': os.path.abspath(tf_summary_output_fn)
+}
+# with open(os.path.abspath(tf_summary_output_fn), 'r') as fh:
+#   # sys.stdout.write('Status: 200 OK\r\n')
+#   # sys.stdout.write('Content-Type: application/pdf\r\n\r\n')
+#   shutil.copyfileobj(fh, resultObj)
+
+print(json.dumps(result))
 
 # delete TF summary table and PDF
-os.remove(tf_summary_output_fn)
+# os.remove(tf_summary_output_fn)
 sys.exit(os.EX_OK)
