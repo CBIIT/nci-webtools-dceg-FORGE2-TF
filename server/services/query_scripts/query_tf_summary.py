@@ -47,7 +47,7 @@ fdr_threshold = float(tf_summary['fdrThreshold'])
 count = int(array_probe_counts[array])
 n_tests = int(tf_summary['nTests'])
 
-tf_bin = os.path.join(data_dir, array, 'tf', 'query_probes.py')
+tf_bin = os.path.join(os.getcwd(), 'services', 'query_scripts', 'query_probes.py')
 tmp = tempfile.NamedTemporaryFile()
 probes_fn = os.path.join(tmp_dir, os.path.basename(tmp.name))
 with open(probes_fn, 'w') as f:

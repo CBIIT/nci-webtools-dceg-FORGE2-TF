@@ -50,9 +50,7 @@ with open(tf_summary_fn, 'w') as f:
   
 # convert TF summary table to PDF
 tf_summary_output_fn = os.path.join(tmp_dir, tf_summary['output'])
-tf_bin = os.path.join(os.getcwd(), 'query_tf_summary_graph.Rscript')
-
-print("tf_bin", tf_bin)
+tf_bin = os.path.join(os.getcwd(), 'services', 'query_scripts', 'query_tf_summary_graph.Rscript')
 
 strict = 0.01
 marginal = 0.05
