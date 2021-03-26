@@ -64,7 +64,7 @@ tf_databases = [
 
 cmd = "%s -p %s %s | head -1 | cut -f2-" % (pts_bin, offsets_fn, tfModel)
 try:
-  overlap_result = subprocess.check_output(cmd, shell=True)
+  overlap_result = subprocess.check_output(cmd, shell=True).decode('utf-8')
   if overlap_result:
     elems = overlap_result.rstrip('\n').split('\t')
     if len(elems) != 1:
