@@ -380,7 +380,7 @@ class TFSummaryTable extends React.Component {
         Cell: (row) => (
           <div
             style={{
-              height: 'auto',
+              height: '70px',
               width: 'auto',
               maxWidth: '100%',
               textAlign: 'left',
