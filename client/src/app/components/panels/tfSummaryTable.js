@@ -389,7 +389,7 @@ class TFSummaryTable extends React.Component {
           >
             <img
               style={{ width: '100%', height: 'auto', textAlign: 'left' }}
-              src={`assets/services/motif-logos/logos/${row.value.database}/${row.value.name}.png`}
+              src={`assets/motif-logos/logos/${row.value.database}/${row.value.name}.png`}
               onError={this.imgError}
             />
           </div>

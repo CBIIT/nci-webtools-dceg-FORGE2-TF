@@ -5,13 +5,8 @@ import os
 import json
 import subprocess
 
-root_dir = '/var/www/eforge/forge2-tf/browser/src/client/assets/services'
-data_dir = os.path.join(root_dir, 'data')
-pts_bin = os.path.join(root_dir, 'pts-line-bisect', 'pts_lbsearch')
-# bedops_dir = '/net/module/sw/bedops/2.4.34-typical/bin'
-# bedops_bin = os.path.join(bedops_dir, 'bedops')
-# htslib_dir = '/net/module/sw/htslib/1.7/bin'
 tabix_bin = os.path.join('tabix')
+pts_bin = os.path.join('pts_lbsearch')
 
 probe_fns = {
   'All' : 'probes.bed.idsort.txt'
@@ -26,16 +21,17 @@ tf_databases = [
 
 form = json.load(sys.stdin)
 
-def error(type, msg):
-  if type == 400:
-    sys.stdout.write('Status: 400 Bad Request\r\n')
-  else:
-    sys.stdout.write('Status: 400 Bad Request\r\n')
-  sys.stdout.write('Content-Type: application/json\r\n\r\n')
-  sys.stdout.write(json.dumps(
-    { 'msg' : '%s' % (msg) }
-  ))
-  sys.exit(os.EX_USAGE)
+if not 'dataDir' in form:
+  error(400, 'Data directory not specified')
+data_dir = form['dataDir']
+
+if not 'awsInfo' in form:
+  error(400, 'AWS info not specified')
+aws_info = form['awsInfo']
+
+if not 'numProcesses' in form:
+  error(400, 'Max number of parallel subprocesses not specified')
+numProcesses = form['numProcesses']
 
 if not 'settings' in form:
   error(400, 'Settings not specified')
@@ -69,6 +65,43 @@ if not 'annotationType' in settings:
   error(400, 'Annotation type not specified')
 annotation_type = settings['annotationType']
 
+def error(code, message):
+  raise SystemExit(json.dumps({
+    "code": code,
+    "message": message
+  }))
+
+def checkS3File(bucket, filePath):
+  if ('aws_access_key_id' in aws_info and len(aws_info['aws_access_key_id']) > 0 and 'aws_secret_access_key' in aws_info and len(aws_info['aws_secret_access_key']) > 0):
+    session = boto3.Session(
+      aws_access_key_id=aws_info['aws_access_key_id'],
+      aws_secret_access_key=aws_info['aws_secret_access_key'],
+    )
+    s3 = session.resource('s3')
+  else: 
+    s3 = boto3.resource('s3')
+  try:
+    s3.Object(bucket, filePath).load()
+  except botocore.exceptions.ClientError as e:
+    if e.response['Error']['Code'] == "404":
+      return False
+    else:
+      return False
+  else: 
+    return True
+
+if ('aws_access_key_id' in aws_info and len(aws_info['aws_access_key_id']) > 0 and 'aws_secret_access_key' in aws_info and len(aws_info['aws_secret_access_key']) > 0):
+  export_s3_keys = "export AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s;" % (aws_info['aws_access_key_id'], aws_info['aws_secret_access_key'])
+else:
+  export_s3_keys = ""
+
+def tabix_call(cmd):
+  try:
+    return subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT).decode('utf-8')
+  except subprocess.CalledProcessError as cpe:
+    return None
+    # error(400, 'could not perform signal archive query [%s] [%s]' % (cmd, cpe))
+
 #
 # write JSON payload
 #
@@ -93,7 +126,7 @@ if not os.path.exists(probes_fn):
   error(400, 'could not find id-sorted probes BED file [%s]' % (probes_fn))
 cmd = "%s -p %s %s | cut -f2-" % (pts_bin, probes_fn, probe_name)
 try:
-  position_result = subprocess.check_output(cmd, shell=True)
+  position_result = subprocess.check_output(cmd, shell=True).decode('utf-8')
   if position_result:
     elems = position_result.rstrip().split()
     if len(elems) != 3:
@@ -123,7 +156,7 @@ if not os.path.exists(sequences_fn):
 #cmd = "echo -e '%s\t%s\t%s' | %s -e 1 --chrom %s %s - | cut -f1,6-8" % (position['chromosome'], position['start'], position['stop'], bedops_bin, position['chromosome'], sequences_fn)
 cmd = "%s %s %s:%d-%d | cut -f1,6-8" % (tabix_bin, sequences_fn, position['chromosome'], position['start'], position['stop'])
 try:
-  sequence_result = subprocess.check_output(cmd, shell=True)
+  sequence_result = subprocess.check_output(cmd, shell=True).decode('utf-8')
   if sequence_result:
     elems = sequence_result.rstrip().split()
     window['range'] = {}
@@ -153,7 +186,7 @@ if not os.path.exists(signal_fn):
 #cmd = "echo -e '%s\t%s\t%s' | %s -e 1 --chrom %s %s - | cut -f1,6-8" % (position['chromosome'], position['start'], position['stop'], bedops_bin, position['chromosome'], signal_fn)
 cmd = "%s %s %s:%d-%d | cut -f1,6-8" % (tabix_bin, signal_fn, position['chromosome'], position['start'], position['stop'])
 try:
-  signal_result = subprocess.check_output(cmd, shell=True)
+  signal_result = subprocess.check_output(cmd, shell=True).decode('utf-8')
   if signal_result:
     elems = signal_result.rstrip().split()
     try:
@@ -175,6 +208,9 @@ except subprocess.CalledProcessError as cpe:
 # eg. echo -e 'position_result' | bedops -e 1 --chrom <chr> <db_name>/probe.db.starch -
 #     tabix <db_name>/probe.db.gz <chr>:<start>-<stop>
 #
+
+# parallelize tabix calls
+cmd_list = []
 for db_name in tf_databases:
   #db_fn = os.path.join(data_dir, array, 'tf', db_name, 'probe.db.starch')
   if annotation_type == 'Probe-only':
@@ -188,7 +224,7 @@ for db_name in tf_databases:
   cmd = "%s %s %s:%d-%d" % (tabix_bin, db_fn, position['chromosome'], position['start'], position['stop'])
   try:
     probe['tf_overlaps'][db_name] = []
-    db_query_result = subprocess.check_output(cmd, shell=True)
+    db_query_result = subprocess.check_output(cmd, shell=True).decode('utf-8')
     if db_query_result:
       elems = db_query_result.rstrip().split('|')
       hits = elems[1]
@@ -230,7 +266,7 @@ if not os.path.exists(fp_fn):
 cmd = "%s %s %s:%d-%d" % (tabix_bin, fp_fn, position['chromosome'], position['start'], position['stop'])
 try:
   probe['fp_overlaps'] = []
-  fp_result = subprocess.check_output(cmd, shell=True)
+  fp_result = subprocess.check_output(cmd, shell=True).decode('utf-8')
   if fp_result:
     try:
       elems = fp_result.rstrip().split('|')
@@ -265,7 +301,10 @@ state_json = {
   'probe' : probe
 }
 
-sys.stdout.write('Status: 200 OK\r\n')
-sys.stdout.write('Content-Type: application/json; charset=utf-8\r\n\r\n')
-sys.stdout.write(json.dumps(state_json))
+# sys.stdout.write('Status: 200 OK\r\n')
+# sys.stdout.write('Content-Type: application/json; charset=utf-8\r\n\r\n')
+# sys.stdout.write(json.dumps(state_json))
+
+print(json.dumps(state_json))
+
 sys.exit(os.EX_OK)

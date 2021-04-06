@@ -132,42 +132,6 @@ class TFTable extends React.Component {
     return objs;
   }
 
-  async getLogo(path) {
-    try {
-      const response = 
-        await fetch(`api/getImageS3`, {
-          method: 'POST',
-          headers: {
-            Accept: 'image/png',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ path }),
-        });
-      console.log(response);
-      if (!response.ok) {
-        // console
-        // const msg = await response.text();
-        // mergeError(msg);
-        return 'assets/img/blank.png'
-      } else {
-        const pic = await response.blob();
-        const objectURL = URL.createObjectURL(pic);
-
-        if (plotURL.length) URL.revokeObjectURL(plotURL);
-
-        console.log("objectURL", objectURL);
-        // mergeMutationalProfiles({
-        //   plotURL: objectURL,
-        // });
-        // }
-        return objectURL;
-      }
-    } catch (err) {
-      // mergeError(err.message);
-      console.log("error getLogo", err);
-    }
-  }
-
   render() {
     const reactTableColumns = [
       {
@@ -209,28 +173,23 @@ class TFTable extends React.Component {
         headerStyle: { fontWeight: 'bold', textAlign: 'left' },
         width: 150,
         height: 100,
-        Cell: async (row) => {
-          const logoPath = `forge2-tf/motif-logos/logos/${row.value.database}/${row.value.name}.png`;
-          const logoURL = this.getLogo(logoPath);
-          return (
-            <div
-              style={{
-                height: 'auto',
-                width: 'auto',
-                maxWidth: '100%',
-                textAlign: 'left',
-                fontSize: '0.9em',
-              }}
-            >
-              <img
-                style={{ width: '100%', height: 'auto', textAlign: 'left' }}
-                // src={`assets/services/motif-logos/logos/${row.value.database}/${row.value.name}.png`}
-                src={logoURL}
-                // onError={this.imgError}
-              />
-            </div>
-          )
-        },
+        Cell: (row) => (
+          <div
+            style={{
+              height: 'auto',
+              width: 'auto',
+              maxWidth: '100%',
+              textAlign: 'left',
+              fontSize: '0.9em',
+            }}
+          >
+            <img
+              style={{ width: '100%', height: 'auto', textAlign: 'left' }}
+              src={`assets/motif-logos/logos/${row.value.database}/${row.value.name}.png`}
+              onError={this.imgError}
+            />
+          </div>
+        ),
       },
       {
         Header: 'Position',
