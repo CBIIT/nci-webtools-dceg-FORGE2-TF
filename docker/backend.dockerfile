@@ -6,11 +6,13 @@ RUN dnf -y update \
       dnf-plugins-core \
       epel-release \
       glibc-langpack-en \
+   && dnf config-manager --set-enabled powertools \
    && dnf -y module enable nodejs:14 \
    && dnf -y install \
       gcc-c++ \
       make \
       nodejs \
+      R \
       python3 \
       bzip2 \
       bzip2-devel \
@@ -38,6 +40,9 @@ RUN cd /tmp \
    && cd pts-line-bisect \
    && gcc -s -O3 -Wall pts_lbsearch.c -o pts_lbsearch \
    && mv pts_lbsearch /usr/local/bin
+
+# install R packages
+RUN Rscript -e "Sys.setenv(MAKEFLAGS = '-j2'); install.packages(c('optparse'), repos='https://cloud.r-project.org/')"
 
 RUN mkdir -p /deploy/server /deploy/logs
 
