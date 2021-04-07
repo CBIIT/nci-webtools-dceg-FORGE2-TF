@@ -57,24 +57,24 @@ apiRouter.post('/query-probe-names', ({ body }, response) => {
     });
 });
 
-// query route (query.py)
-apiRouter.post('/query', ({ body }, response) => {
-    logger.debug("Execute /query");
-    const pythonProcess = new PythonShell('query.py');
-    pythonProcess.send({...body, dataDir, awsInfo, numProcesses});
-    pythonProcess.on('message', results => {
-        if (results) {
-            logger.debug("/query", results);
-            response.status(200).json(results);
-        }
-    });
-    pythonProcess.end((err, code, signal) => {
-        if (err) {
-            logger.error(err);
-            response.status(400).json(err);
-        }
-    });
-});
+// // query route (query.py)
+// apiRouter.post('/query', ({ body }, response) => {
+//     logger.debug("Execute /query");
+//     const pythonProcess = new PythonShell('query.py');
+//     pythonProcess.send({...body, dataDir, awsInfo, numProcesses});
+//     pythonProcess.on('message', results => {
+//         if (results) {
+//             logger.debug("/query", results);
+//             response.status(200).json(results);
+//         }
+//     });
+//     pythonProcess.end((err, code, signal) => {
+//         if (err) {
+//             logger.error(err);
+//             response.status(400).json(err);
+//         }
+//     });
+// });
 
 // query-aggregate route (query_aggregate.py)
 apiRouter.post('/query-aggregate', ({ body }, response) => {
