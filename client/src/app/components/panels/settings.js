@@ -651,6 +651,12 @@ class Settings extends React.Component {
           {/* <p className="spacer"></p>
           {pingButton} */}
         </div>
+
+        <div className="settings-item-padding-title">
+          Questions or comments? 
+          <br />
+          Contact us via <a href="mailto:NCIFORGE2TFWebAdmin@mail.nih.gov?subject=FORGE2-TF" target="_top" title="Support">email</a>.
+        </div>
       </div>
     );
   }
