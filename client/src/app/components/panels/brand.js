@@ -9,7 +9,7 @@ class Brand extends React.Component {
     return (
       <div>
         <div className="brand-container">
-          <img src="assets/img/altius_logo.png" className="brand-logo" />
+          <img src="assets/img/altius_logo.png" className="brand-logo" alt="Brand Logo" />
           <span className="brand-text">{this.props.brandTitle}</span>
           <div className="brand-subtitle">{this.props.brandSubtitle}</div>
         </div>

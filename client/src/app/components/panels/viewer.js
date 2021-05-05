@@ -333,6 +333,7 @@ class Viewer extends React.Component {
         <div className="viewer-gallery-header" id="viewer-gallery-header">
           <div>
             <button
+              aria-label="Go To Previous View"
               type="button"
               disabled={this.props.settings.probesCount == 1}
               value="viewer-go-previous"
@@ -348,6 +349,7 @@ class Viewer extends React.Component {
           </div>
           <div>
             <button
+              aria-label="Go To Previous View"
               type="button"
               disabled={this.props.settings.probesCount == 1}
               value="viewer-go-next"

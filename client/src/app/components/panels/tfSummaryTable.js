@@ -457,6 +457,7 @@ class TFSummaryTable extends React.Component {
           </p>
         </div>
         <div
+          tabindex="0"
           className="tf-table-container"
           ref="tfTableContainer"
           id={this.props.id}

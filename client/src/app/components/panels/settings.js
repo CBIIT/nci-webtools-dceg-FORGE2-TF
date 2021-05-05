@@ -208,6 +208,7 @@ class Settings extends React.Component {
           className="form-control-panel-custom form-control-panel-array-custom"
           onChange={this.handleInputChange}
           value={this.state.array}
+          aria-label="Select Array"
         >
           {updateArrayMenu()}
         </FormControl>
@@ -245,6 +246,7 @@ class Settings extends React.Component {
           className="form-control-panel-custom form-control-panel-sample-custom"
           onChange={this.handleInputChange}
           value={this.state.sample}
+          aria-label="Select Sample"
         >
           {updateSampleMenu()}
         </FormControl>
@@ -343,6 +345,7 @@ class Settings extends React.Component {
           value={this.state.probesString}
           onChange={this.handleInputChange}
           onKeyPress={this.handleKeyPress}
+          aria-label="SNP IDs Text Input Area"
         />
       </FormGroup>
     );
@@ -560,7 +563,7 @@ class Settings extends React.Component {
         <p className="settings-item-title settings-item-padding-title ">
           Smoothing
         </p>
-        <div className="slider-container noselect">{smoothingInput}</div>
+        <div className="slider-container noselect" aria-label="slider">{smoothingInput}</div>
         {smoothingNotice}
       </div>
     );

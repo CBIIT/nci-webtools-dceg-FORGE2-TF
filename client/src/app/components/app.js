@@ -149,7 +149,8 @@ export default class App extends React.Component {
   render() {
 
     return (
-      <div className="parent-container">
+      <main className="parent-container">
+        <h1 className="sr-only">FORGE2 TF</h1>
         <ErrorModal />
         <Panels
           panelSide="right-side"
@@ -198,7 +199,7 @@ export default class App extends React.Component {
             updateSettings={this.updateSettings}
           />
         </Panels>
-      </div>
+      </main>
     );
   }
 }
