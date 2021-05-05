@@ -14,6 +14,8 @@ client/public/assets/motif-logos/
 **/.vscode
 **.gz.tbi
 **data.zip
+scripts/*.txt
+scripts/*.db*
 
 # server
 server/config.json
