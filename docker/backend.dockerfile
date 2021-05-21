@@ -30,18 +30,35 @@ RUN curl https://www.sqlite.org/2021/sqlite-autoconf-3350500.tar.gz -o /tmp/sqli
    && cd /tmp \
    && tar xvfz sqlite-autoconf-3350500.tar.gz \
    && cd sqlite-autoconf-3350500 \
-   && ./configure \
-   && make && make install \
-   && LD_RUN_PATH=/usr/local/lib ./configure
+   && export CFLAGS="-DSQLITE_ENABLE_FTS3 \
+    -DSQLITE_ENABLE_FTS3_PARENTHESIS \
+    -DSQLITE_ENABLE_FTS4 \
+    -DSQLITE_ENABLE_FTS5 \
+    -DSQLITE_ENABLE_JSON1 \
+    -DSQLITE_ENABLE_LOAD_EXTENSION \
+    -DSQLITE_ENABLE_RTREE \
+    -DSQLITE_ENABLE_STAT4 \
+    -DSQLITE_ENABLE_UPDATE_DELETE_LIMIT \
+    -DSQLITE_SOUNDEX \
+    -DSQLITE_TEMP_STORE=3 \
+    -DSQLITE_USE_URI \
+    -O2 \
+    -fPIC" \
+   && export PREFIX="/usr/local" \
+   && LIBS="-lm" ./configure --disable-tcl --enable-shared --enable-tempstore=always --prefix="$PREFIX" \
+   # && ./configure \
+   && make && make install 
+   # \
+   # && LD_RUN_PATH=/usr/local/lib ./configure
 
-# # Install Python 
-# RUN dnf -y install python3
-RUN curl https://www.python.org/ftp/python/3.6.8/Python-3.6.8.tgz -o /tmp/Python-3.6.8.tgz \
-   && cd /tmp \
-   && tar -xzf Python-3.6.8.tgz \
-   && cd Python-3.6.8 \
-   && ./configure --enable-optimizations \
-   && LD_RUN_PATH=/usr/local/lib make altinstall
+# Install Python 
+RUN dnf -y install python3
+# RUN curl https://www.python.org/ftp/python/3.6.8/Python-3.6.8.tgz -o /tmp/Python-3.6.8.tgz \
+#    && cd /tmp \
+#    && tar -xzf Python-3.6.8.tgz \
+#    && cd Python-3.6.8 \
+#    && ./configure --enable-optimizations \
+#    && LD_RUN_PATH=/usr/local/lib make altinstall
 
 # Make sure Python looks for latest SQLite in /root/.bashrc
 # RUN 
