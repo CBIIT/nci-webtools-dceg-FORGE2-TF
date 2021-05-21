@@ -13,7 +13,7 @@ RUN dnf -y update \
       make \
       nodejs \
       R \
-      python3 \
+      # python3 \
       bzip2 \
       bzip2-devel \
       libcurl-devel \
@@ -21,7 +21,29 @@ RUN dnf -y update \
       zlib-devel \
       xz-devel \
       git \
+      gcc \
+      libffi-devel \
    && dnf clean all
+
+# Install latest version of SQLite
+RUN curl https://www.sqlite.org/2021/sqlite-autoconf-3350500.tar.gz -o /tmp/sqlite-autoconf-3350500.tar.gz \
+   && cd /tmp \
+   && tar xvfz sqlite-autoconf-3350500.tar.gz \
+   && cd sqlite-autoconf-3350500 \
+   && make && make install \
+   && LD_RUN_PATH=/usr/local/lib ./configure
+
+# # Install Python 
+# RUN dnf -y install python3
+RUN curl https://www.python.org/ftp/python/3.6.8/Python-3.6.8.tgz -o /tmp/Python-3.6.8.tgz \
+   && cd /tmp \
+   && tar -xzf Python-3.6.8.tgz \
+   && cd cd Python-3.8.1 \
+   && ./configure --enable-optimizations \
+   && LD_RUN_PATH=/usr/local/lib make altinstall
+
+# Make sure Python looks for latest SQLite in /root/.bashrc
+# RUN 
 
 # Install Python packages
 RUN pip3 install boto3 simplejson numpy scipy patsy pandas statsmodels
