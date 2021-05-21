@@ -30,6 +30,7 @@ RUN curl https://www.sqlite.org/2021/sqlite-autoconf-3350500.tar.gz -o /tmp/sqli
    && cd /tmp \
    && tar xvfz sqlite-autoconf-3350500.tar.gz \
    && cd sqlite-autoconf-3350500 \
+   && ./configure \
    && make && make install \
    && LD_RUN_PATH=/usr/local/lib ./configure
 
