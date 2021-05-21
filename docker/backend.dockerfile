@@ -39,7 +39,7 @@ RUN curl https://www.sqlite.org/2021/sqlite-autoconf-3350500.tar.gz -o /tmp/sqli
 RUN curl https://www.python.org/ftp/python/3.6.8/Python-3.6.8.tgz -o /tmp/Python-3.6.8.tgz \
    && cd /tmp \
    && tar -xzf Python-3.6.8.tgz \
-   && cd cd Python-3.8.1 \
+   && cd Python-3.8.1 \
    && ./configure --enable-optimizations \
    && LD_RUN_PATH=/usr/local/lib make altinstall
 
