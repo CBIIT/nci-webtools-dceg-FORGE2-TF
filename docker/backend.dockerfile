@@ -36,11 +36,11 @@ RUN curl https://www.sqlite.org/2021/sqlite-autoconf-3350500.tar.gz -o /tmp/sqli
 # Install Python 
 RUN curl https://www.python.org/ftp/python/3.6.8/Python-3.6.8.tgz -o /tmp/Python-3.6.8.tgz \
    && cd /tmp \
-   && tar -xzf Python-3.6.8.tgz \
+   && tar xvfz Python-3.6.8.tgz \
    && cd Python-3.6.8 \
    && LD_RUN_PATH=/usr/local/lib  ./configure --prefix=/usr --enable-optimizations \
    && LD_RUN_PATH=/usr/local/lib make \
-   && LD_RUN_PATH=/usr/local/lib make altinstall
+   && LD_RUN_PATH=/usr/local/lib make install
 
 # Install Python packages
 RUN pip3 install boto3 simplejson numpy scipy patsy pandas statsmodels
