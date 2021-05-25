@@ -164,7 +164,7 @@ class Settings extends React.Component {
           console.log(res.data);
           var filteredByNameProbesArray = res.data.probes;
           var probesCount = filteredByNameProbesArray.length;
-          console.log("probesCount", probesCount);
+          // comment-out truncate snippet below- updated SQLite version to support 1000+ search terms
           // filter list further down to 1000 probes max. -- adjust UI text
           // if (probesCount > 1000) {
           //   filteredByNameProbesArray = filteredByNameProbesArray.slice(
@@ -172,8 +172,6 @@ class Settings extends React.Component {
           //     1000
           //   );
           // }
-          console.log("filteredByNameProbesArray", filteredByNameProbesArray);
-          console.log("filteredByNameProbesArray length", filteredByNameProbesArray.length);
           var currentProbe = filteredByNameProbesArray[0];
           this.setState(
             {
