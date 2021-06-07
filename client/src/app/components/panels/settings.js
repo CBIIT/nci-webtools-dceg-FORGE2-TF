@@ -78,8 +78,8 @@ class Settings extends React.Component {
               name == 'array' ||
               name == 'annotationType' ||
               name == 'signalType' ||
-              name == 'viewMode' ||
-              name == 'snpFilter'
+              name == 'viewMode' 
+              // name == 'snpFilter'
             ) {
               this.renderSettings();
             }
