@@ -167,6 +167,15 @@ hr {
     margin-top: 14px !important;
 }
 
+.checkbox-inline {
+    vertical-align: unset !important;
+}
+
+.settings-snp-filter-checkbox.checkbox-inline input[type=checkbox] {
+    margin-left: 0 !important;
+    position: relative !important;
+}
+
 .panel-label-notice {
     margin-top: 3px !important;
     margin-bottom: 6px !important;

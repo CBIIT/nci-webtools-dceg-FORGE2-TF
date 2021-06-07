@@ -44,6 +44,7 @@ export const settings = {
     signalType: 'Line',
     viewMode: 'Associations',
     fdrThreshold: 0.001,
+    snpFilter: false
   },
   paddings: [20, 50, 100, 200, 500],
   smoothings: [0, 1, 2, 3, 5],

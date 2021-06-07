@@ -21,6 +21,7 @@ export default class App extends React.Component {
       annotationType: AppConst.settings.defaults.annotationType,
       signalType: AppConst.settings.defaults.signalType,
       viewMode: AppConst.settings.defaults.viewMode,
+      snpFilter: AppConst.settings.defaults.snpFilter
     };
 
     const queryString = require('query-string');

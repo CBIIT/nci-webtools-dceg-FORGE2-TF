@@ -5,6 +5,7 @@ import {
   ControlLabel,
   FormGroup,
   FormControl,
+  Checkbox
 } from 'react-bootstrap';
 import * as AppConst from '../../appConstants';
 import axios from 'axios';
@@ -25,12 +26,14 @@ class Settings extends React.Component {
       annotationType: this.props.settings.annotationType,
       signalType: this.props.settings.signalType,
       viewMode: this.props.settings.viewMode,
+      snpFilter: this.props.settings.snpFilter
     };
     this.handleKeyPress = this.handleKeyPress.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
     this.renderSettings = this.renderSettings.bind(this);
     this.handleSlideStop = this.handleSlideStop.bind(this);
     console.log('probesString', this.state.probesString);
+    console.log('snpFilter', this.state.snpFilter);
   }
 
   handleKeyPress(event) {
@@ -40,7 +43,6 @@ class Settings extends React.Component {
   }
 
   handleInputChange(event, customName, mouseoutFlag) {
-    //console.log("handleInputChange");
     const target = event.target;
     var value = mouseoutFlag
       ? null
@@ -66,7 +68,7 @@ class Settings extends React.Component {
           [name]: value,
         },
         function () {
-          if (target.type === 'button' || target.type === 'select-one') {
+          if (target.type === 'button' || target.type === 'select-one' || target.type === 'checkbox') {
             document.activeElement.blur();
             if (name == 'render') {
               this.renderSettings();
@@ -76,7 +78,8 @@ class Settings extends React.Component {
               name == 'array' ||
               name == 'annotationType' ||
               name == 'signalType' ||
-              name == 'viewMode'
+              name == 'viewMode' ||
+              name == 'snpFilter'
             ) {
               this.renderSettings();
             }
@@ -155,6 +158,7 @@ class Settings extends React.Component {
       var settings = {
         array: this.state.array,
         probes: probesArray,
+        snpFilter: this.state.snpFilter
       };
       var probesCount = probesArray.length;
       var currentProbe = probesArray[0];
@@ -349,6 +353,37 @@ class Settings extends React.Component {
           aria-label="SNP IDs Text Input Area"
         />
       </FormGroup>
+    );
+
+    var snpFilterToggleSettings = (
+      <div
+        className={
+          self.state.viewMode !== 'Summary' ? 'hidden-container' : ''
+        }
+      >
+        <FormGroup
+          className="settings-probes-form"
+          controlId="formControlsToggleField"
+        >
+          <p className="settings-item-title settings-item-padding-title">
+            SNP Filter 
+            <Checkbox 
+              className="settings-snp-filter-checkbox" 
+              title="SNP Filter toggle checkbox" 
+              checked={this.state.snpFilter}
+              name="snpFilter"
+              onChange={this.handleInputChange}
+              // inputRef={
+              //   ref => {
+              //     this.state.snpFilter = ref;
+              //   }
+              // }
+              inline />
+          </p>
+          {/* <Checkbox title="SNP Filter toggle checkbox" inline>
+          </Checkbox> */}
+        </FormGroup>
+      </div>
     );
 
     var paddingInputOld = (
@@ -648,6 +683,8 @@ class Settings extends React.Component {
           </p>
           <div>{probeInput}</div>
           {probesNotice}
+
+          {snpFilterToggleSettings}
 
           <p className="spacer"></p>
           {renderButton}
