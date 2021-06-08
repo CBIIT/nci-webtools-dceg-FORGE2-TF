@@ -104,7 +104,7 @@ else:
   # retrieve aws credentials here
   session = boto3.Session()
   credentials = session.get_credentials().get_frozen_credentials()
-  export_s3_keys = "export AWS_ACCESS_KEY_ID=%s; export AWS_SECRET_ACCESS_KEY=%s;" % (credentials.access_key, credentials.secret_key)
+  export_s3_keys = "export AWS_ACCESS_KEY_ID=%s; export AWS_SECRET_ACCESS_KEY=%s; export AWS_SESSION_TOKEN=%s;" % (credentials.access_key, credentials.secret_key, credentials.token)
 
 def tabix_call(cmd):
   try:
