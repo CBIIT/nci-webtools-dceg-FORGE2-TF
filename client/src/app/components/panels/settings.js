@@ -358,7 +358,7 @@ class Settings extends React.Component {
     var snpFilterToggleSettings = (
       <div
         className={
-          self.state.viewMode !== 'Summary' ? 'hidden-container' : ''
+          self.state.viewMode === 'Summary' || self.state.viewMode === 'Associations' ? '' : 'hidden-container'
         }
       >
         <FormGroup
@@ -366,10 +366,10 @@ class Settings extends React.Component {
           controlId="formControlsToggleField"
         >
           <p className="settings-item-title settings-item-padding-title">
-            SNP Filter 
+            DHS Filter 
             <Checkbox 
               className="settings-snp-filter-checkbox" 
-              title="SNP Filter toggle checkbox" 
+              title="DHS Filter toggle checkbox" 
               checked={this.state.snpFilter}
               name="snpFilter"
               onChange={this.handleInputChange}
