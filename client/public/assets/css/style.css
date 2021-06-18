@@ -1,7 +1,7 @@
 body {
     margin: 0;
     padding: 0;
-    overflow: hidden;
+    overflow-x: hidden;
     font-family: ".SFNSDisplay-Regular", -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Helvetica", "Calibri", sans-serif !important;
     line-height: 1.2 !important;
     letter-spacing: 0.025em !important;
@@ -93,21 +93,22 @@ hr {
 
 .parent-container {
     width: 100%;
-    float: right;
-    margin-left: -284px;
+    /* float: right;
+    margin-left: -284px; */
+    height: 100%;
 }
 
 .left-side {
     position: relative;
-    padding: 12px;
-    padding-right: 16px;
+    /* padding: 12px;
+    padding-right: 16px; */
     width: 300px;
     background-color: #f1f1f1;
-    border-right: 1px dotted black;
+    /* border-right: 1px dotted black; */
     float: left;
     height: 100vh;
     overflow-x: hidden;
-    overflow-y: scroll;
+    overflow-y: auto;
 }
 
 .right-side {
@@ -159,21 +160,13 @@ hr {
 
 .settings-probes-textarea {
     padding: 4px;
-    height: 120px !important;
-    font-size: 0.95em !important;
+    min-height: 130px !important;
+    font-size: 0.80em !important;
+    resize: vertical;
 }
 
 .settings-item-padding-title {
     margin-top: 14px !important;
-}
-
-.checkbox-inline {
-    vertical-align: unset !important;
-}
-
-.settings-snp-filter-checkbox.checkbox-inline input[type=checkbox] {
-    margin-left: 0 !important;
-    position: relative !important;
 }
 
 .panel-label-notice {
@@ -324,7 +317,7 @@ button[disabled] {
     pointer-events: none;
 }
 
-.react-bootstrap-button-custom-style {
+/* .react-bootstrap-button-custom-style {
     font-weight: 300;
     color: #fff;
     background-color: #3e93dd;
@@ -333,7 +326,7 @@ button[disabled] {
 
 .react-bootstrap-button-custom-style:hover {
     background-color: inherit;
-}
+} */
 
 .btn-default.active {
     color: #fff;
@@ -440,3 +433,56 @@ button[disabled] {
     overflow-y: scroll;
     border: 1px dotted #525252;
 }
+
+footer {
+    text-rendering: optimizeLegibility !important;
+    -webkit-font-smoothing: antialiased !important;
+  }
+  
+  .footer-header h1 {
+    font-weight: bold !important;
+    font-style: normal !important;
+    font-size: 25px !important;
+    line-height: 1.1em !important;
+  }
+  
+  .footer-header h1 span {
+    display: block;
+    font-size: 16px;
+  }
+  
+  .footer-header-mobile h1 {
+    font-weight: bold !important;
+    font-style: normal !important;
+    font-size: 20px !important;
+    line-height: 1.1em !important;
+  }
+  
+  .footer-header-mobile h1 span {
+    display: block;
+    font-size: 14px;
+  }
+  
+  .footer-nav {
+    line-height: 1.5;
+  }
+  
+  .footer-nav h2 {
+    font-size: 1.2em !important;
+    line-height: 1.215em !important;
+    font-weight: 400 !important;
+  }
+  
+  .footer-link {
+    font-weight: 700;
+  }
+  
+  .footer-agencies {
+    font-size: 0.8em;
+  }
+  
+  .footer-tagline h3{
+    font-size: 16px !important;
+    font-weight: 400 !important;
+    line-height: 1.333em !important;
+  }

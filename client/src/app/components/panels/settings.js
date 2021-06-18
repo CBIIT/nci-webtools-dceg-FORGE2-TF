@@ -2,10 +2,9 @@ import React from 'react';
 import {
   Button,
   ButtonGroup,
-  ControlLabel,
   FormGroup,
   FormControl,
-  Checkbox
+  Form
 } from 'react-bootstrap';
 import * as AppConst from '../../appConstants';
 import axios from 'axios';
@@ -99,6 +98,7 @@ class Settings extends React.Component {
         console.log('PING ERROR');
         console.log("error response : ", err);
         window.alert(`server status: PING ERROR`);
+        this.props.updateShowErrorModal();
       }
     );
   }
@@ -194,6 +194,7 @@ class Settings extends React.Component {
           console.log('settings - handleInputChange() - error');
           // console.log(err.response.data.msg);
           console.log("error response : ", err);
+          this.props.updateShowErrorModal();
         }
       );
     }
@@ -204,19 +205,16 @@ class Settings extends React.Component {
 
     var arraySelect = (
       <FormGroup className="array-panel">
-        <FormControl
+        <select 
           name="array"
           ref="array"
-          componentClass="select"
           placeholder="select"
-          type="select"
-          className="form-control-panel-custom form-control-panel-array-custom"
+          className="custom-select"
           onChange={this.handleInputChange}
           value={this.state.array}
-          aria-label="Select Array"
-        >
+          aria-label="Select Array">
           {updateArrayMenu()}
-        </FormControl>
+        </select>
       </FormGroup>
     );
 
@@ -242,19 +240,17 @@ class Settings extends React.Component {
 
     var sampleSelect = (
       <FormGroup className="sample-panel">
-        <FormControl
+        <select
           name="sample"
           ref="sample"
-          componentClass="select"
           placeholder="select"
-          type="select"
-          className="form-control-panel-custom form-control-panel-sample-custom"
+          className="custom-select"
           onChange={this.handleInputChange}
           value={this.state.sample}
           aria-label="Select Sample"
-        >
+          >
           {updateSampleMenu()}
-        </FormControl>
+        </select>
       </FormGroup>
     );
 
@@ -342,10 +338,11 @@ class Settings extends React.Component {
         controlId="formControlsTextField"
       >
         <FormControl
+          as="textarea"
           className="settings-textarea settings-probes-textarea"
           name="probes"
           ref="probes"
-          componentClass="textarea"
+          // componentClass="textarea"
           placeholder=""
           value={this.state.probesString}
           onChange={this.handleInputChange}
@@ -365,23 +362,18 @@ class Settings extends React.Component {
           className="settings-probes-form"
           controlId="formControlsToggleField"
         >
-          <p className="settings-item-title settings-item-padding-title">
+          <div className="settings-item-title settings-item-padding-title">
             DHS Filter 
-            <Checkbox 
-              className="settings-snp-filter-checkbox" 
+            <Form.Check 
+              inline
+              className="ml-2" 
+              type="checkbox"
               title="DHS Filter toggle checkbox" 
               checked={this.state.snpFilter}
               name="snpFilter"
               onChange={this.handleInputChange}
-              // inputRef={
-              //   ref => {
-              //     this.state.snpFilter = ref;
-              //   }
-              // }
-              inline />
-          </p>
-          {/* <Checkbox title="SNP Filter toggle checkbox" inline>
-          </Checkbox> */}
+            />
+          </div>
         </FormGroup>
       </div>
     );
@@ -469,13 +461,15 @@ class Settings extends React.Component {
     var makeViewModeButtonGroupFromArray = function (o) {
       return (
         <Button
+          variant="primary"
+          size="sm"
           name="viewMode"
           key={o}
           value={o}
           className={
             self.state.viewMode === o
-              ? 'active react-bootstrap-button-custom-style'
-              : 'react-bootstrap-button-custom-style'
+              ? 'active'
+              : ''
           }
         >
           {o}
@@ -502,13 +496,15 @@ class Settings extends React.Component {
     var makeSignalTypeButtonGroupFromArray = function (o) {
       return (
         <Button
+          variant="primary"
+          size="sm"
           name="signalType"
           key={o}
           value={o}
           className={
             self.state.signalType === o
-              ? 'active react-bootstrap-button-custom-style'
-              : 'react-bootstrap-button-custom-style'
+              ? 'active'
+              : ''
           }
         >
           {o}
@@ -526,13 +522,15 @@ class Settings extends React.Component {
     var makeAnnotationButtonGroupFromArray = function (o) {
       return (
         <Button
+          variant="primary"
+          size="sm"
           name="annotationType"
           key={o}
           value={o}
           className={
             self.state.annotationType === o
-              ? 'active react-bootstrap-button-custom-style'
-              : 'react-bootstrap-button-custom-style'
+              ? 'active'
+              : ''
           }
         >
           {o}
@@ -549,12 +547,14 @@ class Settings extends React.Component {
 
     var renderButton = (
       <Button
+        variant="primary"
+        size="sm"
         name="render"
         key="render"
         value="render"
-        bsSize="xsmall"
+        // bsSize="xsmall"
         onClick={this.handleInputChange}
-        className="react-bootstrap-button-custom-style"
+        // className="react-bootstrap-button-custom-style"
       >
         Update
       </Button>
@@ -562,12 +562,14 @@ class Settings extends React.Component {
 
     var pingButton = (
       <Button
+        variant="primary"
+        size="sm"
         name="render"
         key="ping"
         value="render"
-        bsSize="xsmall"
+        // bsSize="xsmall"
         onClick={this.handlePing}
-        className="react-bootstrap-button-custom-style"
+        // className="react-bootstrap-button-custom-style"
       >
         Ping
       </Button>
@@ -614,7 +616,7 @@ class Settings extends React.Component {
           Signal rendering
         </p>
         <ButtonGroup
-          bsSize="xsmall"
+          // bsSize="xsmall"
           className="btn-group-panel-custom"
           onClick={this.handleInputChange}
         >
@@ -636,7 +638,7 @@ class Settings extends React.Component {
           TF overlaps
         </p>
         <ButtonGroup
-          bsSize="xsmall"
+          // bsSize="xsmall"
           className="btn-group-panel-custom"
           onClick={this.handleInputChange}
         >
@@ -657,7 +659,7 @@ class Settings extends React.Component {
             Mode
           </p>
           <ButtonGroup
-            bsSize="xsmall"
+            // bsSize="xsmall"
             className="btn-group-panel-custom"
             onClick={this.handleInputChange}
           >
@@ -697,6 +699,7 @@ class Settings extends React.Component {
           Questions or comments? 
           <br />
           Contact us via <a href="mailto:NCIFORGE2TFWebAdmin@mail.nih.gov?subject=FORGE2-TF" target="_top" title="Support">email</a>.
+          <p className="spacer"></p>
         </div>
       </div>
     );

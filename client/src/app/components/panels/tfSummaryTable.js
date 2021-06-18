@@ -4,10 +4,6 @@ import FaExternalLink from 'react-icons/lib/fa/external-link';
 import axios from 'axios';
 import {
   Button,
-  ButtonGroup,
-  ControlLabel,
-  FormGroup,
-  FormControl,
 } from 'react-bootstrap';
 import * as AppConst from '../../appConstants';
 
@@ -409,12 +405,14 @@ class TFSummaryTable extends React.Component {
 
     var exportTableButton = (
       <Button
+        variant="primary"
+        size="sm"
         name="exportTable"
         key="exportTable"
         value="exportTable"
-        bsSize="xsmall"
+        // bsSize="xsmall"
         onClick={this.handleInputChange}
-        className="react-bootstrap-button-custom-style"
+        // className="react-bootstrap-button-custom-style"
       >
         <FaExternalLink /> Export CSV
       </Button>
@@ -422,12 +420,14 @@ class TFSummaryTable extends React.Component {
 
     var exportGraphButton = (
       <Button
+        variant="primary"
+        size="sm"
         name="exportGraph"
         key="exportGraph"
         value="exportGraph"
-        bsSize="xsmall"
+        // bsSize="xsmall"
         onClick={this.handleInputChange}
-        className="react-bootstrap-button-custom-style"
+        // className="react-bootstrap-button-custom-style"
       >
         <FaExternalLink /> Export PDF
       </Button>
@@ -457,7 +457,7 @@ class TFSummaryTable extends React.Component {
           </p>
         </div>
         <div
-          tabindex="0"
+          tabIndex="0"
           className="tf-table-container"
           ref="tfTableContainer"
           id={this.props.id}

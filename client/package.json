@@ -14,21 +14,20 @@
   "author": "Alex Reynolds",
   "license": "ISC",
   "dependencies": {
-    "@reduxjs/toolkit": "^1.5.0",
-    "axios": "^0.16.1",
+    "axios": "^0.21.1",
+    "bootstrap": "^4.6.0",
     "d3": "^5.0.0",
+    "node-sass": "^4.14.1",
     "query-string": "^6",
     "react": "^16.14.0",
-    "react-bootstrap": "^0.32.0",
+    "react-bootstrap": "^1.6.1",
     "react-dom": "^16.14.0",
     "react-icons": "^2.2.7",
-    "react-redux": "^7.2.2",
     "react-scripts": "^4.0.1",
     "react-svg-spinner": "^1.0.1",
     "react-table": "^6.7.6"
   },
   "devDependencies": {
-    "node-sass": "^5.0.0",
     "prettier": "^2.2.1"
   },
   "browserslist": {

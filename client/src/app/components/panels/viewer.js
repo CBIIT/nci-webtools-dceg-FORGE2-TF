@@ -12,9 +12,9 @@ import TFPlot from './tfPlot';
 
 import * as AppConst from '../../appConstants';
 
-import { useSelector, useDispatch } from 'react-redux';
-import { actions } from '../../services/store';
-
+import {
+  Button,
+} from 'react-bootstrap';
 
 class Viewer extends React.Component {
   constructor(props) {
@@ -38,6 +38,7 @@ class Viewer extends React.Component {
       selectedTF: null,
       mouseoveredTF: null,
       plotKey: this.props.plotKey,
+      errorModal: this.props.errorModal
     };
     this.updateDimensions = this.updateDimensions.bind(this);
     this.updateAssociationData = this.updateAssociationData.bind(this);
@@ -166,6 +167,7 @@ class Viewer extends React.Component {
           selectedTF: null,
           mouseoveredTF: null,
         });
+        this.props.updateShowErrorModal();
       }
     );
   }
@@ -203,6 +205,7 @@ class Viewer extends React.Component {
           selectedTF: null,
           mouseoveredTF: null,
         });
+        this.props.updateShowErrorModal();
       }
     );
   }
@@ -291,6 +294,7 @@ class Viewer extends React.Component {
                 },
                 (overlap_err) => {
                   console.log('overlap_err', overlap_err.response);
+                  this.props.updateShowErrorModal();
                 }
               );
           },
@@ -299,6 +303,7 @@ class Viewer extends React.Component {
             self.setState({
               tfAggregateData: {},
             });
+            this.props.updateShowErrorModal();
           }
         );
       }
@@ -332,33 +337,33 @@ class Viewer extends React.Component {
       return (
         <div className="viewer-gallery-header" id="viewer-gallery-header">
           <div>
-            <button
+            <Button
+              variant="primary"
               aria-label="Go To Previous View"
-              type="button"
               disabled={this.props.settings.probesCount == 1}
               value="viewer-go-previous"
-              className="react-bootstrap-button-custom-style btn btn-default"
+              // className="react-bootstrap-button-custom-style btn btn-default"
               name="viewer-go-previous"
               onClick={this.handleInputChange}
             >
               <FaAngleLeft />
-            </button>
+            </Button>
           </div>
           <div className="viewer-gallery-header-title">
             SNP TF and Footprint Associations
           </div>
           <div>
-            <button
+            <Button
+              variant="primary"
               aria-label="Go To Previous View"
-              type="button"
               disabled={this.props.settings.probesCount == 1}
               value="viewer-go-next"
-              className="react-bootstrap-button-custom-style btn btn-default"
+              // className="react-bootstrap-button-custom-style btn btn-default"
               name="viewer-go-next"
               onClick={this.handleInputChange}
             >
               <FaAngleRight />
-            </button>
+            </Button>
           </div>
         </div>
       );
@@ -428,6 +433,7 @@ class Viewer extends React.Component {
               updateSelectedTF={this.updateSelectedTF}
               updateMouseoverTF={this.updateMouseoverTF}
               key={this.props.tfSummaryTableKey}
+              updateShowErrorModal={this.props.updateShowErrorModal}
             />
           </div>
         </div>

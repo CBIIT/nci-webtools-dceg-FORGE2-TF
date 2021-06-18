@@ -213,7 +213,7 @@ class TFTable extends React.Component {
 
     return (
       <div
-        tabindex="0"
+        tabIndex="0"
         className="tf-table-container"
         ref="tfTableContainer"
         id={this.props.id}
