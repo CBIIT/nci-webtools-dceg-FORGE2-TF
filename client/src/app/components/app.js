@@ -227,10 +227,10 @@ export default class App extends React.Component {
               brandTitle={this.state.brandTitle}
               brandSubtitle={this.state.brandSubtitle}
             />
-            <h6 className="description">About</h6>
+            <h2 className="description" style={{fontSize: '14.4px'}}>About</h2>
             <p className="description">
               The <em>FORGE2 TF</em> application is an adjunct to the{' '}
-              <a href="https://forge2.altiusinstitute.org/">FORGE2</a> GWAS
+              <a href="https://forge2.altiusinstitute.org/" target="_blank" style={{color: "#0062cc"}}>FORGE2</a> GWAS
               analysis tool. This enables the exploration of DNase I tag
               (chromatin accessibility) signal surrounding GWAS array SNPs and the
               calculation of significance of overlap with transcription factor

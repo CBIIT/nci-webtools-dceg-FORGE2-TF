@@ -372,6 +372,8 @@ class Settings extends React.Component {
               checked={this.state.snpFilter}
               name="snpFilter"
               onChange={this.handleInputChange}
+              title="DHS Filter"
+              aria-label="DHS Filter"
             />
           </div>
         </FormGroup>
@@ -461,7 +463,7 @@ class Settings extends React.Component {
     var makeViewModeButtonGroupFromArray = function (o) {
       return (
         <Button
-          variant="primary"
+          variant="outline-primary"
           size="sm"
           name="viewMode"
           key={o}
@@ -496,7 +498,7 @@ class Settings extends React.Component {
     var makeSignalTypeButtonGroupFromArray = function (o) {
       return (
         <Button
-          variant="primary"
+          variant="outline-primary"
           size="sm"
           name="signalType"
           key={o}
@@ -522,7 +524,7 @@ class Settings extends React.Component {
     var makeAnnotationButtonGroupFromArray = function (o) {
       return (
         <Button
-          variant="primary"
+          variant="outline-primary"
           size="sm"
           name="annotationType"
           key={o}
@@ -653,7 +655,7 @@ class Settings extends React.Component {
     return (
       <div className="settings">
         <div className="settings-container">
-          <h6 className="settings-title">{this.props.title}</h6>
+          <h2 className="settings-title" style={{fontSize: '14.4px'}}>{this.props.title}</h2>
 
           <p className="settings-item-title settings-item-padding-title">
             Mode
@@ -698,7 +700,7 @@ class Settings extends React.Component {
         <div className="settings-item-padding-title">
           Questions or comments? 
           <br />
-          Contact us via <a href="mailto:NCIFORGE2TFWebAdmin@mail.nih.gov?subject=FORGE2-TF" target="_top" title="Support">email</a>.
+          Contact us via <a className="settings-link" href="mailto:NCIFORGE2TFWebAdmin@mail.nih.gov?subject=FORGE2-TF" target="_top" title="Support" style={{color: "#0062cc"}}>email</a>.
           <p className="spacer"></p>
         </div>
       </div>

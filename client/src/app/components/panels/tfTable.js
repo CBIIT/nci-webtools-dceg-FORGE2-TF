@@ -187,6 +187,7 @@ class TFTable extends React.Component {
               style={{ width: '100%', height: 'auto', textAlign: 'left' }}
               src={`assets/motif-logos/logos/${row.value.database}/${row.value.name}.png`}
               onError={this.imgError}
+              alt="motif logo"
             />
           </div>
         ),
