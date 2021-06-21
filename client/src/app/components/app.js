@@ -1,5 +1,5 @@
 import React from 'react';
-import Panels from './panels';
+// import Panels from './panels';
 import Brand from './panels/brand';
 import Settings from './panels/settings';
 import Viewer from './panels/viewer';
@@ -7,6 +7,10 @@ import * as AppConst from '../appConstants';
 import { ErrorModal } from './controls/error-modal/error-modal';
 import { NCIFooter } from './controls/nci-footer/nci-footer';
 import './main.scss';
+import {
+  Row,
+  Col
+} from 'react-bootstrap';
 
 export default class App extends React.Component {
   constructor(props) {
@@ -204,12 +208,56 @@ export default class App extends React.Component {
             visible={this.state.errorModal}
             closeErrorModal={this.updateCloseErrorModal}
           />
-
-          <Panels
+          <Row>
+            <Col className="left-side p-2">
+              <div className="ml-4 mr-3">
+              {/* </Panels> */}
+              {/* <Panels
+                panelSide="left-side px-3 py-2"
+                id="left-side-container"
+                ref="leftSideContainer"
+              > */}
+                <Brand
+                  brandTitle={this.state.brandTitle}
+                  brandSubtitle={this.state.brandSubtitle}
+                />
+                <h2 className="description" style={{ fontSize: '14.4px' }}>
+                  About
+                </h2>
+                <p className="description">
+                  The <em>FORGE2 TF</em> application is an adjunct to the{' '}
+                  <a
+                    href="https://forge2.altiusinstitute.org/"
+                    target="_blank"
+                    style={{ color: '#0062cc' }}
+                  >
+                    FORGE2
+                  </a>{' '}
+                  GWAS analysis tool. This enables the exploration of DNase I tag
+                  (chromatin accessibility) signal surrounding GWAS array SNPs and
+                  the calculation of significance of overlap with transcription
+                  factor binding sites from common TF databases.
+                </p>
+                <hr />
+                {/*<h6 className="description spacer">Usage</h6>
+                    <p className="description">Select the desired array, sample, probe IDs, and padding values.</p> 
+                    <p className="description">Output includes a rendering of the signal and highlighted sequence representing factor binding sites.</p> */}
+                <Settings
+                  id="settings"
+                  ref="settings"
+                  title="Settings"
+                  settings={this.state.settings}
+                  updateSettings={this.updateSettings}
+                  updateShowErrorModal={this.updateShowErrorModal}
+                />
+             </div>
+            </Col>
+            <Col className="right-side pl-0">
+          {/* <Panels
             panelSide="right-side"
             id="right-side-container"
             ref="rightSideContainer"
-          >
+          > */}
             <Viewer
               id="viewer"
               settings={this.state.settings}
@@ -222,46 +270,9 @@ export default class App extends React.Component {
               }
               updateShowErrorModal={this.updateShowErrorModal}
             />
-          </Panels>
-          <Panels
-            panelSide="left-side px-3 py-2"
-            id="left-side-container"
-            ref="leftSideContainer"
-          >
-            <Brand
-              brandTitle={this.state.brandTitle}
-              brandSubtitle={this.state.brandSubtitle}
-            />
-            <h2 className="description" style={{ fontSize: '14.4px' }}>
-              About
-            </h2>
-            <p className="description">
-              The <em>FORGE2 TF</em> application is an adjunct to the{' '}
-              <a
-                href="https://forge2.altiusinstitute.org/"
-                target="_blank"
-                style={{ color: '#0062cc' }}
-              >
-                FORGE2
-              </a>{' '}
-              GWAS analysis tool. This enables the exploration of DNase I tag
-              (chromatin accessibility) signal surrounding GWAS array SNPs and
-              the calculation of significance of overlap with transcription
-              factor binding sites from common TF databases.
-            </p>
-            <hr />
-            {/*<h6 className="description spacer">Usage</h6>
-                <p className="description">Select the desired array, sample, probe IDs, and padding values.</p> 
-                <p className="description">Output includes a rendering of the signal and highlighted sequence representing factor binding sites.</p> */}
-            <Settings
-              id="settings"
-              ref="settings"
-              title="Settings"
-              settings={this.state.settings}
-              updateSettings={this.updateSettings}
-              updateShowErrorModal={this.updateShowErrorModal}
-            />
-          </Panels>
+            </Col>
+          {/* </Panels> */}
+          </Row>
         </main>
 
         <NCIFooter
