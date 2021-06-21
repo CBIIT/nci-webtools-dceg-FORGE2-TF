@@ -18,9 +18,8 @@ class TFTable extends React.Component {
     this.updateDimensions = this.updateDimensions.bind(this);
     this.imgError = this.imgError.bind(this);
     this.sortedChange = this.sortedChange.bind(this);
-    this.convertTFOverlapsToReactTableDataObj = this.convertTFOverlapsToReactTableDataObj.bind(
-      this
-    );
+    this.convertTFOverlapsToReactTableDataObj =
+      this.convertTFOverlapsToReactTableDataObj.bind(this);
     this.timeStampInMs =
       window.performance &&
       window.performance.now &&
@@ -206,9 +205,8 @@ class TFTable extends React.Component {
     ];
     const probe = this.props.data.probe;
     const probeTFOverlaps = probe.tf_overlaps;
-    let reactTableData = this.convertTFOverlapsToReactTableDataObj(
-      probeTFOverlaps
-    );
+    let reactTableData =
+      this.convertTFOverlapsToReactTableDataObj(probeTFOverlaps);
 
     var self = this;
 

@@ -12,9 +12,7 @@ import TFPlot from './tfPlot';
 
 import * as AppConst from '../../appConstants';
 
-import {
-  Button,
-} from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 
 class Viewer extends React.Component {
   constructor(props) {
@@ -38,7 +36,7 @@ class Viewer extends React.Component {
       selectedTF: null,
       mouseoveredTF: null,
       plotKey: this.props.plotKey,
-      errorModal: this.props.errorModal
+      errorModal: this.props.errorModal,
     };
     this.updateDimensions = this.updateDimensions.bind(this);
     this.updateAssociationData = this.updateAssociationData.bind(this);
@@ -151,13 +149,13 @@ class Viewer extends React.Component {
         });
       },
       (err) => {
-        console.log("viewer - updateAssociationData() - error");
-        console.log("error response : ", err);
+        console.log('viewer - updateAssociationData() - error');
+        console.log('error response : ', err);
         // const dispatch = useDispatch();
-        // actions.updateKey({ 
-        //   key: 'errorModal', 
-        //   data: { 
-        //     visible: true 
+        // actions.updateKey({
+        //   key: 'errorModal',
+        //   data: {
+        //     visible: true
         //   }
         // });
         self.setState({
@@ -198,7 +196,7 @@ class Viewer extends React.Component {
       },
       (err) => {
         // console.log(err.response.data.msg);
-        console.log("error response : ", err);
+        console.log('error response : ', err);
         self.setState({
           summaryData: {},
           summaryDataAvailable: false,
@@ -248,7 +246,8 @@ class Viewer extends React.Component {
             tf_probe_overlap_summary['array'] = settings.array;
             tf_probe_overlap_summary['tfModel'] = tfModel;
             tf_probe_overlap_summary['padding'] = 20;
-            axios.post(tf_probe_overlap_query, { tf_probe_overlap_summary })
+            axios
+              .post(tf_probe_overlap_query, { tf_probe_overlap_summary })
               .then(
                 (overlap_result) => {
                   console.log('viewer - updateSelectedTF() - overlap_result');

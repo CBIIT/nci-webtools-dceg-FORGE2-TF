@@ -225,9 +225,8 @@ class Plot extends React.Component {
       var selectedTFRangeChromosome = selectedTFRangeElements[0];
       var selectedTFRangeStartStop = selectedTFRangeElements[1];
       var selectedTFRangeStrand = selectedTFRangeElements[2];
-      var selectedTFRangeStartStopElements = selectedTFRangeStartStop.split(
-        '-'
-      );
+      var selectedTFRangeStartStopElements =
+        selectedTFRangeStartStop.split('-');
       var selectedTFRangeStart = parseInt(selectedTFRangeStartStopElements[0]);
       var selectedTFRangeStop = parseInt(selectedTFRangeStartStopElements[1]);
       var selectedTFRangeSequence = Array.from(

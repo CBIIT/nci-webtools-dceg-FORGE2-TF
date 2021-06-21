@@ -4,7 +4,7 @@ import {
   ButtonGroup,
   FormGroup,
   FormControl,
-  Form
+  Form,
 } from 'react-bootstrap';
 import * as AppConst from '../../appConstants';
 import axios from 'axios';
@@ -25,7 +25,7 @@ class Settings extends React.Component {
       annotationType: this.props.settings.annotationType,
       signalType: this.props.settings.signalType,
       viewMode: this.props.settings.viewMode,
-      snpFilter: this.props.settings.snpFilter
+      snpFilter: this.props.settings.snpFilter,
     };
     this.handleKeyPress = this.handleKeyPress.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
@@ -67,7 +67,11 @@ class Settings extends React.Component {
           [name]: value,
         },
         function () {
-          if (target.type === 'button' || target.type === 'select-one' || target.type === 'checkbox') {
+          if (
+            target.type === 'button' ||
+            target.type === 'select-one' ||
+            target.type === 'checkbox'
+          ) {
             document.activeElement.blur();
             if (name == 'render') {
               this.renderSettings();
@@ -77,7 +81,7 @@ class Settings extends React.Component {
               name == 'array' ||
               name == 'annotationType' ||
               name == 'signalType' ||
-              name == 'viewMode' 
+              name == 'viewMode'
               // name == 'snpFilter'
             ) {
               this.renderSettings();
@@ -96,7 +100,7 @@ class Settings extends React.Component {
       },
       (err) => {
         console.log('PING ERROR');
-        console.log("error response : ", err);
+        console.log('error response : ', err);
         window.alert(`server status: PING ERROR`);
         this.props.updateShowErrorModal();
       }
@@ -158,7 +162,7 @@ class Settings extends React.Component {
       var settings = {
         array: this.state.array,
         probes: probesArray,
-        snpFilter: this.state.snpFilter
+        snpFilter: this.state.snpFilter,
       };
       var probesCount = probesArray.length;
       var currentProbe = probesArray[0];
@@ -193,7 +197,7 @@ class Settings extends React.Component {
         (err) => {
           console.log('settings - handleInputChange() - error');
           // console.log(err.response.data.msg);
-          console.log("error response : ", err);
+          console.log('error response : ', err);
           this.props.updateShowErrorModal();
         }
       );
@@ -205,14 +209,15 @@ class Settings extends React.Component {
 
     var arraySelect = (
       <FormGroup className="array-panel">
-        <select 
+        <select
           name="array"
           ref="array"
           placeholder="select"
           className="custom-select"
           onChange={this.handleInputChange}
           value={this.state.array}
-          aria-label="Select Array">
+          aria-label="Select Array"
+        >
           {updateArrayMenu()}
         </select>
       </FormGroup>
@@ -248,7 +253,7 @@ class Settings extends React.Component {
           onChange={this.handleInputChange}
           value={this.state.sample}
           aria-label="Select Sample"
-          >
+        >
           {updateSampleMenu()}
         </select>
       </FormGroup>
@@ -355,7 +360,10 @@ class Settings extends React.Component {
     var snpFilterToggleSettings = (
       <div
         className={
-          self.state.viewMode === 'Summary' || self.state.viewMode === 'Associations' ? '' : 'hidden-container'
+          self.state.viewMode === 'Summary' ||
+          self.state.viewMode === 'Associations'
+            ? ''
+            : 'hidden-container'
         }
       >
         <FormGroup
@@ -363,12 +371,12 @@ class Settings extends React.Component {
           controlId="formControlsToggleField"
         >
           <div className="settings-item-title settings-item-padding-title">
-            DHS Filter 
-            <Form.Check 
+            DHS Filter
+            <Form.Check
               inline
-              className="ml-2" 
+              className="ml-2"
               type="checkbox"
-              title="DHS Filter toggle checkbox" 
+              title="DHS Filter toggle checkbox"
               checked={this.state.snpFilter}
               name="snpFilter"
               onChange={this.handleInputChange}
@@ -468,11 +476,7 @@ class Settings extends React.Component {
           name="viewMode"
           key={o}
           value={o}
-          className={
-            self.state.viewMode === o
-              ? 'active'
-              : ''
-          }
+          className={self.state.viewMode === o ? 'active' : ''}
         >
           {o}
         </Button>
@@ -503,11 +507,7 @@ class Settings extends React.Component {
           name="signalType"
           key={o}
           value={o}
-          className={
-            self.state.signalType === o
-              ? 'active'
-              : ''
-          }
+          className={self.state.signalType === o ? 'active' : ''}
         >
           {o}
         </Button>
@@ -529,11 +529,7 @@ class Settings extends React.Component {
           name="annotationType"
           key={o}
           value={o}
-          className={
-            self.state.annotationType === o
-              ? 'active'
-              : ''
-          }
+          className={self.state.annotationType === o ? 'active' : ''}
         >
           {o}
         </Button>
@@ -603,7 +599,9 @@ class Settings extends React.Component {
         <p className="settings-item-title settings-item-padding-title ">
           Smoothing
         </p>
-        <div className="slider-container noselect" aria-label="slider">{smoothingInput}</div>
+        <div className="slider-container noselect" aria-label="slider">
+          {smoothingInput}
+        </div>
         {smoothingNotice}
       </div>
     );
@@ -655,7 +653,9 @@ class Settings extends React.Component {
     return (
       <div className="settings">
         <div className="settings-container">
-          <h2 className="settings-title" style={{fontSize: '14.4px'}}>{this.props.title}</h2>
+          <h2 className="settings-title" style={{ fontSize: '14.4px' }}>
+            {this.props.title}
+          </h2>
 
           <p className="settings-item-title settings-item-padding-title">
             Mode
@@ -698,10 +698,19 @@ class Settings extends React.Component {
         </div>
 
         <div className="settings-item-padding-title">
-          Questions or comments? 
+          Questions or comments?
           <br />
-          Contact us via <a className="settings-link" href="mailto:NCIFORGE2TFWebAdmin@mail.nih.gov?subject=FORGE2-TF" target="_top" title="Support" style={{color: "#0062cc"}}>email</a>.
-          <p className="spacer"></p>
+          Contact us via{' '}
+          <a
+            className="settings-link"
+            href="mailto:NCIFORGE2TFWebAdmin@mail.nih.gov?subject=FORGE2-TF"
+            target="_top"
+            title="Support"
+            style={{ color: '#0062cc' }}
+          >
+            email
+          </a>
+          .<p className="spacer"></p>
         </div>
       </div>
     );

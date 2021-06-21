@@ -107,7 +107,7 @@ hr {
     /* padding: 12px;
     padding-right: 16px; */
     width: 300px;
-    /* background-color: #f3f3f3; */
+    background-color: #f3f3f3;
     /* border-right: 1px dotted black; */
     float: left;
     height: 100vh;
@@ -492,6 +492,10 @@ footer {
   }
 
 /* bootstrap overrides */
+
+.bg-nci-grey {
+    background-color: #606060 !important;
+}
 
 .btn-primary {
     background-color: #0062cc !important;

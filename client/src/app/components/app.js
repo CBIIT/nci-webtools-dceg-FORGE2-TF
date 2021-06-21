@@ -6,7 +6,7 @@ import Viewer from './panels/viewer';
 import * as AppConst from '../appConstants';
 import { ErrorModal } from './controls/error-modal/error-modal';
 import { NCIFooter } from './controls/nci-footer/nci-footer';
-import './main.scss'
+import './main.scss';
 
 export default class App extends React.Component {
   constructor(props) {
@@ -24,7 +24,7 @@ export default class App extends React.Component {
       signalType: AppConst.settings.defaults.signalType,
       viewMode: AppConst.settings.defaults.viewMode,
       snpFilter: AppConst.settings.defaults.snpFilter,
-      errorModal: AppConst.settings.defaults.errorModal
+      errorModal: AppConst.settings.defaults.errorModal,
     };
 
     const queryString = require('query-string');
@@ -70,7 +70,7 @@ export default class App extends React.Component {
       plotKeyPrefix: 'plot-',
       tfTableKey: 0,
       tfTableKeyPrefix: 'tfTable-',
-      errorModal: this.defaultSettings.errorModal
+      errorModal: this.defaultSettings.errorModal,
     };
     this.updateSettings = this.updateSettings.bind(this);
     this.updateSettingsChange = this.updateSettingsChange.bind(this);
@@ -176,17 +176,23 @@ export default class App extends React.Component {
   }
 
   render() {
-
     return (
       <>
         <header className="bg-dark">
-          <a href="#main" className="sr-only sr-only-focusable d-block text-white bg-primary-dark text-center">
+          <a
+            href="#main"
+            className="sr-only sr-only-focusable d-block text-white bg-primary-dark text-center"
+          >
             Skip to Main Content
           </a>
           <div className="">
             <div className="">
               <a href="https://dceg.cancer.gov/" target="_blank">
-                <img src="assets/img/dceg-logo-inverted.svg" height="110" alt="National Cancer Institute Logo" />
+                <img
+                  src="assets/img/dceg-logo-inverted.svg"
+                  height="110"
+                  alt="National Cancer Institute Logo"
+                />
               </a>
             </div>
           </div>
@@ -194,11 +200,10 @@ export default class App extends React.Component {
 
         <main className="parent-container" id="main">
           <h1 className="sr-only">FORGE2 TF</h1>
-          <ErrorModal 
-            visible={this.state.errorModal} 
-            closeErrorModal={
-              this.updateCloseErrorModal
-            } />
+          <ErrorModal
+            visible={this.state.errorModal}
+            closeErrorModal={this.updateCloseErrorModal}
+          />
 
           <Panels
             panelSide="right-side"
@@ -227,14 +232,22 @@ export default class App extends React.Component {
               brandTitle={this.state.brandTitle}
               brandSubtitle={this.state.brandSubtitle}
             />
-            <h2 className="description" style={{fontSize: '14.4px'}}>About</h2>
+            <h2 className="description" style={{ fontSize: '14.4px' }}>
+              About
+            </h2>
             <p className="description">
               The <em>FORGE2 TF</em> application is an adjunct to the{' '}
-              <a href="https://forge2.altiusinstitute.org/" target="_blank" style={{color: "#0062cc"}}>FORGE2</a> GWAS
-              analysis tool. This enables the exploration of DNase I tag
-              (chromatin accessibility) signal surrounding GWAS array SNPs and the
-              calculation of significance of overlap with transcription factor
-              binding sites from common TF databases.
+              <a
+                href="https://forge2.altiusinstitute.org/"
+                target="_blank"
+                style={{ color: '#0062cc' }}
+              >
+                FORGE2
+              </a>{' '}
+              GWAS analysis tool. This enables the exploration of DNase I tag
+              (chromatin accessibility) signal surrounding GWAS array SNPs and
+              the calculation of significance of overlap with transcription
+              factor binding sites from common TF databases.
             </p>
             <hr />
             {/*<h6 className="description spacer">Usage</h6>
@@ -261,85 +274,83 @@ export default class App extends React.Component {
               <div className="h6">at the National Cancer Institute</div>
             </div>
           }
-          columns={
-            [
-              {
-                title: "CONTACT INFORMATION", 
-                links: [
-                  {
-                    title: "Contact Us", 
-                    href: "https://www.cancer.gov/contact"
-                  },
-                  {
-                    title: "Support", 
-                    href: "mailto:NCIFORGE2TFWebAdmin@mail.nih.gov"
-                  }
-                ]
-              },
-              {
-                title: "MORE INFORMATION", 
-                links: [
-                  {
-                    title: "About This Website", 
-                    href: "https://www.cancer.gov/about-website"
-                  },
-                  {
-                    title: "Multimedia", 
-                    href: "https://www.cancer.gov/multimedia"
-                  },
-                  {
-                    title: "Publications", 
-                    href: "https://www.cancer.gov/publications"
-                  },
-                  {
-                    title: "Site Map", 
-                    href: "https://www.cancer.gov/about-website/sitemap"
-                  },
-                  {
-                    title: "Digital Standards for NCI Websites", 
-                    href: "https://www.cancer.gov/digital-standards"
-                  }
-                ]
-              },
-              {
-                title: "POLICIES", 
-                links: [
-                  {
-                    title: "Accessibility", 
-                    href: "https://www.cancer.gov/policies/accessibility"
-                  },
-                  {
-                    title: "Content Policy", 
-                    href: "https://www.cancer.gov/policies/comments"
-                  },
-                  {
-                    title: "Disclaimer", 
-                    href: "https://www.cancer.gov/policies/disclaimer"
-                  },
-                  {
-                    title: "FOIA", 
-                    href: "https://www.cancer.gov/policies/foia"
-                  },
-                  {
-                    title: "Privacy & Security", 
-                    href: "https://www.cancer.gov/policies/privacy-security"
-                  },
-                  {
-                    title: "Reuse & Copyright", 
-                    href: "https://www.cancer.gov/policies/copyright-reuse"
-                  },
-                  {
-                    title: "Syndication Services", 
-                    href: "https://www.cancer.gov/syndication"
-                  },
-                  {
-                    title: "Website Linking", 
-                    href: "https://www.cancer.gov/policies/linking"
-                  }
-                ]
-              }
-            ]
-          }
+          columns={[
+            {
+              title: 'CONTACT INFORMATION',
+              links: [
+                {
+                  title: 'Contact Us',
+                  href: 'https://www.cancer.gov/contact',
+                },
+                {
+                  title: 'Support',
+                  href: 'mailto:NCIFORGE2TFWebAdmin@mail.nih.gov',
+                },
+              ],
+            },
+            {
+              title: 'MORE INFORMATION',
+              links: [
+                {
+                  title: 'About This Website',
+                  href: 'https://www.cancer.gov/about-website',
+                },
+                {
+                  title: 'Multimedia',
+                  href: 'https://www.cancer.gov/multimedia',
+                },
+                {
+                  title: 'Publications',
+                  href: 'https://www.cancer.gov/publications',
+                },
+                {
+                  title: 'Site Map',
+                  href: 'https://www.cancer.gov/about-website/sitemap',
+                },
+                {
+                  title: 'Digital Standards for NCI Websites',
+                  href: 'https://www.cancer.gov/digital-standards',
+                },
+              ],
+            },
+            {
+              title: 'POLICIES',
+              links: [
+                {
+                  title: 'Accessibility',
+                  href: 'https://www.cancer.gov/policies/accessibility',
+                },
+                {
+                  title: 'Content Policy',
+                  href: 'https://www.cancer.gov/policies/comments',
+                },
+                {
+                  title: 'Disclaimer',
+                  href: 'https://www.cancer.gov/policies/disclaimer',
+                },
+                {
+                  title: 'FOIA',
+                  href: 'https://www.cancer.gov/policies/foia',
+                },
+                {
+                  title: 'Privacy & Security',
+                  href: 'https://www.cancer.gov/policies/privacy-security',
+                },
+                {
+                  title: 'Reuse & Copyright',
+                  href: 'https://www.cancer.gov/policies/copyright-reuse',
+                },
+                {
+                  title: 'Syndication Services',
+                  href: 'https://www.cancer.gov/syndication',
+                },
+                {
+                  title: 'Website Linking',
+                  href: 'https://www.cancer.gov/policies/linking',
+                },
+              ],
+            },
+          ]}
         />
       </>
     );

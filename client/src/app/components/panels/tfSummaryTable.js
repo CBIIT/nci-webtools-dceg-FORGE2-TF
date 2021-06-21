@@ -2,9 +2,7 @@ import React from 'react';
 import ReactTable from 'react-table';
 import FaExternalLink from 'react-icons/lib/fa/external-link';
 import axios from 'axios';
-import {
-  Button,
-} from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import * as AppConst from '../../appConstants';
 
 class TFSummaryTable extends React.Component {
@@ -27,12 +25,10 @@ class TFSummaryTable extends React.Component {
     this.imgError = this.imgError.bind(this);
     this.sortedChange = this.sortedChange.bind(this);
     this.convertTFSummaryToRows = this.convertTFSummaryToRows.bind(this);
-    this.convertTFSummaryToSummaryObject = this.convertTFSummaryToSummaryObject.bind(
-      this
-    );
-    this.convertTFSummaryToReactTableDataObj = this.convertTFSummaryToReactTableDataObj.bind(
-      this
-    );
+    this.convertTFSummaryToSummaryObject =
+      this.convertTFSummaryToSummaryObject.bind(this);
+    this.convertTFSummaryToReactTableDataObj =
+      this.convertTFSummaryToReactTableDataObj.bind(this);
     this.timeStampInMs =
       window.performance &&
       window.performance.now &&
@@ -119,7 +115,7 @@ class TFSummaryTable extends React.Component {
         (err) => {
           console.log('tfSummaryTable - exportGraph() - error');
           // console.log(err.response.data.msg);
-          console.log("error response : ", err);
+          console.log('error response : ', err);
         }
       );
     }
@@ -395,9 +391,8 @@ class TFSummaryTable extends React.Component {
     ];
     const summary = this.props.data.summary;
     const probeTFSummary = summary;
-    let reactTableData = this.convertTFSummaryToReactTableDataObj(
-      probeTFSummary
-    );
+    let reactTableData =
+      this.convertTFSummaryToReactTableDataObj(probeTFSummary);
 
     var self = this;
     var totalNumberOfTests = AppConst.settings.tf.n;
