@@ -43,7 +43,7 @@ class Viewer extends React.Component {
     this.updateSummaryData = this.updateSummaryData.bind(this);
     this.updateSelectedTF = this.updateSelectedTF.bind(this);
     this.updateMouseoverTF = this.updateMouseoverTF.bind(this);
-    this.handleInputChange = this.handleInputChange.bind(this);
+    // this.handleInputChange = this.handleInputChange.bind(this);
     this.renderAssociationHeader = this.renderAssociationHeader.bind(this);
     this.renderAssociationBody = this.renderAssociationBody.bind(this);
     this.renderSummaryHeader = this.renderSummaryHeader.bind(this);
@@ -316,20 +316,20 @@ class Viewer extends React.Component {
     });
   }
 
-  handleInputChange(event, customName, mouseoutFlag) {
-    //console.log("handleInputChange");
-    const target = event.target;
-    var value = target.type === 'checkbox' ? target.checked : target.value;
-    const name = customName ? customName : target.name;
+  // handleInputChange(event, customName, mouseoutFlag) {
+  //   //console.log("handleInputChange");
+  //   const target = event.target;
+  //   var value = target.type === 'checkbox' ? target.checked : target.value;
+  //   const name = customName ? customName : target.name;
 
-    if (name == 'viewer-go-previous') {
-      this.props.updateCurrentProbe('previous');
-    } else if (name == 'viewer-go-next') {
-      this.props.updateCurrentProbe('next');
-    }
+  //   if (name == 'viewer-go-previous') {
+  //     this.props.updateCurrentProbe('previous');
+  //   } else if (name == 'viewer-go-next') {
+  //     this.props.updateCurrentProbe('next');
+  //   }
 
-    document.activeElement.blur();
-  }
+  //   document.activeElement.blur();
+  // }
 
   renderAssociationHeader() {
     if (this.props.settings && this.props.settings.probesCount >= 1) {
@@ -343,7 +343,8 @@ class Viewer extends React.Component {
               value="viewer-go-previous"
               // className="react-bootstrap-button-custom-style btn btn-default"
               name="viewer-go-previous"
-              onClick={this.handleInputChange}
+              // onClick={this.handleInputChange}
+              onClick={_ => this.props.updateCurrentProbe('previous')}
             >
               <FaAngleLeft />
             </Button>
@@ -359,7 +360,8 @@ class Viewer extends React.Component {
               value="viewer-go-next"
               // className="react-bootstrap-button-custom-style btn btn-default"
               name="viewer-go-next"
-              onClick={this.handleInputChange}
+              // onClick={this.handleInputChange}
+              onClick={_ => this.props.updateCurrentProbe('next')}
             >
               <FaAngleRight />
             </Button>
