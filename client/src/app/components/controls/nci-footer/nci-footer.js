@@ -5,7 +5,7 @@ export const defaultSections = {};
 
 export function NCIFooter({
   className = 'bg-primary-dark text-light py-4',
-  style = {},
+  style = { position: 'relative' },
 
   title = (
     <div className="mb-4">
