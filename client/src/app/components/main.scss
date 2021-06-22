@@ -451,9 +451,10 @@ button[disabled] {
 }
 
 .tf-table-container {
-  overflow-x: scroll;
-  overflow-y: scroll;
+  overflow-x: auto;
+  overflow-y: auto;
   border: 1px dotted #525252;
+  min-height: 100px;
 }
 
 footer {
