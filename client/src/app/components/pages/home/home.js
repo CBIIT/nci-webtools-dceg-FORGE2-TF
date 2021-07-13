@@ -19,7 +19,7 @@ export function Home() {
                         {/* <HomeImage className="figure-img img-fluid" /> */}
                         <img
                             src="assets/img/Transcription_Factors.svg"
-                            alt="Home page image"
+                            alt="eFORGE TF diagram"
                         />
                         <figcaption className="figure-caption">
                             Modified from image by Kelvin13 (Own work, CC BY 3.0, <a style={{color: "#6c757d"}} href="https://commons.wikimedia.org/w/index.php?curid=23272278" target="_blank">https://commons.wikimedia.org/w/index.php?curid=23272278</a>)
