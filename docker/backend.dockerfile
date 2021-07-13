@@ -1,5 +1,5 @@
 
-FROM centos:8.3.2011
+FROM centos:latest
 
 RUN dnf -y update \
    && dnf -y install \
