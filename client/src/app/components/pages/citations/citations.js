@@ -7,7 +7,7 @@ export function Citations() {
             boxShadow: "0px 1px 4px #3c3c3c",
             minHeight: "500px"
         }}>
-            Citations!
+            Work in progress...
         </div>
     </div>
   );
