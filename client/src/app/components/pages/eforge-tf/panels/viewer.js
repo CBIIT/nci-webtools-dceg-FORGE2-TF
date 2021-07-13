@@ -10,7 +10,7 @@ import TFTable from './tfTable';
 import TFSummaryTable from './tfSummaryTable';
 import TFPlot from './tfPlot';
 
-import * as AppConst from '../../appConstants';
+import * as AppConst from '../../../../appConstants';
 
 import { Button } from 'react-bootstrap';
 

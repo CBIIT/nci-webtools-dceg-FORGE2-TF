@@ -1,6 +1,6 @@
 import React from 'react';
 import * as d3 from 'd3';
-import * as AppConst from '../../appConstants';
+import * as AppConst from '../../../../appConstants';
 
 class Plot extends React.Component {
   constructor(props) {
@@ -8,8 +8,8 @@ class Plot extends React.Component {
     this.state = {
       clientWidth: -1,
       clientHeight: -1,
-      clientMargin: { top: 65, right: 55, bottom: 95, left: 55 },
-      clientPadding: { top: 6, right: 10, bottom: 6, left: 6 },
+      clientMargin: { top: 45, right: 55, bottom: 55, left: 55 },
+      clientPadding: { top: 2, right: 10, bottom: 6, left: 6 },
     };
     this.updateDimensions = this.updateDimensions.bind(this);
     this.updatePlot = this.updatePlot.bind(this);
@@ -127,23 +127,21 @@ class Plot extends React.Component {
     svg.selectAll('*').remove();
 
     // data
-    const probe = this.props.data.probe;
-    const sample = probe.name;
-    const padding = probe.padding;
-    const smoothing = probe.smoothing;
-    const signalType = probe.signal_type;
-    const position =
-      probe.position.chromosome +
-      ':' +
-      probe.position.start +
-      '-' +
-      probe.position.stop;
+    const aggregate = this.props.data.aggregate;
+    const sample = aggregate.samplePrefix;
+    const samples = aggregate.samples;
+    const tfModel = aggregate.tfModel;
+    const padding = aggregate.padding;
+    const smoothing = aggregate.smoothing;
+    const signalType = aggregate.signalType;
+    var signal = aggregate.signal;
 
-    const windowRangeChromosome = probe.window.range.chromosome;
-    const windowRangeStart = probe.window.range.start;
-    const windowRangeStop = probe.window.range.stop;
-    const windowRangeStartAdjusted = probe.position.start - padding;
-    const windowRangeStopAdjusted = probe.position.stop + padding - 1;
+    const queryProbeMatches = this.props.queryProbeMatches;
+
+    const windowRangeStart = 0;
+    const windowRangeStop = signal.length;
+    const windowRangeStartAdjusted = 0;
+    const windowRangeStopAdjusted = signal.length - 1;
     const windowRange = [windowRangeStartAdjusted, windowRangeStopAdjusted];
     const windowRangeSequence = Array.from(Array(2 * padding + 1).keys()).map(
       function (i) {
@@ -151,10 +149,14 @@ class Plot extends React.Component {
       }
     );
 
-    const signalMidpointIndex = parseInt(probe.window.signal.length / 2);
+    const leftTFEdge = padding;
+    const rightTFEdge =
+      parseInt(windowRangeStopAdjusted - windowRangeStartAdjusted) - padding;
+    const leftDownstreamEdge = rightTFEdge + 1;
+
+    const signalMidpointIndex = parseInt(signal.length / 2);
     const signalStartIndex = 0;
-    const signalStopIndex = probe.window.signal.length - 1;
-    var signal = probe.window.signal;
+    const signalStopIndex = signal.length - 1;
 
     // post-process signal with smoothing parameter
     if (smoothing != 0) {
@@ -165,7 +167,7 @@ class Plot extends React.Component {
         var rightIdx = idx + smoothing;
         leftIdx = leftIdx < signalStartIndex ? signalStartIndex : leftIdx;
         rightIdx = rightIdx >= signalStopIndex ? signalStopIndex : rightIdx;
-        var signalSubarray = probe.window.signal.slice(leftIdx, rightIdx);
+        var signalSubarray = signal.slice(leftIdx, rightIdx);
         newSignal[idx] = mean(signalSubarray);
       }
       signal = newSignal;
@@ -173,78 +175,10 @@ class Plot extends React.Component {
 
     var signalMin = d3.min(signal);
     var signalMax = d3.max(signal);
-    var signalAdjustment = 0.1 * parseFloat(signalMax - signalMin);
-
-    signalMin -= signalAdjustment;
-    signalMax += signalAdjustment;
-
-    // console.log("signalAdjustment, signalMin, signalMax",signalAdjustment,signalMin,signalMax);
-
     const signalSlop =
       padding > 50 ? 0 : 0.23 * parseFloat(signalMax - signalMin);
-
-    const sequenceMidpointIndex = signalMidpointIndex;
-    const sequenceStartIndex = signalStartIndex;
-    const sequenceStopIndex = signalStopIndex + 1;
-    const sequence = probe.window.sequence.slice(
-      sequenceStartIndex,
-      sequenceStopIndex
-    );
-
-    // Footprint overlaps
-    const fp_overlaps = probe.fp_overlaps;
-    var fps = [];
-    fp_overlaps.forEach(function (d, i) {
-      var fpoRangeChromosome = d['chromosome'];
-      var fpoRangeStart = parseInt(d['start']);
-      var fpoRangeStop = parseInt(d['stop']);
-      var fpoRangeSequence = Array.from(
-        Array(fpoRangeStop - fpoRangeStart).keys()
-      ).map(function (j) {
-        return parseInt(fpoRangeStart + j);
-      });
-      var fpoRangeIndexStartOffset =
-        windowRangeSequence[sequenceMidpointIndex] - fpoRangeStart;
-      var fpoRangeIndexSequence = Array.from(
-        Array(fpoRangeStop - fpoRangeStart).keys()
-      ).map(function (j) {
-        return parseInt(sequenceMidpointIndex - fpoRangeIndexStartOffset + j);
-      });
-      fps.push(fpoRangeIndexSequence);
-    });
-
-    // selected TF takes precedence over mouseover'ed TF
-    var selectedTFRange = this.props.selectedTF
-      ? this.props.selectedTF.original.position
-      : this.props.mouseoveredTF
-      ? this.props.mouseoveredTF.original.position
-      : null;
-    //    console.log("plot - updatePlot() - selectedTFRange", selectedTFRange);
-    if (selectedTFRange) {
-      var selectedTFRangeElements = selectedTFRange.split(':');
-      var selectedTFRangeChromosome = selectedTFRangeElements[0];
-      var selectedTFRangeStartStop = selectedTFRangeElements[1];
-      var selectedTFRangeStrand = selectedTFRangeElements[2];
-      var selectedTFRangeStartStopElements =
-        selectedTFRangeStartStop.split('-');
-      var selectedTFRangeStart = parseInt(selectedTFRangeStartStopElements[0]);
-      var selectedTFRangeStop = parseInt(selectedTFRangeStartStopElements[1]);
-      var selectedTFRangeSequence = Array.from(
-        Array(selectedTFRangeStop - selectedTFRangeStart).keys()
-      ).map(function (i) {
-        return parseInt(selectedTFRangeStart + i);
-      });
-      var selectedTFRangeIndexStartOffset =
-        windowRangeSequence[sequenceMidpointIndex] - selectedTFRangeStart;
-      var selectedTFRangeIndexSequence = Array.from(
-        Array(selectedTFRangeStop - selectedTFRangeStart).keys()
-      ).map(function (i) {
-        return parseInt(
-          sequenceMidpointIndex - selectedTFRangeIndexStartOffset + i
-        );
-      });
-      //      console.log("plot - updatePlot() - selectedTFRangeChromosome, selectedTFRangeStart, selectedTFRangeStop, selectedTFRangeIndexSequence", selectedTFRangeChromosome, selectedTFRangeStart, selectedTFRangeStop, selectedTFRangeIndexSequence);
-    }
+    signalMin -= 0.05 * parseFloat(signalMax - signalMin);
+    signalMax -= 0.15 * parseFloat(signalMax - signalMin);
 
     // plot attributes
     const truePlotWidth =
@@ -412,7 +346,20 @@ class Plot extends React.Component {
     const xAxisBottom = d3
       .axisBottom(xAxisScale)
       .ticks(parseInt(windowRangeStopAdjusted - windowRangeStartAdjusted) - 1)
-      .tickFormat(spaceFormat);
+      .tickFormat(function (d, i) {
+        var reformat = spaceFormat(d, i);
+        if (reformat < leftTFEdge) {
+          reformat -= padding;
+        } else if (reformat < leftDownstreamEdge) {
+          reformat -= padding - 1;
+        } else {
+          reformat -=
+            parseInt(windowRangeStopAdjusted - windowRangeStartAdjusted) -
+            padding;
+          reformat = '+' + reformat.toString();
+        }
+        return reformat;
+      });
     const xAxisTop = d3.axisTop(xAxisScale).tickValues([]);
 
     const xAxisBottomCall = d3
@@ -433,27 +380,30 @@ class Plot extends React.Component {
     // get x-positions of tick marks for truest alignment of signal and sequence to ticks
     // reformat
     var xAxisTickPositions = new Array();
+    var xAxisTickLabels = new Array();
     xAxisBottomCall.selectAll('.tick').each(function (d, i) {
       var tick = d3.select(this);
       var transformation = getTransformAttributes(tick.attr('transform'));
       xAxisTickPositions.push(transformation.translateX);
       var label = tick.select('text');
-      label.attr(
-        'fill',
-        selectedTFRange !== null &&
-          windowRangeSequence[i] >= selectedTFRangeStart &&
-          windowRangeSequence[i] < selectedTFRangeStop
-          ? AppConst.settings.style.color.xAxisHighlightedTextFill
-          : AppConst.settings.style.color.xAxisGenericTextFill
-      );
-      label.attr(
-        'font-weight',
-        selectedTFRange !== null &&
-          windowRangeSequence[i] >= selectedTFRangeStart &&
-          windowRangeSequence[i] < selectedTFRangeStop
-          ? AppConst.settings.style.weight.xAxisHighlightedText
-          : AppConst.settings.style.weight.xAxisGenericText
-      );
+      label.attr('fill', function (d) {
+        if (d < leftTFEdge) {
+          return AppConst.settings.style.color.xAxisMoreGenericTextFill;
+        } else if (d < leftDownstreamEdge) {
+          return AppConst.settings.style.color.xAxisGenericTextFill;
+        } else {
+          return AppConst.settings.style.color.xAxisMoreGenericTextFill;
+        }
+      });
+      label.attr('font-weight', function (d) {
+        if (d < leftTFEdge) {
+          return AppConst.settings.style.weight.xAxisGenericText;
+        } else if (d < leftDownstreamEdge) {
+          return AppConst.settings.style.weight.xAxisHighlightedText;
+        } else {
+          return AppConst.settings.style.weight.xAxisGenericText;
+        }
+      });
       label.attr(
         'font-size',
         padding == 20
@@ -463,19 +413,47 @@ class Plot extends React.Component {
       if (padding > 50 && i % 20 != 0) {
         tick.attr('opacity', 0);
       }
+      xAxisTickLabels.push(label.text());
     });
-    const truePlotXMidpoint = xAxisTickPositions[padding];
+    const truePlotXMidpoint =
+      10 +
+      xAxisTickPositions[padding] +
+      parseFloat(
+        (xAxisTickPositions[xAxisTickPositions.length - 1] -
+          2 * xAxisTickPositions[padding - 1]) /
+          2.0
+      );
 
     xAxisBottomCall
       .append('text')
       .attr('x', truePlotXMidpoint)
-      .attr('y', (8 * this.state.clientMargin.bottom) / 10)
+      .attr('y', (7 * this.state.clientMargin.bottom) / 10)
       .attr('dy', '0.48em')
       .attr('fill', '#000')
       .attr('font-size', '1.4em')
       .attr('font-weight', 'bold')
       .attr('text-anchor', 'middle')
-      .text(windowRangeChromosome);
+      .text('Relative position');
+
+    // padding rects
+    d3.select(node)
+      .append('rect')
+      .attr('class', 'background')
+      .style('fill', '#fff')
+      .style('fill-opacity', '0.9')
+      .attr('x', xAxisTickPositions[leftTFEdge])
+      .attr(
+        'y',
+        parseFloat(truePlotTop) - AppConst.settings.style.generic.axisTopPadding
+      )
+      .attr(
+        'height',
+        truePlotHeight + AppConst.settings.style.generic.axisTopPadding
+      )
+      .attr(
+        'width',
+        xAxisTickPositions[rightTFEdge] - xAxisTickPositions[leftTFEdge]
+      );
 
     const xAxisTopCall = d3
       .select(node)
@@ -491,151 +469,27 @@ class Plot extends React.Component {
       .call(xAxisTop);
 
     // title
+    var subtitle = sample + ' (' + samples.length + ' experiments)';
     d3.select(node)
       .append('text')
       .attr('x', truePlotXMidpoint)
-      .attr('y', (2.5 * this.state.clientMargin.top) / 10)
+      .attr('y', (0.5 * this.state.clientMargin.top) / 10)
       .attr('dy', '0.64em')
       .attr('fill', '#000')
       .attr('font-size', 'larger')
       .attr('font-weight', 'bold')
       .attr('text-anchor', 'middle')
-      .text(sample);
+      .text(tfModel);
     d3.select(node)
       .append('text')
       .attr('x', truePlotXMidpoint)
-      .attr('y', (5.5 * this.state.clientMargin.top) / 10)
+      .attr('y', (5.0 * this.state.clientMargin.top) / 10)
       .attr('dy', '0.64em')
       .attr('fill', '#000')
       .attr('font-size', 'smaller')
       .attr('font-weight', 'normal')
       .attr('text-anchor', 'middle')
-      .text(position);
-
-    // Footprint highlight
-    d3.select(node)
-      .selectAll('.fp-highlight')
-      .data(fps)
-      .enter()
-      .append('g')
-      .each(function (d, i) {
-        d3.select(this)
-          .selectAll('.fp-highlight')
-          .data(d)
-          .enter()
-          .append('rect')
-          .attr('class', 'fp-highlight');
-        d3.select(this).selectAll('.fp-highlight').data(d).exit().remove();
-        d3.select(this)
-          .selectAll('.fp-highlight')
-          .data(d)
-          .style(
-            'fill',
-            AppConst.settings.style.color.footprintHighlightRectFill
-          )
-          .style(
-            'fill-opacity',
-            AppConst.settings.style.color.footprintHighlightRectFillOpacity
-          )
-          .attr('x', function (datum, i) {
-            if (datum == 0) {
-              return xAxisTickPositions[0];
-            } else if (datum == d.length - 1) {
-              return (
-                xAxisTickPositions[d.length - 1] - truePlotMarkerWidth / 2.0
-              );
-            } else {
-              return xAxisTickPositions[datum] - truePlotMarkerWidth / 2.0;
-            }
-          })
-          .attr(
-            'y',
-            (d) =>
-              self.state.clientHeight -
-              yScale(signalMax + signalSlop) -
-              self.state.clientMargin.bottom +
-              self.state.clientMargin.top -
-              AppConst.settings.style.generic.footprintHighlightPadding
-          )
-          .attr(
-            'height',
-            (d) =>
-              yScale(signalMax + signalSlop) -
-              self.state.clientMargin.top +
-              AppConst.settings.style.generic.footprintHighlightPadding
-          )
-          .attr('width', function (d, i) {
-            return d > 0
-              ? xAxisTickPositions[d] - xAxisTickPositions[d - 1]
-              : xAxisTickPositions[d];
-          });
-      });
-
-    // TF highlight
-    if (selectedTFRange !== null) {
-      d3.select(node)
-        .selectAll('.tf-highlight')
-        .data(selectedTFRangeIndexSequence)
-        .enter()
-        .append('rect')
-        .attr('class', 'tf-highlight');
-      d3.select(node)
-        .selectAll('.tf-highlight')
-        .data(selectedTFRangeIndexSequence)
-        .exit()
-        .remove();
-      d3.select(node)
-        .selectAll('.tf-highlight')
-        .data(selectedTFRangeIndexSequence)
-        .style('fill', AppConst.settings.style.color.signalHighlightRectFill)
-        .style(
-          'fill-opacity',
-          AppConst.settings.style.color.signalHighlightRectFillOpacity
-        )
-        .attr('x', function (d, i) {
-          return xAxisTickPositions[d] - truePlotMarkerWidth / 2.0;
-        })
-        .attr(
-          'y',
-          (d) =>
-            this.state.clientHeight -
-            yScale(signalMax + signalSlop) -
-            this.state.clientMargin.bottom +
-            this.state.clientMargin.top -
-            AppConst.settings.style.generic.signalHighlightPadding
-        )
-        .attr(
-          'height',
-          (d) =>
-            yScale(signalMax + signalSlop) -
-            this.state.clientMargin.top +
-            AppConst.settings.style.generic.signalHighlightPadding
-        )
-        .attr('width', function (d, i) {
-          return d > 0
-            ? xAxisTickPositions[d] - xAxisTickPositions[d - 1]
-            : xAxisTickPositions[d];
-        });
-    }
-
-    // probe position marker
-    d3.select(node)
-      .append('g')
-      .append('line')
-      .attr('class', 'line')
-      .attr('x1', truePlotXMidpoint)
-      .attr('y1', truePlotBottom)
-      .attr('x2', truePlotXMidpoint)
-      .attr(
-        'y2',
-        parseFloat(truePlotTop) -
-          AppConst.settings.style.generic.probePositionMarkerPadding
-      )
-      .attr(
-        'stroke',
-        AppConst.settings.style.color.probePositionMarkerLineStroke
-      )
-      .attr('stroke-dasharray', '4, 4');
+      .text(subtitle);
 
     // signal
     if (signalType == 'Bar') {
@@ -678,24 +532,6 @@ class Plot extends React.Component {
             : (xAxisTickPositions[i] - xAxisTickPositions[i - 1]) / 2.0;
         });
     } else if (signalType == 'Line') {
-      var reformatNumber = function (n, c) {
-        if (n < 1000) {
-          return n + '';
-        } else {
-          n += '';
-
-          // Support fractions.
-          let i = n.indexOf('.');
-          let f = i == -1 ? '' : n.slice(i);
-          if (f) n = n.slice(0, i);
-
-          // Add commas.
-          i = n.length;
-          n = n.split('');
-          while (i > 3) n.splice((i -= 3), 0, c);
-          return n.join('') + f;
-        }
-      };
       var line = d3
         .line()
         .x(function (d, i) {
@@ -709,7 +545,6 @@ class Plot extends React.Component {
             self.state.clientMargin.top
           );
         });
-      //.curve(d3.curveStep);
       d3.select(node)
         .append('path')
         .datum(signal)
@@ -730,13 +565,7 @@ class Plot extends React.Component {
           var signalAtPosn = parseFloat(
             Math.round(signal[offsetIdx] * 100) / 100
           ).toFixed(2);
-          var posn =
-            '[' +
-            probe.position.chromosome +
-            '] ' +
-            reformatNumber(base, ' ') +
-            ' ▶ ' +
-            signalAtPosn;
+          var posn = '[' + xAxisTickLabels[offsetIdx] + '] ▶ ' + signalAtPosn;
 
           focus.style('display', null);
           focus.select('text').text(posn);
@@ -770,176 +599,59 @@ class Plot extends React.Component {
         })
         .on('mouseleave', function (d) {
           focus.style('display', 'none');
+          focus.select('text').html(null);
         });
     }
 
-    // sequence data
-    var sequenceFontSize =
-      AppConst.settings.style.size.sequenceGenericText.large;
-    var ySequenceCrick = truePlotTop;
-    var ySequenceWatson = truePlotTop + 16;
-    if (padding == 20) {
-      sequenceFontSize = AppConst.settings.style.size.sequenceGenericText.large;
-    } else if (padding == 50) {
-      sequenceFontSize =
-        AppConst.settings.style.size.sequenceGenericText.medium;
-    } else {
-      sequenceFontSize = AppConst.settings.style.size.sequenceGenericText.small;
-    }
-    const complement = {
-      A: 'T',
-      C: 'G',
-      G: 'C',
-      T: 'A',
-      M: 'K',
-      K: 'M',
-      Y: 'R',
-      R: 'Y',
-      V: 'B',
-      B: 'V',
-      H: 'D',
-      D: 'H',
-      a: 't',
-      c: 'g',
-      g: 'c',
-      t: 'a',
-      m: 'k',
-      k: 'm',
-      y: 'r',
-      r: 'y',
-      v: 'b',
-      b: 'v',
-      h: 'd',
-      d: 'h',
-    };
+    // motif model edge markers
     d3.select(node)
-      .selectAll('.sequence.crick')
-      .data(sequence)
-      .enter()
-      .append('text')
-      .attr('class', 'sequence crick');
-    d3.select(node).selectAll('.sequence.crick').data(sequence).exit().remove();
+      .append('g')
+      .append('line')
+      .attr('class', 'line')
+      .attr('x1', xAxisTickPositions[leftTFEdge])
+      .attr('y1', truePlotBottom)
+      .attr('x2', xAxisTickPositions[leftTFEdge])
+      .attr(
+        'y2',
+        parseFloat(truePlotTop) -
+          AppConst.settings.style.generic.probePositionMarkerPadding
+      )
+      .attr(
+        'stroke',
+        AppConst.settings.style.color.probePositionMarkerLineStroke
+      )
+      .attr('stroke-dasharray', '4, 4');
     d3.select(node)
-      .selectAll('.sequence.crick')
-      .data(sequence)
-      .attr('x', (d, i) => xAxisTickPositions[i])
-      .attr('y', (d) => ySequenceCrick)
-      .attr('dy', sequenceFontSize)
-      .attr('fill', function (d, i) {
-        return selectedTFRange !== null &&
-          windowRangeSequence[i] >= selectedTFRangeStart &&
-          windowRangeSequence[i] < selectedTFRangeStop
-          ? AppConst.settings.style.color.sequenceHighlightedTextFill
-          : AppConst.settings.style.color.sequenceGenericTextFill;
-      })
-      .attr('font-weight', function (d, i) {
-        return selectedTFRange !== null &&
-          windowRangeSequence[i] >= selectedTFRangeStart &&
-          windowRangeSequence[i] < selectedTFRangeStop
-          ? AppConst.settings.style.weight.sequenceHighlightedText
-          : AppConst.settings.style.weight.sequenceGenericText;
-      })
-      .attr('text-anchor', 'middle')
-      .attr('font-family', 'monospace')
-      .attr('font-size', sequenceFontSize)
-      .text(function (d, i) {
-        if (padding > 50) {
-          return '';
-        }
-        if (i <= 2) {
-          // print '','5','-' as lead-in for Crick strand
-          switch (i) {
-            case 0:
-              return '';
-            case 1:
-              return '5';
-            case 2:
-              return '-';
-          }
-        } else if (i >= sequence.length - 3) {
-          // print '-','3', '' as lead-out
-          switch (i) {
-            case sequence.length - 3:
-              return '-';
-            case sequence.length - 2:
-              return '3';
-            case sequence.length - 1:
-              return '';
-          }
-        } else {
-          // just print the complement base
-          return d;
-        }
-      });
-    d3.select(node)
-      .selectAll('.sequence.watson')
-      .data(sequence)
-      .enter()
-      .append('text')
-      .attr('class', 'sequence watson');
-    d3.select(node)
-      .selectAll('.sequence.watson')
-      .data(sequence)
-      .exit()
-      .remove();
-    d3.select(node)
-      .selectAll('.sequence.watson')
-      .data(sequence)
-      .attr('x', (d, i) => xAxisTickPositions[i])
-      .attr('y', (d) => ySequenceWatson)
-      .attr('dy', sequenceFontSize)
-      .attr('fill', function (d, i) {
-        return selectedTFRange !== null &&
-          windowRangeSequence[i] >= selectedTFRangeStart &&
-          windowRangeSequence[i] < selectedTFRangeStop
-          ? AppConst.settings.style.color.sequenceHighlightedTextFill
-          : AppConst.settings.style.color.sequenceGenericTextFill;
-      })
-      .attr('font-weight', function (d, i) {
-        return selectedTFRange !== null &&
-          windowRangeSequence[i] >= selectedTFRangeStart &&
-          windowRangeSequence[i] < selectedTFRangeStop
-          ? AppConst.settings.style.weight.sequenceHighlightedText
-          : AppConst.settings.style.weight.sequenceGenericText;
-      })
-      .attr('text-anchor', 'middle')
-      .attr('font-family', 'monospace')
-      .attr('font-size', sequenceFontSize)
-      .text(function (d, i) {
-        if (padding > 50) {
-          return '';
-        }
-        if (i <= 2) {
-          // print '','3','-' as lead-in for Watson strand
-          switch (i) {
-            case 0:
-              return '';
-            case 1:
-              return '3';
-            case 2:
-              return '-';
-          }
-        } else if (i >= sequence.length - 3) {
-          // print '-','5','' as lead-out
-          switch (i) {
-            case sequence.length - 3:
-              return '-';
-            case sequence.length - 2:
-              return '5';
-            case sequence.length - 1:
-              return '';
-          }
-        } else {
-          // print the complement base on watson strand
-          return complement[d];
-        }
-      });
+      .append('g')
+      .append('line')
+      .attr('class', 'line')
+      .attr('x1', xAxisTickPositions[rightTFEdge])
+      .attr('y1', truePlotBottom)
+      .attr('x2', xAxisTickPositions[rightTFEdge])
+      .attr(
+        'y2',
+        parseFloat(truePlotTop) -
+          AppConst.settings.style.generic.probePositionMarkerPadding
+      )
+      .attr(
+        'stroke',
+        AppConst.settings.style.color.probePositionMarkerLineStroke
+      )
+      .attr('stroke-dasharray', '4, 4');
 
     // focus
     var focus = d3
       .select(node)
       .append('g')
       .attr('class', 'focus')
+      .style('display', 'none');
+    var focusInnerCircle = focus
+      .append('circle')
+      .attr(
+        'fill',
+        AppConst.settings.style.color.signalHighlightFocusCircleFill
+      )
+      .attr('r', 10)
       .style('display', 'none');
     var focusCircle = focus
       .append('circle')
@@ -957,24 +669,135 @@ class Plot extends React.Component {
       .attr('fill', AppConst.settings.style.color.signalPrimaryFocusTextFill)
       .attr('font-size', 'smaller')
       .attr('font-weight', 'normal');
+
+    // query probe match markers
+    var queryProbeMatchNode = d3
+      .select(node)
+      .append('g')
+      .attr('class', 'probeMatch');
+
+    var queryProbeMatchMarkers = queryProbeMatchNode
+      .selectAll('probeMatch')
+      .data(queryProbeMatches)
+      .enter()
+      .append('circle')
+      .attr('cx', (d) => {
+        var xPosn = xAxisTickPositions[d.position];
+        return xPosn;
+      })
+      .attr('cy', (d) => {
+        var yPosn =
+          this.state.clientHeight -
+          yScale(signal[d.position]) -
+          this.state.clientMargin.bottom +
+          this.state.clientMargin.top -
+          1;
+        return yPosn;
+      })
+      .attr('r', 8)
+      .attr(
+        'fill',
+        AppConst.settings.style.color.signalPrimaryProbeMarkerCircleFill
+      )
+      .on('mouseenter', (d) => {
+        var xPosn = xAxisTickPositions[d.position];
+        var yPosn =
+          this.state.clientHeight -
+          yScale(signal[d.position]) -
+          this.state.clientMargin.bottom +
+          this.state.clientMargin.top -
+          1;
+        var offsetIdx = Math.floor(
+          ((xPosn - truePlotLeft) / truePlotLRDiff) * signal.length
+        );
+        var base = windowRangeStartAdjusted + parseInt(offsetIdx);
+        var signalAtPosn = parseFloat(
+          Math.round(signal[offsetIdx] * 100) / 100
+        ).toFixed(2);
+        var posn = '[' + xAxisTickLabels[offsetIdx] + '] ▶ ' + signalAtPosn;
+
+        focus.style('display', null);
+
+        focus
+          .select('text')
+          .attr('text-align', 'left')
+          .append('tspan')
+          .attr('x', '0')
+          .attr('dx', '0')
+          .attr('dy', '0')
+          .text(posn);
+        focus
+          .select('text')
+          .append('tspan')
+          .attr('x', '0')
+          .attr('dx', '0')
+          .attr('dy', '1.3em')
+          .attr('font-weight', 'bold')
+          .text(d.probe);
+
+        if (offsetIdx <= signal.length / 10) {
+          focusText.attr('text-anchor', 'start');
+        } else if (offsetIdx <= (9 * signal.length) / 10) {
+          focusText.attr('text-anchor', 'middle');
+        } else {
+          focusText.attr('text-anchor', 'end');
+        }
+        focusCircle.style('display', 'none');
+        focusInnerCircle.style('display', null);
+        focus.attr(
+          'transform',
+          'translate(' + xPosn + ',' + (yPosn + 45) + ')'
+        );
+        var bbox = focusText._groups[0][0].getBBox();
+        var ctm = focusText._groups[0][0].getCTM();
+        focus.selectAll('rect').remove();
+        var rect = focus
+          .insert('rect', 'text')
+          .attr('x', bbox.x - 5)
+          .attr('y', bbox.y - 5)
+          .attr('fill', AppConst.settings.style.color.signalPrimaryFocusFill)
+          .attr(
+            'stroke',
+            AppConst.settings.style.color.signalPrimaryFocusStroke
+          )
+          .attr('stroke-width', '1px')
+          .attr('width', bbox.width + 10)
+          .attr('height', bbox.height + 10);
+      })
+      .on('mouseleave', (d) => {
+        focus.style('display', 'none');
+        focus.select('text').html(null);
+        focusCircle.style('display', null);
+        focusInnerCircle.style('display', 'none');
+      });
   }
 
   render() {
-    return (
-      <div className="plot-container" ref="plotContainer" id={this.props.id}>
-        <svg
-          className="plot-svg"
-          shapeRendering="crispEdges"
-          ref={(node) => (this.node = node)}
-          width={parseFloat(
-            this.state.clientWidth -
-              this.state.clientMargin.left -
-              this.state.clientMargin.right
-          )}
-          height={parseFloat(this.state.clientHeight)}
-        />
-      </div>
-    );
+    if (this.props.data.aggregate) {
+      return (
+        <div className="plot-container" ref="plotContainer" id={this.props.id}>
+          <svg
+            className="plot-svg"
+            shapeRendering="crispEdges"
+            ref={(node) => (this.node = node)}
+            width={parseFloat(
+              this.state.clientWidth -
+                this.state.clientMargin.left -
+                this.state.clientMargin.right
+            )}
+            height={parseFloat(this.state.clientHeight)}
+          />
+        </div>
+      );
+    } else {
+      return (
+        <div
+          className="plot-container"
+          ref="plotContainer"
+          id={this.props.id}
+        ></div>
+      );
+    }
   }
 }
 

@@ -3,7 +3,7 @@ import ReactTable from 'react-table';
 import FaExternalLink from 'react-icons/lib/fa/external-link';
 import axios from 'axios';
 import { Button } from 'react-bootstrap';
-import * as AppConst from '../../appConstants';
+import * as AppConst from '../../../../appConstants';
 
 class TFSummaryTable extends React.Component {
   constructor(props) {

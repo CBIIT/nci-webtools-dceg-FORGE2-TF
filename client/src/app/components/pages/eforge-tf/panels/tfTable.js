@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactTable from 'react-table';
-import * as AppConst from '../../appConstants';
+import * as AppConst from '../../../../appConstants';
 
 class TFTable extends React.Component {
   constructor(props) {

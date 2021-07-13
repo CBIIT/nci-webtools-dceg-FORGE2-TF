@@ -211,10 +211,10 @@ hr {
 /* brand */
 
 .brand-container {
-  padding-left: 6px;
-  padding-right: 6px;
-  padding-top: 4px;
-  padding-bottom: 12px;
+  // padding-left: 6px;
+  // padding-right: 6px;
+  // padding-top: 4px;
+  // padding-bottom: 12px;
 }
 
 .brand-logo {
@@ -514,6 +514,10 @@ footer {
 
 .bg-dark {
   background-color: #606060 !important;
+}
+
+.bg-navbar-dark {
+  background-color: #343A40 !important;
 }
 
 .btn-primary {

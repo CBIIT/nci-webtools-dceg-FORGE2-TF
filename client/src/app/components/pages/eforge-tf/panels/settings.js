@@ -6,8 +6,10 @@ import {
   FormControl,
   Form,
 } from 'react-bootstrap';
-import * as AppConst from '../../appConstants';
+import Brand from './brand';
+import * as AppConst from '../../../../appConstants';
 import axios from 'axios';
+
 
 class Settings extends React.Component {
   constructor(props) {
@@ -653,9 +655,15 @@ class Settings extends React.Component {
     return (
       <div className="settings">
         <div className="settings-container">
-          <h2 className="settings-title" style={{ fontSize: '14.4px' }}>
+          {/* <h2 className="settings-title" style={{ fontSize: '14.4px' }}>
             {this.props.title}
-          </h2>
+          </h2> */}
+          <div className="mt-1">
+            <Brand
+              brandTitle={'FORGE2 TF'}
+              brandSubtitle={'TF-centric SNP array browser'}
+            />
+          </div>
 
           <p className="settings-item-title settings-item-padding-title">
             Mode
