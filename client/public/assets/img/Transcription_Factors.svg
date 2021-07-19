@@ -28,7 +28,8 @@
 	.st20{fill:url(#path3945_1_);}
 	.st21{fill:#1CD8C4;fill-opacity:0.7843;}
 	.st22{fill:#FFFFFF;}
-	.st23{fill-rule:evenodd;clip-rule:evenodd;fill:#008DFF;fill-opacity:5.882353e-02;}
+	<!-- .st23{fill-rule:evenodd;clip-rule:evenodd;fill:#008DFF;fill-opacity:5.882353e-02;} -->
+	.st23{fill-rule:evenodd;clip-rule:evenodd;fill:#008DFF;fill-opacity:0;}	
 	.st24{fill:#4487FF;}
 	.st25{fill:#449EFF;fill-opacity:0.7165;}
 	.st26{enable-background:new    ;}
