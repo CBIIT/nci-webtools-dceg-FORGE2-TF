@@ -186,28 +186,6 @@ export default class eFORGETF extends React.Component {
                 />
                 <Col className="left-side p-2">
                     <div className="ml-4 mr-3">
-                        {/* <Brand
-                            brandTitle={this.state.brandTitle}
-                            brandSubtitle={this.state.brandSubtitle}
-                        /> */}
-                        {/* <h2 className="description" style={{ fontSize: '14.4px' }}>
-                            About
-                        </h2>
-                        <p className="description">
-                            The <em>FORGE2 TF</em> application is an adjunct to the{' '}
-                            <a
-                            href="https://forge2.altiusinstitute.org/"
-                            target="_blank"
-                            style={{ color: '#0062cc' }}
-                            >
-                            FORGE2
-                            </a>{' '}
-                            GWAS analysis tool. This enables the exploration of DNase I tag
-                            (chromatin accessibility) signal surrounding GWAS array SNPs and
-                            the calculation of significance of overlap with transcription
-                            factor binding sites from common TF databases.
-                        </p>
-                        <hr /> */}
                         <Settings
                             id="settings"
                             ref="settings"
@@ -236,9 +214,3 @@ export default class eFORGETF extends React.Component {
         );
     }
 }
-
-// export function eFORGETF() {
-//   return (
-    
-//   );
-// }

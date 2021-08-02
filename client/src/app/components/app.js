@@ -9,9 +9,8 @@ import {
   Redirect,
 } from 'react-router-dom';
 import { Home } from './pages/home/home';
-import { Citations } from './pages/citations/citations';
 import eFORGETF from './pages/eforge-tf/eforge-tf';
-// import { About } from './pages/about/about';
+import Brand from './pages/eforge-tf/panels/brand';
 
 
 export function App() {
@@ -24,15 +23,7 @@ export function App() {
     {
       route: '/eforge-tf',
       title: 'eFORGE-TF',
-    },
-    {
-      route: '/citations',
-      title: 'Citations',
-    },
-    // {
-    //   route: '/about',
-    //   title: 'About',
-    // },
+    }
   ];
 
   return (
@@ -78,67 +69,23 @@ export function App() {
 
       <main className="parent-container" id="main">
         <h1 className="sr-only">FORGE2 TF</h1>
-        {/* <ErrorModal
-          visible={this.state.errorModal}
-          closeErrorModal={this.updateCloseErrorModal}
-        /> */}
-        {/* <Row>
-          <Col className="left-side p-2">
-            <div className="ml-4 mr-3">
-              <Brand
-                brandTitle={this.state.brandTitle}
-                brandSubtitle={this.state.brandSubtitle}
-              />
-              <h2 className="description" style={{ fontSize: '14.4px' }}>
-                About
-              </h2>
-              <p className="description">
-                The <em>FORGE2 TF</em> application is an adjunct to the{' '}
-                <a
-                  href="https://forge2.altiusinstitute.org/"
-                  target="_blank"
-                  style={{ color: '#0062cc' }}
-                >
-                  FORGE2
-                </a>{' '}
-                GWAS analysis tool. This enables the exploration of DNase I tag
-                (chromatin accessibility) signal surrounding GWAS array SNPs and
-                the calculation of significance of overlap with transcription
-                factor binding sites from common TF databases.
-              </p>
-              <hr />
-              <Settings
-                id="settings"
-                ref="settings"
-                title="Settings"
-                settings={this.state.settings}
-                updateSettings={this.updateSettings}
-                updateShowErrorModal={this.updateShowErrorModal}
-              />
-            </div>
-          </Col>
-          <Col className="right-side pl-0">
-          <Viewer
-            id="viewer"
-            settings={this.state.settings}
-            settingsChangeStart={this.state.settingsChangeStart}
-            updateSettingsChange={this.updateSettingsChange}
-            updateCurrentProbe={this.updateCurrentProbe}
-            plotKey={this.state.plotKeyPrefix + this.randomInt(0, 1000000)}
-            tfTableKey={
-              this.state.tfTableKeyPrefix + this.randomInt(0, 1000000)
-            }
-            updateShowErrorModal={this.updateShowErrorModal}
-          />
-          </Col>
-        </Row> */}
         <Route exact path={`/`} render={() => <Redirect to="/home" />} />
         <Route path="/home" exact={true} component={Home} />
         <Route path="/eforge-tf" component={eFORGETF} />
-        <Route path="/citations" component={Citations} />
-        {/* <Route path="/about" component={About} /> */}
       </main>
-
+      
+      <div class="bg-primary-dark text-light py-3 px-4">
+        <div className="mb-2">
+          <div className="brand-container">
+            <span className="brand-text text-white">Citations</span>
+          </div>
+        </div>
+        <ul>
+          <li>
+            Breeze CE, et al. <em>FORGE2-TF: TF analysis</em> for GWAS SNPs. Manuscript in preparation.
+          </li>
+        </ul>
+      </div>
       <NCIFooter
         className="py-4 bg-dark text-light"
         title={
