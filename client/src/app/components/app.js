@@ -9,8 +9,8 @@ import {
   Redirect,
 } from 'react-router-dom';
 import { Home } from './pages/home/home';
-import eFORGETF from './pages/eforge-tf/eforge-tf';
-import Brand from './pages/eforge-tf/panels/brand';
+import FORGE2TF from './pages/forge2-tf/forge2-tf';
+import Brand from './pages/forge2-tf/panels/brand';
 
 
 export function App() {
@@ -21,8 +21,8 @@ export function App() {
       title: 'Home',
     },
     {
-      route: '/eforge-tf',
-      title: 'eFORGE-TF',
+      route: '/forge2-tf',
+      title: 'FORGE2-TF',
     }
   ];
 
@@ -71,7 +71,7 @@ export function App() {
         <h1 className="sr-only">FORGE2 TF</h1>
         <Route exact path={`/`} render={() => <Redirect to="/home" />} />
         <Route path="/home" exact={true} component={Home} />
-        <Route path="/eforge-tf" component={eFORGETF} />
+        <Route path="/forge2-tf" component={FORGE2TF} />
       </main>
       
       <div class="bg-primary-dark text-light py-3 px-4">

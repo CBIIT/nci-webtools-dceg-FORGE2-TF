@@ -10,7 +10,7 @@ import * as AppConst from '../../../appConstants';
 import { ErrorModal } from '../../controls/error-modal/error-modal';
 
 
-export default class eFORGETF extends React.Component {
+export default class FORGE2TF extends React.Component {
     constructor(props) {
         super(props);
         this.defaultSettings = {
@@ -64,7 +64,7 @@ export default class eFORGETF extends React.Component {
         }
     
         this.state = {
-            brandTitle: 'FORGE2 TF',
+            brandTitle: 'FORGE2-TF',
             brandSubtitle: 'TF-centric SNP array browser',
             settings: this.defaultSettings,
             settingsChangeStart: false,

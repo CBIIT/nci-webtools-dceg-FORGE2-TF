@@ -3,7 +3,7 @@ import {
     Row,
     Col
 } from 'react-bootstrap';
-import Brand from '../eforge-tf/panels/brand';
+import Brand from '../forge2-tf/panels/brand';
 
 
 export function Home() {
@@ -18,7 +18,7 @@ export function Home() {
                     <img   
                         className="center-block"
                         src="assets/img/Transcription_Factors.svg"
-                        alt="eFORGE TF diagram"
+                        alt="FORGE2-TF diagram"
                         width="75%"
                     />
                     <p className="figure-caption">
@@ -29,14 +29,14 @@ export function Home() {
                 <Col lg={12}>
                     <div className="mb-2">
                         <Brand
-                            brandTitle={'FORGE2 TF'}
+                            brandTitle={'FORGE2-TF'}
                             brandSubtitle={'TF-centric SNP array browser'}
                         />
                     </div>
                 </Col>
                 <Col lg={12}>
                     <p>
-                        The <em>FORGE2 TF</em> is a complementary method to the{` `}
+                        The <em>FORGE2-TF</em> is a complementary method to the{` `}
                         <a href="https://forge2.altiusinstitute.org/"
                             target="_blank"
                             style={{ color: '#0062cc' }}>

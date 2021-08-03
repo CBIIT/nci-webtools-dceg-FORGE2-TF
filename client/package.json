@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "homepage": ".",
   "proxy": "http://localhost:8000",
-  "description": "Forge2 TF viewer client",
+  "description": "Forge2-TF viewer client",
   "scripts": {
     "start": "react-scripts start",
     "build": "npm run format && react-scripts --max_old_space_size=4096 build",

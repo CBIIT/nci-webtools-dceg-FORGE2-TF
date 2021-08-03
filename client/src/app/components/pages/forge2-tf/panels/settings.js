@@ -660,7 +660,7 @@ class Settings extends React.Component {
           </h2> */}
           <div className="mt-1">
             <Brand
-              brandTitle={'FORGE2 TF'}
+              brandTitle={'FORGE2-TF'}
               brandSubtitle={'TF-centric SNP array browser'}
             />
           </div>
