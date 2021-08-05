@@ -19,7 +19,7 @@ export function Home() {
                         className="center-block"
                         src="assets/img/Transcription_Factors.svg"
                         alt="FORGE2-TF diagram"
-                        width="75%"
+                        width="60%"
                     />
                     <p className="figure-caption">
                         Modified from image by Kelvin13 (Own work, CC BY 3.0, <a style={{color: "#6c757d"}} href="https://commons.wikimedia.org/w/index.php?curid=23272278" target="_blank">https://commons.wikimedia.org/w/index.php?curid=23272278</a>)
