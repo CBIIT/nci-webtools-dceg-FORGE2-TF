@@ -1,4 +1,4 @@
-FROM ncidockerhub.nci.nih.gov/docker-linux-poc/centos-base-image:1.0
+FROM quay.io/centos/centos:stream8
 
 RUN dnf -y update \
     && dnf -y install \
@@ -13,9 +13,6 @@ RUN dnf -y update \
         nodejs \
     && dnf clean all
 
-# Add custom httpd configuration
-COPY docker/forge2-tf.conf /etc/httpd/conf.d/forge2-tf.conf
-
 RUN mkdir /client
 
 WORKDIR /client
@@ -28,6 +25,9 @@ COPY client /client/
 
 RUN npm run build \
     && mv /client/build /var/www/html/forge2-tf
+
+# Add custom httpd configuration
+COPY docker/httpd-forge2-tf.conf /etc/httpd/conf.d/httpd-forge2-tf.conf
 
 WORKDIR /var/www/html
 

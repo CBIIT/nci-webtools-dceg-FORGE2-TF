@@ -1,5 +1,5 @@
 
-FROM ncidockerhub.nci.nih.gov/docker-linux-poc/centos-base-image:1.0
+FROM quay.io/centos/centos:stream8
 
 RUN dnf -y update \
    && dnf -y install \
