@@ -25,7 +25,7 @@ export function Home() {
                 </Col>
                 <Col lg={2}>
                     <p className="figure-caption">
-                        Modified from image by Kelvin13 (Own work, CC BY 3.0, <a style={{color: "#6c757d"}} href="https://commons.wikimedia.org/w/index.php?curid=23272278" target="_blank">Wikimedia Commons</a>)
+                        Modified from image by Kelvin13 (Own work, CC BY 3.0, <a style={{color: "#6c757d"}} href="https://commons.wikimedia.org/w/index.php?curid=23272278" target="_blank"><u>Wikimedia Commons</u></a>)
                     </p>
                 </Col>
 
