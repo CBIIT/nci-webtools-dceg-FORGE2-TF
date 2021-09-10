@@ -14,20 +14,23 @@ export function Home() {
             minHeight: "500px"
         }}>
             <Row>
-                <Col lg={12} className="mb-3 text-center">
+                <Col lg={2}></Col>
+                <Col lg={8} className="mb-3 text-center">
                     <img   
                         className="center-block"
                         src="assets/img/Transcription_Factors.svg"
                         alt="FORGE2-TF diagram"
-                        width="60%"
+                        style={{maxWidth: '1000px'}}
                     />
+                </Col>
+                <Col lg={2}>
                     <p className="figure-caption">
-                        Modified from image by Kelvin13 (Own work, CC BY 3.0, <a style={{color: "#6c757d"}} href="https://commons.wikimedia.org/w/index.php?curid=23272278" target="_blank">https://commons.wikimedia.org/w/index.php?curid=23272278</a>)
+                        Modified from image by Kelvin13 (Own work, CC BY 3.0, <a style={{color: "#6c757d"}} href="https://commons.wikimedia.org/w/index.php?curid=23272278" target="_blank">Wikimedia Commons</a>)
                     </p>
                 </Col>
 
                 <Col lg={12}>
-                    <div className="mb-2">
+                    <div className="mb-2 text-center">
                         <Brand
                             brandTitle={'FORGE2-TF'}
                             brandSubtitle={'TF-centric SNP array browser'}
@@ -35,7 +38,7 @@ export function Home() {
                     </div>
                 </Col>
                 <Col lg={12}>
-                    <p>
+                    <p className="text-center">
                         The <em>FORGE2-TF</em> is a complementary method to the{` `}
                         <a href="https://forge2.altiusinstitute.org/"
                             target="_blank"
