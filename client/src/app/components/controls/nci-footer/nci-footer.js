@@ -100,7 +100,7 @@ export function NCIFooter({
               <ul className="footer-links">
                 {column.links.map((link, linkIndex) => (
                   <li key={`footer-column-${columnIndex}-link-${linkIndex}`}>
-                    <a href={link.href}>{link.title}</a>
+                    <a href={link.href} target="_blank">{link.title}</a>
                   </li>
                 ))}
               </ul>
@@ -113,7 +113,7 @@ export function NCIFooter({
         <ul className="footer-links inline">
           {footerLinks.map((link, linkIndex) => (
             <li key={`footer-link-${linkIndex}`}>
-              <a href={link.href}>{link.title}</a>
+              <a href={link.href} target="_blank">{link.title}</a>
             </li>
           ))}
         </ul>
