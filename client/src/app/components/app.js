@@ -12,9 +12,7 @@ import { Home } from './pages/home/home';
 import FORGE2TF from './pages/forge2-tf/forge2-tf';
 import Brand from './pages/forge2-tf/panels/brand';
 
-
 export function App() {
-
   const links = [
     {
       route: '/home',
@@ -23,7 +21,7 @@ export function App() {
     {
       route: '/forge2-tf',
       title: 'FORGE2-TF',
-    }
+    },
   ];
 
   return (
@@ -73,7 +71,7 @@ export function App() {
         <Route path="/home" exact={true} component={Home} />
         <Route path="/forge2-tf" component={FORGE2TF} />
       </main>
-      
+
       <div class="bg-primary-dark text-light py-3 px-4">
         <div className="mb-2">
           <div className="brand-container">
@@ -82,7 +80,8 @@ export function App() {
         </div>
         <ul>
           <li>
-            Breeze CE, et al. <em>FORGE2-TF: TF analysis</em> for GWAS SNPs. Manuscript in preparation.
+            Breeze CE, et al. <em>FORGE2-TF: TF analysis</em> for GWAS SNPs.
+            Manuscript in preparation.
           </li>
         </ul>
       </div>

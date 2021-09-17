@@ -10,7 +10,6 @@ import Brand from './brand';
 import * as AppConst from '../../../../appConstants';
 import axios from 'axios';
 
-
 class Settings extends React.Component {
   constructor(props) {
     super(props);

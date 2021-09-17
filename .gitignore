@@ -16,6 +16,7 @@ client/public/assets/motif-logos/
 **data.zip
 scripts/*.txt
 scripts/*.db*
+forge2tf-data.tar.gz
 
 # server
 server/config.json

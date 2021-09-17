@@ -344,7 +344,7 @@ class Viewer extends React.Component {
               // className="react-bootstrap-button-custom-style btn btn-default"
               name="viewer-go-previous"
               // onClick={this.handleInputChange}
-              onClick={_ => this.props.updateCurrentProbe('previous')}
+              onClick={(_) => this.props.updateCurrentProbe('previous')}
             >
               <FaAngleLeft />
             </Button>
@@ -361,7 +361,7 @@ class Viewer extends React.Component {
               // className="react-bootstrap-button-custom-style btn btn-default"
               name="viewer-go-next"
               // onClick={this.handleInputChange}
-              onClick={_ => this.props.updateCurrentProbe('next')}
+              onClick={(_) => this.props.updateCurrentProbe('next')}
             >
               <FaAngleRight />
             </Button>
