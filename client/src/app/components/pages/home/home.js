@@ -23,7 +23,7 @@ export function Home() {
                         style={{maxWidth: '1000px'}}
                     />
                 </Col>
-                <Col lg={2}>
+                <Col lg={2} className="align-self-end">
                     <p className="figure-caption">
                         Modified from image by Kelvin13 (Own work, CC BY 3.0, <a style={{color: "#6c757d"}} href="https://commons.wikimedia.org/w/index.php?curid=23272278" target="_blank"><u>Wikimedia Commons</u></a>)
                     </p>
