@@ -138,6 +138,10 @@ export function App() {
             title: 'POLICIES',
             links: [
               {
+                title: 'HHS Vulnerability Disclosure',
+                href: 'https://www.hhs.gov/vulnerability-disclosure-policy/index.html',
+              },
+              {
                 title: 'Accessibility',
                 href: 'https://www.cancer.gov/policies/accessibility',
               },
