@@ -1,46 +1,48 @@
-
-FROM quay.io/centos/centos:stream8
+FROM public.ecr.aws/amazonlinux/amazonlinux:2022
 
 RUN dnf -y update \
-   && dnf -y install \
-      dnf-plugins-core \
-      epel-release \
-      glibc-langpack-en \
-   && dnf config-manager --set-enabled powertools \
-   && dnf -y module enable nodejs:14 \
-   && dnf -y install \
-      gcc-c++ \
-      make \
-      nodejs \
-      R \
-      # python3 \
-      bzip2 \
-      bzip2-devel \
-      libcurl-devel \
-      openssl-devel \
-      zlib-devel \
-      xz-devel \
-      git \
-      gcc \
-      libffi-devel \
-   && dnf clean all
+ && dnf -y install \
+    gcc-c++ \
+    httpd \
+    make \
+    nodejs \
+    npm \
+    R \
+    bzip2 \
+    bzip2-devel \
+    libcurl-devel \
+    openssl-devel \
+    zlib-devel \
+    xz-devel \
+    git \
+    gcc \
+    libffi-devel \    
+    sqlite \
+    sqlite-devel \
+    python3 \
+    python3-devel \
+    python3-pip \
+    python3-setuptools \
+    python3-wheel \
+    tar \
+ && dnf clean all
 
 # Install latest version of SQLite
-RUN curl https://www.sqlite.org/2021/sqlite-autoconf-3350500.tar.gz -o /tmp/sqlite-autoconf-3350500.tar.gz \
-   && cd /tmp \
-   && tar xvfz sqlite-autoconf-3350500.tar.gz \
-   && cd sqlite-autoconf-3350500 \
-   && LD_RUN_PATH=/usr/local/lib ./configure \
-   && make && make install 
+# RUN curl https://www.sqlite.org/2021/sqlite-autoconf-3350500.tar.gz -o /tmp/sqlite-autoconf-3350500.tar.gz \
+#    && cd /tmp \
+#    && tar xvfz sqlite-autoconf-3350500.tar.gz \
+#    && cd sqlite-autoconf-3350500 \
+#    && LD_RUN_PATH=/usr/local/lib ./configure \
+#    && make && make install 
 
-# Install Python 
-RUN curl https://www.python.org/ftp/python/3.6.8/Python-3.6.8.tgz -o /tmp/Python-3.6.8.tgz \
-   && cd /tmp \
-   && tar xvfz Python-3.6.8.tgz \
-   && cd Python-3.6.8 \
-   && LD_RUN_PATH=/usr/local/lib  ./configure --prefix=/usr --enable-optimizations \
-   && LD_RUN_PATH=/usr/local/lib make \
-   && LD_RUN_PATH=/usr/local/lib make install
+# # Install Python 
+# RUN curl https://www.python.org/ftp/python/3.6.8/Python-3.6.8.tgz -o /tmp/Python-3.6.8.tgz \
+#    && cd /tmp \
+#    && tar xvfz Python-3.6.8.tgz \
+#    && cd Python-3.6.8 \
+#    && LD_RUN_PATH=/usr/local/lib  ./configure --prefix=/usr --enable-optimizations \
+#    && LD_RUN_PATH=/usr/local/lib make \
+#    && LD_RUN_PATH=/usr/local/lib make install
 
 # Install Python packages
 RUN pip3 install boto3 simplejson numpy scipy patsy pandas statsmodels

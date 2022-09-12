@@ -1,17 +1,13 @@
-FROM quay.io/centos/centos:stream8
+FROM public.ecr.aws/amazonlinux/amazonlinux:2022
 
 RUN dnf -y update \
-    && dnf -y install \
-        dnf-plugins-core \
-        epel-release \
-        glibc-langpack-en \
-    && dnf -y module enable nodejs:14 \
-    && dnf -y install \
-        gcc-c++ \
-        httpd \
-        make \
-        nodejs \
-    && dnf clean all
+ && dnf -y install \
+    gcc-c++ \
+    httpd \
+    make \
+    nodejs \
+    npm \
+ && dnf clean all
 
 RUN mkdir /client
 
