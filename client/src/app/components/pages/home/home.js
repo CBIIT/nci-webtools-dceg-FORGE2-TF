@@ -1,6 +1,6 @@
-import React from 'react';
-import { Row, Col } from 'react-bootstrap';
-import Brand from '../forge2-tf/panels/brand';
+import React from "react";
+import { Row, Col } from "react-bootstrap";
+import Brand from "../forge2-tf/panels/brand";
 
 export function Home() {
   return (
@@ -8,8 +8,8 @@ export function Home() {
       <div
         className="bg-white p-4"
         style={{
-          boxShadow: '0px 1px 4px #3c3c3c',
-          minHeight: '500px',
+          boxShadow: "0px 1px 4px #3c3c3c",
+          minHeight: "500px",
         }}
       >
         <Row>
@@ -19,14 +19,14 @@ export function Home() {
               className="center-block"
               src="assets/img/Transcription_Factors.svg"
               alt="FORGE2-TF diagram"
-              style={{ maxWidth: '1000px' }}
+              style={{ maxWidth: "1000px" }}
             />
           </Col>
           <Col lg={2} className="align-self-end">
             <p className="figure-caption">
-              Modified from image by Kelvin13 (Own work, CC BY 3.0,{' '}
+              Modified from image by Kelvin13 (Own work, CC BY 3.0,{" "}
               <a
-                style={{ color: '#6c757d' }}
+                style={{ color: "#6c757d" }}
                 href="https://commons.wikimedia.org/w/index.php?curid=23272278"
                 target="_blank"
               >
@@ -39,8 +39,8 @@ export function Home() {
           <Col lg={12}>
             <div className="mb-2 text-center">
               <Brand
-                brandTitle={'FORGE2-TF'}
-                brandSubtitle={'TF-centric SNP array browser'}
+                brandTitle={"FORGE2-TF"}
+                brandSubtitle={"TF-centric SNP array browser"}
               />
             </div>
           </Col>
@@ -50,7 +50,7 @@ export function Home() {
               <a
                 href="https://forge2.altiusinstitute.org/"
                 target="_blank"
-                style={{ color: '#0062cc' }}
+                style={{ color: "#0062cc" }}
               >
                 FORGE2
               </a>

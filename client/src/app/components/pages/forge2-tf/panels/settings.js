@@ -1,14 +1,14 @@
-import React from 'react';
+import React from "react";
 import {
   Button,
   ButtonGroup,
   FormGroup,
   FormControl,
   Form,
-} from 'react-bootstrap';
-import Brand from './brand';
-import * as AppConst from '../../../../appConstants';
-import axios from 'axios';
+} from "react-bootstrap";
+import Brand from "./brand";
+import * as AppConst from "../../../../appConstants";
+import axios from "axios";
 
 class Settings extends React.Component {
   constructor(props) {
@@ -32,12 +32,12 @@ class Settings extends React.Component {
     this.handleInputChange = this.handleInputChange.bind(this);
     this.renderSettings = this.renderSettings.bind(this);
     this.handleSlideStop = this.handleSlideStop.bind(this);
-    console.log('probesString', this.state.probesString);
-    console.log('snpFilter', this.state.snpFilter);
+    console.log("probesString", this.state.probesString);
+    console.log("snpFilter", this.state.snpFilter);
   }
 
   handleKeyPress(event) {
-    if (event.key == 'Enter') {
+    if (event.key == "Enter") {
       this.renderSettings();
     }
   }
@@ -46,18 +46,18 @@ class Settings extends React.Component {
     const target = event.target;
     var value = mouseoutFlag
       ? null
-      : target.type === 'checkbox'
+      : target.type === "checkbox"
       ? target.checked
       : target.value;
     const name = customName ? customName : target.name;
     //console.log("name", name);
     //console.log("value", value);
 
-    if (name == 'padding') {
+    if (name == "padding") {
       value = parseInt(value);
     }
 
-    if (name == 'probes') {
+    if (name == "probes") {
       var probesString = value;
       this.setState({
         probesString: value,
@@ -69,20 +69,20 @@ class Settings extends React.Component {
         },
         function () {
           if (
-            target.type === 'button' ||
-            target.type === 'select-one' ||
-            target.type === 'checkbox'
+            target.type === "button" ||
+            target.type === "select-one" ||
+            target.type === "checkbox"
           ) {
             document.activeElement.blur();
-            if (name == 'render') {
+            if (name == "render") {
               this.renderSettings();
             }
             if (
-              name == 'sample' ||
-              name == 'array' ||
-              name == 'annotationType' ||
-              name == 'signalType' ||
-              name == 'viewMode'
+              name == "sample" ||
+              name == "array" ||
+              name == "annotationType" ||
+              name == "signalType" ||
+              name == "viewMode"
               // name == 'snpFilter'
             ) {
               this.renderSettings();
@@ -94,14 +94,14 @@ class Settings extends React.Component {
   }
 
   async handlePing() {
-    axios.get('api/ping').then(
+    axios.get("api/ping").then(
       (res) => {
-        console.log('result', res);
+        console.log("result", res);
         window.alert(`server status: ${res.data}`);
       },
       (err) => {
-        console.log('PING ERROR');
-        console.log('error response : ', err);
+        console.log("PING ERROR");
+        console.log("error response : ", err);
         window.alert(`server status: PING ERROR`);
         this.props.updateShowErrorModal();
       }
@@ -109,21 +109,21 @@ class Settings extends React.Component {
   }
 
   componentDidMount() {
-    $('#settings-panel-padding-slider')
+    $("#settings-panel-padding-slider")
       .slider({})
-      .on('slideStop', this.handleSlideStop)
-      .data('slider');
-    $('#settings-panel-smoothing-slider')
+      .on("slideStop", this.handleSlideStop)
+      .data("slider");
+    $("#settings-panel-smoothing-slider")
       .slider({})
-      .on('slideStop', this.handleSlideStop)
-      .data('slider');
+      .on("slideStop", this.handleSlideStop)
+      .data("slider");
   }
 
   handleSlideStop(event) {
     document.activeElement.blur();
     var value = event.target.value;
     var name = event.target.name;
-    if (name == 'padding') {
+    if (name == "padding") {
       var padding = parseInt([20, 50, 100, 200, 500][value]);
       this.setState(
         {
@@ -133,7 +133,7 @@ class Settings extends React.Component {
           this.renderSettings();
         }
       );
-    } else if (name == 'smoothing') {
+    } else if (name == "smoothing") {
       var smoothing = parseInt(AppConst.settings.smoothings[value]);
       this.setState(
         {
@@ -147,10 +147,10 @@ class Settings extends React.Component {
   }
 
   renderSettings() {
-    console.log('rendering settings in current state...');
+    console.log("rendering settings in current state...");
     // var query_probe_names =
     //   'https://forge2-tf.altiusinstitute.org/assets/services/query_probe_names.py';
-    var query_probe_names = 'api/query-probe-names';
+    var query_probe_names = "api/query-probe-names";
     var probesArray = this.state.probesString.split(/[,|\n|\r\n]/);
     var uniq = (arr) => Array.from(new Set(arr));
     let uniqProbesArray = uniq(probesArray);
@@ -158,7 +158,7 @@ class Settings extends React.Component {
       return el;
     });
     probesArray = filteredProbesArray;
-    console.log('probesArray', probesArray);
+    console.log("probesArray", probesArray);
     if (probesArray) {
       var settings = {
         array: this.state.array,
@@ -169,7 +169,7 @@ class Settings extends React.Component {
       var currentProbe = probesArray[0];
       axios.post(query_probe_names, { settings }).then(
         (res) => {
-          console.log('settings - handleInputChange() - result');
+          console.log("settings - handleInputChange() - result");
           console.log(res.data);
           var filteredByNameProbesArray = res.data.probes;
           var probesCount = filteredByNameProbesArray.length;
@@ -196,9 +196,9 @@ class Settings extends React.Component {
           );
         },
         (err) => {
-          console.log('settings - handleInputChange() - error');
+          console.log("settings - handleInputChange() - error");
           // console.log(err.response.data.msg);
-          console.log('error response : ', err);
+          console.log("error response : ", err);
           this.props.updateShowErrorModal();
         }
       );
@@ -269,13 +269,13 @@ class Settings extends React.Component {
       os.map(function (d) {
         let k = Object.keys(d)[0];
         let v = d[k];
-        let elems = k.split('-');
+        let elems = k.split("-");
         let sample = elems[0];
         let ds = elems[1];
         if (os_counts[sample] === undefined) {
           os_counts[sample] = 0;
-          var nk = sample + '-aggregate';
-          var fse = sample.split('_');
+          var nk = sample + "-aggregate";
+          var fse = sample.split("_");
           var fse2 = [];
           fse.forEach(function (d) {
             // test if fetal tissue name scheme
@@ -292,7 +292,7 @@ class Settings extends React.Component {
               );
             }
           });
-          var nv = fse2.join(' ');
+          var nv = fse2.join(" ");
           //console.log("nk, nv", nk, nv);
           o = {};
           o[nk] = nv;
@@ -316,7 +316,7 @@ class Settings extends React.Component {
       */
       var reformat = function (k, v) {
         var o = {};
-        o[k] = v + ' (' + os_counts[k.split('-')[0]] + ' experiments)';
+        o[k] = v + " (" + os_counts[k.split("-")[0]] + " experiments)";
         return o;
       };
 
@@ -361,10 +361,10 @@ class Settings extends React.Component {
     var snpFilterToggleSettings = (
       <div
         className={
-          self.state.viewMode === 'Summary' ||
-          self.state.viewMode === 'Associations'
-            ? ''
-            : 'hidden-container'
+          self.state.viewMode === "Summary" ||
+          self.state.viewMode === "Associations"
+            ? ""
+            : "hidden-container"
         }
       >
         <FormGroup
@@ -417,7 +417,7 @@ class Settings extends React.Component {
         // data-slider-slideStop={this.handleSlideStop}
         data-slider-ticks="[0, 1, 2, 3, 4]"
         data-slider-ticks-labels={
-          '[' + AppConst.settings.paddings.toString() + ']'
+          "[" + AppConst.settings.paddings.toString() + "]"
         }
         data-slider-min="0"
         data-slider-max="4"
@@ -439,7 +439,7 @@ class Settings extends React.Component {
         // data-slider-slideStop={this.handleSlideStop}
         data-slider-ticks="[0, 1, 2, 3, 4]"
         data-slider-ticks-labels={
-          '[' + AppConst.settings.smoothings.toString() + ']'
+          "[" + AppConst.settings.smoothings.toString() + "]"
         }
         data-slider-min="0"
         data-slider-max={Math.max(AppConst.settings.smoothings).toString()}
@@ -477,7 +477,7 @@ class Settings extends React.Component {
           name="viewMode"
           key={o}
           value={o}
-          className={self.state.viewMode === o ? 'active' : ''}
+          className={self.state.viewMode === o ? "active" : ""}
         >
           {o}
         </Button>
@@ -486,15 +486,15 @@ class Settings extends React.Component {
 
     var viewModeNotice = (
       <p className="panel-label-notice noselect">
-        View{' '}
+        View{" "}
         <em>
           <strong>associations</strong>
-        </em>{' '}
+        </em>{" "}
         of transcription factors (TF) and footprints with an individual SNP, or
-        a{' '}
+        a{" "}
         <em>
           <strong>summary</strong>
-        </em>{' '}
+        </em>{" "}
         of TF associations over all SNPs, with positional overlap of selected
         SNPs with associated TFs
       </p>
@@ -508,7 +508,7 @@ class Settings extends React.Component {
           name="signalType"
           key={o}
           value={o}
-          className={self.state.signalType === o ? 'active' : ''}
+          className={self.state.signalType === o ? "active" : ""}
         >
           {o}
         </Button>
@@ -530,7 +530,7 @@ class Settings extends React.Component {
           name="annotationType"
           key={o}
           value={o}
-          className={self.state.annotationType === o ? 'active' : ''}
+          className={self.state.annotationType === o ? "active" : ""}
         >
           {o}
         </Button>
@@ -584,7 +584,7 @@ class Settings extends React.Component {
     var paddingSettings = (
       <div
         className={
-          self.state.viewMode !== 'Associations' ? 'hidden-container' : ''
+          self.state.viewMode !== "Associations" ? "hidden-container" : ""
         }
       >
         <p className="settings-item-title settings-item-padding-title ">
@@ -610,7 +610,7 @@ class Settings extends React.Component {
     var signalRenderingTypeSettings = (
       <div
         className={
-          self.state.viewMode !== 'Associations' ? 'hidden-container' : ''
+          self.state.viewMode !== "Associations" ? "hidden-container" : ""
         }
       >
         <p className="settings-item-title settings-item-padding-title">
@@ -632,7 +632,7 @@ class Settings extends React.Component {
     var tfOverlapTypeSettings = (
       <div
         className={
-          self.state.viewMode !== 'Associations' ? 'hidden-container' : ''
+          self.state.viewMode !== "Associations" ? "hidden-container" : ""
         }
       >
         <p className="settings-item-title settings-item-padding-title">
@@ -659,8 +659,8 @@ class Settings extends React.Component {
           </h2> */}
           <div className="mt-1">
             <Brand
-              brandTitle={'FORGE2-TF'}
-              brandSubtitle={'TF-centric SNP array browser'}
+              brandTitle={"FORGE2-TF"}
+              brandSubtitle={"TF-centric SNP array browser"}
             />
           </div>
 
@@ -707,13 +707,13 @@ class Settings extends React.Component {
         <div className="settings-item-padding-title">
           Questions or comments?
           <br />
-          Contact us via{' '}
+          Contact us via{" "}
           <a
             className="settings-link"
             href="mailto:NCIFORGE2TFWebAdmin@mail.nih.gov?subject=FORGE2-TF"
             target="_top"
             title="Support"
-            style={{ color: '#0062cc' }}
+            style={{ color: "#0062cc" }}
           >
             email
           </a>

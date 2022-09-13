@@ -1,26 +1,26 @@
-import React from 'react';
-import { NCIFooter } from './controls/nci-footer/nci-footer';
-import './main.scss';
-import { Navbar, Nav } from 'react-bootstrap';
+import React from "react";
+import { NCIFooter } from "./controls/nci-footer/nci-footer";
+import "./main.scss";
+import { Navbar, Nav } from "react-bootstrap";
 import {
   HashRouter as Router,
   Route,
   NavLink,
   Redirect,
-} from 'react-router-dom';
-import { Home } from './pages/home/home';
-import FORGE2TF from './pages/forge2-tf/forge2-tf';
-import Brand from './pages/forge2-tf/panels/brand';
+} from "react-router-dom";
+import { Home } from "./pages/home/home";
+import FORGE2TF from "./pages/forge2-tf/forge2-tf";
+import Brand from "./pages/forge2-tf/panels/brand";
 
 export function App() {
   const links = [
     {
-      route: '/home',
-      title: 'Home',
+      route: "/home",
+      title: "Home",
     },
     {
-      route: '/forge2-tf',
-      title: 'FORGE2-TF',
+      route: "/forge2-tf",
+      title: "FORGE2-TF",
     },
   ];
 
@@ -53,7 +53,7 @@ export function App() {
             {links.map((link, index) => (
               <NavLink
                 key={`navlink-${index}`}
-                exact={link.route === '/'}
+                exact={link.route === "/"}
                 activeClassName="active font-weight-bold"
                 className="nav-link px-3"
                 to={link.route}
@@ -97,81 +97,81 @@ export function App() {
         }
         columns={[
           {
-            title: 'CONTACT INFORMATION',
+            title: "CONTACT INFORMATION",
             links: [
               {
-                title: 'Contact Us',
-                href: 'https://www.cancer.gov/contact',
+                title: "Contact Us",
+                href: "https://www.cancer.gov/contact",
               },
               {
-                title: 'Support',
-                href: 'mailto:NCIFORGE2TFWebAdmin@mail.nih.gov',
+                title: "Support",
+                href: "mailto:NCIFORGE2TFWebAdmin@mail.nih.gov",
               },
             ],
           },
           {
-            title: 'MORE INFORMATION',
+            title: "MORE INFORMATION",
             links: [
               {
-                title: 'About This Website',
-                href: 'https://www.cancer.gov/about-website',
+                title: "About This Website",
+                href: "https://www.cancer.gov/about-website",
               },
               {
-                title: 'Multimedia',
-                href: 'https://www.cancer.gov/multimedia',
+                title: "Multimedia",
+                href: "https://www.cancer.gov/multimedia",
               },
               {
-                title: 'Publications',
-                href: 'https://www.cancer.gov/publications',
+                title: "Publications",
+                href: "https://www.cancer.gov/publications",
               },
               {
-                title: 'Site Map',
-                href: 'https://www.cancer.gov/about-website/sitemap',
+                title: "Site Map",
+                href: "https://www.cancer.gov/about-website/sitemap",
               },
               {
-                title: 'Digital Standards for NCI Websites',
-                href: 'https://www.cancer.gov/digital-standards',
+                title: "Digital Standards for NCI Websites",
+                href: "https://www.cancer.gov/digital-standards",
               },
             ],
           },
           {
-            title: 'POLICIES',
+            title: "POLICIES",
             links: [
               {
-                title: 'Accessibility',
-                href: 'https://www.cancer.gov/policies/accessibility',
+                title: "Accessibility",
+                href: "https://www.cancer.gov/policies/accessibility",
               },
               {
-                title: 'Content Policy',
-                href: 'https://www.cancer.gov/policies/comments',
+                title: "Content Policy",
+                href: "https://www.cancer.gov/policies/comments",
               },
               {
-                title: 'Disclaimer',
-                href: 'https://www.cancer.gov/policies/disclaimer',
+                title: "Disclaimer",
+                href: "https://www.cancer.gov/policies/disclaimer",
               },
               {
-                title: 'FOIA',
-                href: 'https://www.cancer.gov/policies/foia',
+                title: "FOIA",
+                href: "https://www.cancer.gov/policies/foia",
               },
               {
-                title: 'Privacy & Security',
-                href: 'https://www.cancer.gov/policies/privacy-security',
+                title: "Privacy & Security",
+                href: "https://www.cancer.gov/policies/privacy-security",
               },
               {
-                title: 'Reuse & Copyright',
-                href: 'https://www.cancer.gov/policies/copyright-reuse',
+                title: "Reuse & Copyright",
+                href: "https://www.cancer.gov/policies/copyright-reuse",
               },
               {
-                title: 'Syndication Services',
-                href: 'https://www.cancer.gov/syndication',
+                title: "Syndication Services",
+                href: "https://www.cancer.gov/syndication",
               },
               {
-                title: 'Website Linking',
-                href: 'https://www.cancer.gov/policies/linking',
+                title: "Website Linking",
+                href: "https://www.cancer.gov/policies/linking",
               },
               {
-                title: 'HHS Vulnerability Disclosure',
-                href: 'https://www.hhs.gov/vulnerability-disclosure-policy/index.html',
+                title: "HHS Vulnerability Disclosure",
+                href: "https://www.hhs.gov/vulnerability-disclosure-policy/index.html",
               },
             ],
           },

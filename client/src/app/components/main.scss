@@ -1,11 +1,11 @@
-@import '~bootstrap/scss/bootstrap';
+@import "~bootstrap/scss/bootstrap";
 
 body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
-  font-family: '.SFNSDisplay-Regular', -apple-system, BlinkMacSystemFont,
-    'Helvetica Neue', 'Helvetica', 'Calibri', sans-serif !important;
+  font-family: ".SFNSDisplay-Regular", -apple-system, BlinkMacSystemFont,
+    "Helvetica Neue", "Helvetica", "Calibri", sans-serif !important;
   line-height: 1.2 !important;
   letter-spacing: 0.025em !important;
   background-color: #e5e5e5;
@@ -22,7 +22,7 @@ h4 {
 }
 
 h5::before {
-  content: '▪ ';
+  content: "▪ ";
 }
 
 h5 {
@@ -36,7 +36,7 @@ h6 {
 
 tt,
 pre {
-  font-family: 'Consolas', 'Input Mono', 'Monaco', 'Menlo', 'Courier New',
+  font-family: "Consolas", "Input Mono", "Monaco", "Menlo", "Courier New",
     Courier, monospace;
   font-size: 0.85em;
 }
@@ -54,7 +54,7 @@ th {
 }
 
 td {
-  font-family: 'Consolas', 'Input Mono', 'Monaco', 'Menlo', 'Courier New',
+  font-family: "Consolas", "Input Mono", "Monaco", "Menlo", "Courier New",
     Courier, monospace;
 }
 

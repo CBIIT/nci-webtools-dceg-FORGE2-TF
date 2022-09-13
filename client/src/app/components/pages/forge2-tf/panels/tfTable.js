@@ -1,6 +1,6 @@
-import React from 'react';
-import ReactTable from 'react-table';
-import * as AppConst from '../../../../appConstants';
+import React from "react";
+import ReactTable from "react-table";
+import * as AppConst from "../../../../appConstants";
 
 class TFTable extends React.Component {
   constructor(props) {
@@ -67,12 +67,12 @@ class TFTable extends React.Component {
     //    console.log("tfTable - componentDidUpdate()", this.timeStampInMs);
     setTimeout(function () {
       //self.updateDimensions();
-      $('.tfTable').css(
-        'max-height',
-        parseFloat($('#viewer').height()) -
-          parseFloat($('#plot-container').height()) -
-          parseFloat($('#viewer-hint').height()) -
-          parseFloat($('#viewer-gallery-header').height()) -
+      $(".tfTable").css(
+        "max-height",
+        parseFloat($("#viewer").height()) -
+          parseFloat($("#plot-container").height()) -
+          parseFloat($("#viewer-hint").height()) -
+          parseFloat($("#viewer-gallery-header").height()) -
           2 * 20.0
       );
     }, 100);
@@ -85,8 +85,8 @@ class TFTable extends React.Component {
   }
 */
   imgError(ev) {
-    ev.target.src = 'assets/img/blank.png';
-    ev.target.style = 'max-height:20px;text-align:center';
+    ev.target.src = "assets/img/blank.png";
+    ev.target.style = "max-height:20px;text-align:center";
   }
 
   sortedChange(column, shiftKey) {
@@ -107,16 +107,16 @@ class TFTable extends React.Component {
         let score = element.score;
         let position =
           element.chromosome +
-          ':' +
+          ":" +
           element.start +
-          '-' +
+          "-" +
           element.stop +
-          ':' +
+          ":" +
           element.strand;
         //let sequence = element.sequence;
         let modifiedDb =
-          db == 'jaspar' ? db + '/JASPAR.vertebrates.meme.pngs' : db;
-        let modifiedName = db == 'jaspar' ? name.replace(/::/, '_') : name;
+          db == "jaspar" ? db + "/JASPAR.vertebrates.meme.pngs" : db;
+        let modifiedName = db == "jaspar" ? name.replace(/::/, "_") : name;
         var obj = {
           name: name,
           database: database,
@@ -134,56 +134,56 @@ class TFTable extends React.Component {
   render() {
     const reactTableColumns = [
       {
-        Header: 'Name',
-        accessor: 'name',
-        width: 'auto',
-        headerStyle: { fontWeight: 'bold', textAlign: 'left' },
+        Header: "Name",
+        accessor: "name",
+        width: "auto",
+        headerStyle: { fontWeight: "bold", textAlign: "left" },
         Cell: (row) => (
-          <div style={{ height: '15px', textAlign: 'left', fontSize: '0.9em' }}>
+          <div style={{ height: "15px", textAlign: "left", fontSize: "0.9em" }}>
             {row.value}
           </div>
         ),
       },
       {
-        Header: 'Database',
-        accessor: 'database',
+        Header: "Database",
+        accessor: "database",
         width: 120,
-        headerStyle: { fontWeight: 'bold', textAlign: 'left', width: '120px' },
+        headerStyle: { fontWeight: "bold", textAlign: "left", width: "120px" },
         Cell: (row) => (
-          <div style={{ height: '15px', textAlign: 'left', fontSize: '0.9em' }}>
+          <div style={{ height: "15px", textAlign: "left", fontSize: "0.9em" }}>
             {row.value}
           </div>
         ),
       },
       {
-        Header: 'FIMO p-value',
-        accessor: 'score',
+        Header: "FIMO p-value",
+        accessor: "score",
         width: 180,
-        headerStyle: { fontWeight: 'bold', textAlign: 'left', width: '180px' },
+        headerStyle: { fontWeight: "bold", textAlign: "left", width: "180px" },
         Cell: (row) => (
-          <div style={{ height: '15px', textAlign: 'left', fontSize: '0.9em' }}>
+          <div style={{ height: "15px", textAlign: "left", fontSize: "0.9em" }}>
             {row.value}
           </div>
         ),
       },
       {
-        Header: 'Sequence logo',
-        accessor: 'logo',
-        headerStyle: { fontWeight: 'bold', textAlign: 'left' },
+        Header: "Sequence logo",
+        accessor: "logo",
+        headerStyle: { fontWeight: "bold", textAlign: "left" },
         width: 150,
         height: 100,
         Cell: (row) => (
           <div
             style={{
-              height: '70px',
-              width: 'auto',
-              maxWidth: '100%',
-              textAlign: 'left',
-              fontSize: '0.9em',
+              height: "70px",
+              width: "auto",
+              maxWidth: "100%",
+              textAlign: "left",
+              fontSize: "0.9em",
             }}
           >
             <img
-              style={{ width: '100%', height: 'auto', textAlign: 'left' }}
+              style={{ width: "100%", height: "auto", textAlign: "left" }}
               src={`assets/motif-logos/logos/${row.value.database}/${row.value.name}.png`}
               onError={this.imgError}
               alt="motif logo"
@@ -192,12 +192,12 @@ class TFTable extends React.Component {
         ),
       },
       {
-        Header: 'Position',
-        accessor: 'position',
-        width: 'auto',
-        headerStyle: { fontWeight: 'bold', textAlign: 'left' },
+        Header: "Position",
+        accessor: "position",
+        width: "auto",
+        headerStyle: { fontWeight: "bold", textAlign: "left" },
         Cell: (row) => (
-          <div style={{ height: '15px', textAlign: 'left', fontSize: '0.9em' }}>
+          <div style={{ height: "15px", textAlign: "left", fontSize: "0.9em" }}>
             {row.value}
           </div>
         ),
@@ -225,7 +225,7 @@ class TFTable extends React.Component {
           showPagination={false}
           defaultSorted={[
             {
-              id: 'score',
+              id: "score",
               desc: false,
             },
           ]}
@@ -233,7 +233,7 @@ class TFTable extends React.Component {
             this.sortedChange(c, s);
           }}
           getTrProps={(state, rowInfo) => {
-            if (typeof rowInfo == 'undefined') {
+            if (typeof rowInfo == "undefined") {
               rowInfo = { index: null };
             }
             if (
@@ -297,17 +297,17 @@ class TFTable extends React.Component {
                   rowInfo.index === this.state.mouseoverRow
                     ? AppConst.settings.style.color
                         .sequenceHighlightedBackground
-                    : 'white',
+                    : "white",
                 color:
                   rowInfo.index === this.state.selectedRow ||
                   rowInfo.index === this.state.mouseoverRow
-                    ? 'black'
-                    : 'black',
+                    ? "black"
+                    : "black",
                 fontWeight:
                   rowInfo.index === this.state.selectedRow ||
                   rowInfo.index === this.state.mouseoverRow
-                    ? 'bold'
-                    : 'normal',
+                    ? "bold"
+                    : "normal",
               },
             };
           }}

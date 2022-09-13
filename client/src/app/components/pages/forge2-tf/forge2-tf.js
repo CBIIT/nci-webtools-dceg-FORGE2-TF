@@ -1,10 +1,10 @@
-import React from 'react';
+import React from "react";
 // import Brand from './panels/brand';
-import Settings from './panels/settings';
-import Viewer from './panels/viewer';
-import { Row, Col } from 'react-bootstrap';
-import * as AppConst from '../../../appConstants';
-import { ErrorModal } from '../../controls/error-modal/error-modal';
+import Settings from "./panels/settings";
+import Viewer from "./panels/viewer";
+import { Row, Col } from "react-bootstrap";
+import * as AppConst from "../../../appConstants";
+import { ErrorModal } from "../../controls/error-modal/error-modal";
 
 export default class FORGE2TF extends React.Component {
   constructor(props) {
@@ -25,7 +25,7 @@ export default class FORGE2TF extends React.Component {
       errorModal: AppConst.settings.defaults.errorModal,
     };
 
-    const queryString = require('query-string');
+    const queryString = require("query-string");
     const parsed = queryString.parse(location.search);
     if (parsed.array !== undefined) {
       var array = parsed.array;
@@ -40,9 +40,9 @@ export default class FORGE2TF extends React.Component {
       }
     }
     if (parsed.probes !== undefined) {
-      this.defaultSettings.probes = parsed.probes.split(',');
-      this.defaultSettings.probesCount = parsed.probes.split(',').length;
-      this.defaultSettings.currentProbe = parsed.probes.split(',')[0];
+      this.defaultSettings.probes = parsed.probes.split(",");
+      this.defaultSettings.probesCount = parsed.probes.split(",").length;
+      this.defaultSettings.currentProbe = parsed.probes.split(",")[0];
     }
     if (parsed.padding !== undefined) {
       var padding = parseInt(parsed.padding);
@@ -60,14 +60,14 @@ export default class FORGE2TF extends React.Component {
     }
 
     this.state = {
-      brandTitle: 'FORGE2-TF',
-      brandSubtitle: 'TF-centric SNP array browser',
+      brandTitle: "FORGE2-TF",
+      brandSubtitle: "TF-centric SNP array browser",
       settings: this.defaultSettings,
       settingsChangeStart: false,
       plotKey: 0,
-      plotKeyPrefix: 'plot-',
+      plotKeyPrefix: "plot-",
       tfTableKey: 0,
-      tfTableKeyPrefix: 'tfTable-',
+      tfTableKeyPrefix: "tfTable-",
       errorModal: this.defaultSettings.errorModal,
     };
     this.updateSettings = this.updateSettings.bind(this);
@@ -79,7 +79,7 @@ export default class FORGE2TF extends React.Component {
   }
 
   componentDidMount() {
-    console.log('initial settings...');
+    console.log("initial settings...");
     console.log(this.state.settings);
   }
 
@@ -92,7 +92,7 @@ export default class FORGE2TF extends React.Component {
         tfTableKey: this.state.tfTableKeyPrefix + this.randomInt(0, 1000000),
       },
       function () {
-        console.log('updated global settings...');
+        console.log("updated global settings...");
         console.log(this.state.settings);
       }
     );
@@ -114,13 +114,13 @@ export default class FORGE2TF extends React.Component {
     var previousSettings = this.state.settings;
     //console.log("app - updateCurrentProbe() - previousSettings", previousSettings);
     switch (direction) {
-      case 'previous':
+      case "previous":
         nextProbeIndex =
           previousSettings.probesIndex - 1 >= 0
             ? (previousSettings.probesIndex - 1) % previousSettings.probesCount
             : previousSettings.probesCount - 1;
         break;
-      case 'next':
+      case "next":
         nextProbeIndex =
           (previousSettings.probesIndex + 1) % previousSettings.probesCount;
         break;
@@ -128,8 +128,8 @@ export default class FORGE2TF extends React.Component {
         break;
     }
     var nextSettings = JSON.parse(JSON.stringify(this.state.settings));
-    nextSettings['probesIndex'] = nextProbeIndex;
-    nextSettings['currentProbe'] = this.state.settings.probes[nextProbeIndex];
+    nextSettings["probesIndex"] = nextProbeIndex;
+    nextSettings["currentProbe"] = this.state.settings.probes[nextProbeIndex];
     //console.log("app - updateCurrentProbe() - nextSettings", nextSettings);
     this.setState(
       {
@@ -139,7 +139,7 @@ export default class FORGE2TF extends React.Component {
         tfTableKey: this.state.tfTableKeyPrefix + this.randomInt(0, 1000000),
       },
       function () {
-        console.log('updated global settings...');
+        console.log("updated global settings...");
         console.log(this.state.settings);
       }
     );
@@ -157,7 +157,7 @@ export default class FORGE2TF extends React.Component {
         errorModal: true,
       },
       function () {
-        console.log('show error modal...');
+        console.log("show error modal...");
       }
     );
   }
@@ -168,7 +168,7 @@ export default class FORGE2TF extends React.Component {
         errorModal: false,
       },
       function () {
-        console.log('close error modal...');
+        console.log("close error modal...");
       }
     );
   }

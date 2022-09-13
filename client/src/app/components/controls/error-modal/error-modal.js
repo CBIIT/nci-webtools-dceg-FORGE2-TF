@@ -1,5 +1,5 @@
-import React from 'react';
-import { Modal, Button } from 'react-bootstrap';
+import React from "react";
+import { Modal, Button } from "react-bootstrap";
 
 export function ErrorModal(props) {
   return (
@@ -15,7 +15,7 @@ export function ErrorModal(props) {
       <Modal.Body>
         <p>
           An error occured when requesting data. If this problem persists,
-          please contact the administrator at{' '}
+          please contact the administrator at{" "}
           <a href="mailto:NCIFORGE2TFWebAdmin@mail.nih.gov">
             NCIFORGE2TFWebAdmin@mail.nih.gov
           </a>
