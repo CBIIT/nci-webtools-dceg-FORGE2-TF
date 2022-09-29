@@ -1,18 +1,18 @@
-import React from 'react';
-import axios from 'axios';
-import Spinner from 'react-svg-spinner';
+import React from "react";
+import axios from "axios";
+import Spinner from "react-svg-spinner";
 
-import FaAngleLeft from 'react-icons/lib/fa/angle-left';
-import FaAngleRight from 'react-icons/lib/fa/angle-right';
+import FaAngleLeft from "react-icons/lib/fa/angle-left";
+import FaAngleRight from "react-icons/lib/fa/angle-right";
 
-import Plot from './plot';
-import TFTable from './tfTable';
-import TFSummaryTable from './tfSummaryTable';
-import TFPlot from './tfPlot';
+import Plot from "./plot";
+import TFTable from "./tfTable";
+import TFSummaryTable from "./tfSummaryTable";
+import TFPlot from "./tfPlot";
 
-import * as AppConst from '../../../../appConstants';
+import * as AppConst from "../../../../appConstants";
 
-import { Button } from 'react-bootstrap';
+import { Button } from "react-bootstrap";
 
 class Viewer extends React.Component {
   constructor(props) {
@@ -80,16 +80,16 @@ class Viewer extends React.Component {
   }
 
   componentDidMount() {
-    window.addEventListener('resize', this.updateDimensions);
-    if (this.props.settings.viewMode == 'Associations') {
+    window.addEventListener("resize", this.updateDimensions);
+    if (this.props.settings.viewMode == "Associations") {
       this.updateAssociationData();
-    } else if (this.props.settings.viewMode == 'Summary') {
+    } else if (this.props.settings.viewMode == "Summary") {
       this.updateSummaryData();
     }
   }
 
   componentWillUnmount() {
-    window.removeEventListener('resize', this.updateDimensions);
+    window.removeEventListener("resize", this.updateDimensions);
   }
 
   componentDidUpdate() {
@@ -105,12 +105,12 @@ class Viewer extends React.Component {
           },
           function () {
             console.log(
-              'viewer - componentDidUpdate() - issuing POST request...',
+              "viewer - componentDidUpdate() - issuing POST request...",
               self.props.settings.viewMode
             );
-            if (self.props.settings.viewMode == 'Associations') {
+            if (self.props.settings.viewMode == "Associations") {
               self.updateAssociationData();
-            } else if (this.props.settings.viewMode == 'Summary') {
+            } else if (this.props.settings.viewMode == "Summary") {
               this.updateSummaryData();
             }
           }
@@ -121,24 +121,24 @@ class Viewer extends React.Component {
 
   updateAssociationData() {
     var settings = this.props.settings;
-    console.log('viewer - updateAssociationData() - settings');
+    console.log("viewer - updateAssociationData() - settings");
     console.log(settings);
     // var single_sample_query =
     //   'https://forge2-tf.altiusinstitute.org/assets/services/query.py';
     // var aggregate_sample_query =
     //   'https://forge2-tf.altiusinstitute.org/assets/services/query_aggregate.py';
-    var single_sample_query = 'api/query';
-    var aggregate_sample_query = 'api/query-aggregate';
+    var single_sample_query = "api/query";
+    var aggregate_sample_query = "api/query-aggregate";
     var sample_label = settings.sample;
-    var se = sample_label.split('-');
+    var se = sample_label.split("-");
     var sample = se[0];
     var ds = se[1];
     var sample_query =
-      ds == 'aggregate' ? aggregate_sample_query : single_sample_query;
+      ds == "aggregate" ? aggregate_sample_query : single_sample_query;
     var self = this;
     axios.post(sample_query, { settings }).then(
       (res) => {
-        console.log('viewer - updateAssociationData() - result');
+        console.log("viewer - updateAssociationData() - result");
         console.log(res.data);
         self.setState({
           associationData: res.data,
@@ -149,8 +149,8 @@ class Viewer extends React.Component {
         });
       },
       (err) => {
-        console.log('viewer - updateAssociationData() - error');
-        console.log('error response : ', err);
+        console.log("viewer - updateAssociationData() - error");
+        console.log("error response : ", err);
         // const dispatch = useDispatch();
         // actions.updateKey({
         //   key: 'errorModal',
@@ -173,19 +173,19 @@ class Viewer extends React.Component {
   updateSummaryData() {
     var settings = this.props.settings;
     var tf_summary = {};
-    tf_summary['array'] = settings.array;
-    tf_summary['probes'] = settings.probes;
-    tf_summary['fdrThreshold'] = AppConst.settings.defaults.fdrThreshold;
-    tf_summary['nTests'] = AppConst.settings.tf.n;
-    console.log('viewer - updateSummaryData() - tf_summary');
+    tf_summary["array"] = settings.array;
+    tf_summary["probes"] = settings.probes;
+    tf_summary["fdrThreshold"] = AppConst.settings.defaults.fdrThreshold;
+    tf_summary["nTests"] = AppConst.settings.tf.n;
+    console.log("viewer - updateSummaryData() - tf_summary");
     console.log(tf_summary);
     // var tf_summary_query =
     //   'https://forge2-tf.altiusinstitute.org/assets/services/query_tf_summary.py';
-    var tf_summary_query = 'api/query-tf-summary';
+    var tf_summary_query = "api/query-tf-summary";
     var self = this;
     axios.post(tf_summary_query, { tf_summary }).then(
       (res) => {
-        console.log('viewer - updateSummaryData() - result');
+        console.log("viewer - updateSummaryData() - result");
         console.log(res.data);
         self.setState({
           summaryData: res.data,
@@ -196,7 +196,7 @@ class Viewer extends React.Component {
       },
       (err) => {
         // console.log(err.response.data.msg);
-        console.log('error response : ', err);
+        console.log("error response : ", err);
         self.setState({
           summaryData: {},
           summaryDataAvailable: false,
@@ -209,7 +209,7 @@ class Viewer extends React.Component {
   }
 
   updateSelectedTF(rowInfo) {
-    console.log('viewer - updateSelectedTF() - rowInfo', rowInfo);
+    console.log("viewer - updateSelectedTF() - rowInfo", rowInfo);
     this.setState(
       {
         selectedTF: rowInfo,
@@ -223,40 +223,40 @@ class Viewer extends React.Component {
         var smoothing = settings.smoothing;
         // to retrieve signal, we need to submit a POST request for specified samples and selected TF
         var tf_aggregate_summary = {};
-        tf_aggregate_summary['array'] = settings.array;
-        tf_aggregate_summary['tfModel'] = tfModel;
-        tf_aggregate_summary['sample'] = sample;
-        tf_aggregate_summary['padding'] = 20;
-        tf_aggregate_summary['smoothing'] = smoothing;
-        tf_aggregate_summary['signalType'] = settings.signalType;
-        console.log('viewer - updateSelectedTF() - tf_aggregate_summary');
+        tf_aggregate_summary["array"] = settings.array;
+        tf_aggregate_summary["tfModel"] = tfModel;
+        tf_aggregate_summary["sample"] = sample;
+        tf_aggregate_summary["padding"] = 20;
+        tf_aggregate_summary["smoothing"] = smoothing;
+        tf_aggregate_summary["signalType"] = settings.signalType;
+        console.log("viewer - updateSelectedTF() - tf_aggregate_summary");
         console.log(tf_aggregate_summary);
         // var tf_aggregate_summary_query =
         //   'https://forge2-tf.altiusinstitute.org/assets/services/query_tf_aggregate_summary.py';
-        var tf_aggregate_summary_query = 'api/query-tf-aggregate-summary';
+        var tf_aggregate_summary_query = "api/query-tf-aggregate-summary";
         var self = this;
         axios.post(tf_aggregate_summary_query, { tf_aggregate_summary }).then(
           (agg_result) => {
-            console.log('viewer - updateSelectedTF() - agg_result');
+            console.log("viewer - updateSelectedTF() - agg_result");
             console.log(agg_result.data);
             // var tf_probe_overlap_query =
             //   'https://forge2-tf.altiusinstitute.org/assets/services/query_tf_probe_overlap_summary.py';
-            var tf_probe_overlap_query = 'api/query-tf-probe-overlap-summary';
+            var tf_probe_overlap_query = "api/query-tf-probe-overlap-summary";
             var tf_probe_overlap_summary = {};
-            tf_probe_overlap_summary['array'] = settings.array;
-            tf_probe_overlap_summary['tfModel'] = tfModel;
-            tf_probe_overlap_summary['padding'] = 20;
+            tf_probe_overlap_summary["array"] = settings.array;
+            tf_probe_overlap_summary["tfModel"] = tfModel;
+            tf_probe_overlap_summary["padding"] = 20;
             axios
               .post(tf_probe_overlap_query, { tf_probe_overlap_summary })
               .then(
                 (overlap_result) => {
-                  console.log('viewer - updateSelectedTF() - overlap_result');
+                  console.log("viewer - updateSelectedTF() - overlap_result");
                   console.log(overlap_result.data);
-                  overlap_result.data['overlaps']['probes'] =
-                    overlap_result.data['overlaps']['probes']['probes'];
+                  overlap_result.data["overlaps"]["probes"] =
+                    overlap_result.data["overlaps"]["probes"]["probes"];
                   var tf_query_probe_matches = [];
                   self.props.settings.probes.forEach(function (targetProbe) {
-                    overlap_result.data['overlaps']['probes'].forEach(function (
+                    overlap_result.data["overlaps"]["probes"].forEach(function (
                       queryProbes,
                       queryPositionIndex
                     ) {
@@ -264,9 +264,9 @@ class Viewer extends React.Component {
                       queryProbes.forEach(function (queryProbe) {
                         if (targetProbe === queryProbe) {
                           console.log(
-                            'match of',
+                            "match of",
                             targetProbe,
-                            'at position',
+                            "at position",
                             queryPositionIndex
                           );
                           tf_query_probe_matches.push({
@@ -287,18 +287,18 @@ class Viewer extends React.Component {
                       tfQueryProbeMatches: tf_query_probe_matches,
                     },
                     function () {
-                      console.log('state', self.state);
+                      console.log("state", self.state);
                     }
                   );
                 },
                 (overlap_err) => {
-                  console.log('overlap_err', overlap_err.response);
+                  console.log("overlap_err", overlap_err.response);
                   this.props.updateShowErrorModal();
                 }
               );
           },
           (agg_err) => {
-            console.log('agg_err', agg_err.response);
+            console.log("agg_err", agg_err.response);
             self.setState({
               tfAggregateData: {},
             });
@@ -344,7 +344,7 @@ class Viewer extends React.Component {
               // className="react-bootstrap-button-custom-style btn btn-default"
               name="viewer-go-previous"
               // onClick={this.handleInputChange}
-              onClick={(_) => this.props.updateCurrentProbe('previous')}
+              onClick={(_) => this.props.updateCurrentProbe("previous")}
             >
               <FaAngleLeft />
             </Button>
@@ -361,7 +361,7 @@ class Viewer extends React.Component {
               // className="react-bootstrap-button-custom-style btn btn-default"
               name="viewer-go-next"
               // onClick={this.handleInputChange}
-              onClick={(_) => this.props.updateCurrentProbe('next')}
+              onClick={(_) => this.props.updateCurrentProbe("next")}
             >
               <FaAngleRight />
             </Button>
@@ -461,7 +461,7 @@ class Viewer extends React.Component {
   }
 
   renderContent() {
-    if (this.props.settings.viewMode == 'Associations') {
+    if (this.props.settings.viewMode == "Associations") {
       return (
         <div>
           {this.renderAssociationHeader()}
@@ -470,7 +470,7 @@ class Viewer extends React.Component {
             this.renderEmptyBody()}
         </div>
       );
-    } else if (this.props.settings.viewMode == 'Summary') {
+    } else if (this.props.settings.viewMode == "Summary") {
       return (
         <div>
           {this.renderSummaryHeader()}

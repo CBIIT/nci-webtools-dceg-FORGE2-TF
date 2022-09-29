@@ -1,9 +1,9 @@
-import React from 'react';
-import ReactTable from 'react-table';
-import FaExternalLink from 'react-icons/lib/fa/external-link';
-import axios from 'axios';
-import { Button } from 'react-bootstrap';
-import * as AppConst from '../../../../appConstants';
+import React from "react";
+import ReactTable from "react-table";
+import FaExternalLink from "react-icons/lib/fa/external-link";
+import axios from "axios";
+import { Button } from "react-bootstrap";
+import * as AppConst from "../../../../appConstants";
 
 class TFSummaryTable extends React.Component {
   constructor(props) {
@@ -58,19 +58,19 @@ class TFSummaryTable extends React.Component {
     const target = event.target;
     var value = mouseoutFlag
       ? null
-      : target.type === 'checkbox'
+      : target.type === "checkbox"
       ? target.checked
       : target.value;
     const name = customName ? customName : target.name;
     //console.log("name", name);
     //console.log("value", value);
 
-    if (name == 'exportTable') {
+    if (name == "exportTable") {
       this.exportData();
       document.activeElement.blur();
     }
 
-    if (name == 'exportGraph') {
+    if (name == "exportGraph") {
       this.exportGraph();
       document.activeElement.blur();
     }
@@ -78,33 +78,33 @@ class TFSummaryTable extends React.Component {
 
   exportGraph() {
     function convertToPDF(fName, summary) {
-      summary['output'] = fName;
+      summary["output"] = fName;
       var tf_summary = summary;
       // var tf_summary_graph_query =
       //   'https://forge2-tf.altiusinstitute.org/assets/services/query_tf_summary_graph.py';
-      var tf_summary_graph_query = 'api/query-tf-summary-graph';
+      var tf_summary_graph_query = "api/query-tf-summary-graph";
       axios({
-        method: 'post',
+        method: "post",
         url: tf_summary_graph_query,
         data: { tf_summary },
-        responseType: 'arraybuffer',
+        responseType: "arraybuffer",
       }).then(
         (res) => {
-          console.log('tfSummaryTable - exportGraph() - result');
-          console.log('fn', fName);
-          console.log('tf_summary', tf_summary);
+          console.log("tfSummaryTable - exportGraph() - result");
+          console.log("fn", fName);
+          console.log("tf_summary", tf_summary);
           var blob = new Blob([new Uint8Array(res.data)], {
-            type: 'application/pdf;',
+            type: "application/pdf;",
           });
           if (navigator.msSaveBlob) {
             navigator.msSaveBlob(blob, fName);
           } else {
-            var link = document.createElement('a');
+            var link = document.createElement("a");
             if (link.download !== undefined) {
               var url = window.URL.createObjectURL(blob);
-              link.setAttribute('href', url);
-              link.setAttribute('download', fName);
-              link.style.visibility = 'hidden';
+              link.setAttribute("href", url);
+              link.setAttribute("download", fName);
+              link.style.visibility = "hidden";
               document.body.appendChild(link);
               link.click();
               document.body.removeChild(link);
@@ -113,30 +113,30 @@ class TFSummaryTable extends React.Component {
           }
         },
         (err) => {
-          console.log('tfSummaryTable - exportGraph() - error');
+          console.log("tfSummaryTable - exportGraph() - error");
           // console.log(err.response.data.msg);
-          console.log('error response : ', err);
+          console.log("error response : ", err);
         }
       );
     }
     var date = new Date();
-    var fName = ['FORGE2-TF', date.toISOString(), 'pdf'].join('.');
+    var fName = ["FORGE2-TF", date.toISOString(), "pdf"].join(".");
     var summary = this.convertTFSummaryToSummaryObject();
     convertToPDF(fName, summary);
   }
 
   exportData() {
     function convertToCSV(fName, rows) {
-      var csv = '';
+      var csv = "";
       for (var i = 0; i < rows.length; i++) {
         var row = rows[i];
         for (var j = 0; j < row.length; j++) {
-          var val = row[j] === null ? '' : row[j].toString();
-          val = val.replace(/\t/gi, ' ');
-          if (j > 0) csv += '\t';
+          var val = row[j] === null ? "" : row[j].toString();
+          val = val.replace(/\t/gi, " ");
+          if (j > 0) csv += "\t";
           csv += val;
         }
-        csv += '\n';
+        csv += "\n";
       }
       // for UTF-16
       var cCode,
@@ -148,17 +148,17 @@ class TFSummaryTable extends React.Component {
         bArr.push((cCode / 256) >>> 0);
       }
       var blob = new Blob([new Uint8Array(bArr)], {
-        type: 'text/csv;charset=UTF-16LE;',
+        type: "text/csv;charset=UTF-16LE;",
       });
       if (navigator.msSaveBlob) {
         navigator.msSaveBlob(blob, fName);
       } else {
-        var link = document.createElement('a');
+        var link = document.createElement("a");
         if (link.download !== undefined) {
           var url = window.URL.createObjectURL(blob);
-          link.setAttribute('href', url);
-          link.setAttribute('download', fName);
-          link.style.visibility = 'hidden';
+          link.setAttribute("href", url);
+          link.setAttribute("download", fName);
+          link.style.visibility = "hidden";
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
@@ -167,7 +167,7 @@ class TFSummaryTable extends React.Component {
       }
     }
     var date = new Date();
-    var fName = ['FORGE2-TF', date.toISOString(), 'csv'].join('.');
+    var fName = ["FORGE2-TF", date.toISOString(), "csv"].join(".");
     var rows = this.convertTFSummaryToRows();
     convertToCSV(fName, rows);
   }
@@ -197,17 +197,17 @@ class TFSummaryTable extends React.Component {
     setTimeout(() => {
       this.updateDimensions();
       var newMaxHeight =
-        parseFloat($('#viewer').height()) -
-        parseFloat($('#plot-container').height()) -
+        parseFloat($("#viewer").height()) -
+        parseFloat($("#plot-container").height()) -
         20.0 -
         10.0 -
-        parseFloat($('#viewer-summary-header').height()) -
-        parseFloat($('#tf-table-header').height()) -
-        parseFloat($('#tf-table-header').css('margin-bottom')) -
-        parseFloat($('#tf-table-footer').height()) -
-        parseFloat($('#tf-table-footer').css('margin-top'));
-      console.log('newMaxHeight', newMaxHeight);
-      $('.tfSummaryTable').css('max-height', newMaxHeight);
+        parseFloat($("#viewer-summary-header").height()) -
+        parseFloat($("#tf-table-header").height()) -
+        parseFloat($("#tf-table-header").css("margin-bottom")) -
+        parseFloat($("#tf-table-footer").height()) -
+        parseFloat($("#tf-table-footer").css("margin-top"));
+      console.log("newMaxHeight", newMaxHeight);
+      $(".tfSummaryTable").css("max-height", newMaxHeight);
     }, 0);
   }
 
@@ -219,8 +219,8 @@ class TFSummaryTable extends React.Component {
 */
 
   imgError(ev) {
-    ev.target.src = 'assets/img/blank.png';
-    ev.target.style = 'max-height:20px;text-align:center';
+    ev.target.src = "assets/img/blank.png";
+    ev.target.style = "max-height:20px;text-align:center";
   }
 
   sortedChange(column, shiftKey) {
@@ -231,7 +231,7 @@ class TFSummaryTable extends React.Component {
     let summary = {};
     let fdrPct = AppConst.settings.defaults.fdrThreshold * 100;
     let rows = [];
-    rows.push(['TF', 'Database', 'pValue', 'qValue']);
+    rows.push(["TF", "Database", "pValue", "qValue"]);
     var data = JSON.parse(this.props.data);
     const dbs = AppConst.settings.tf.databases;
     const dbsLength = dbs.length;
@@ -248,21 +248,21 @@ class TFSummaryTable extends React.Component {
         rows.push(row);
       });
     }
-    summary['fdrPct'] = fdrPct;
-    summary['rows'] = rows;
+    summary["fdrPct"] = fdrPct;
+    summary["rows"] = rows;
     return summary;
   }
 
   convertTFSummaryToRows() {
     let fdrPct = AppConst.settings.defaults.fdrThreshold * 100;
     let rows = [];
-    rows.push(['TF summary']);
+    rows.push(["TF summary"]);
     rows.push([]);
-    rows.push(['FDR', AppConst.settings.defaults.fdrThreshold]);
-    rows.push(['FDR (%)', fdrPct]);
-    rows.push(['probes', this.props.probes.join('|')]);
+    rows.push(["FDR", AppConst.settings.defaults.fdrThreshold]);
+    rows.push(["FDR (%)", fdrPct]);
+    rows.push(["probes", this.props.probes.join("|")]);
     rows.push([]);
-    rows.push(['TF', 'Database', 'p-value', 'q-value']);
+    rows.push(["TF", "Database", "p-value", "q-value"]);
     var data = JSON.parse(this.props.data);
     const dbs = AppConst.settings.tf.databases;
     const dbsLength = dbs.length;
@@ -298,11 +298,11 @@ class TFSummaryTable extends React.Component {
           let database = AppConst.settings.tf.db_name_formatted[db];
           let pval = Number.parseFloat(element.pval).toPrecision(6);
           let qval = Number.parseFloat(element.qval).toPrecision(6);
-          let modifiedPval = pval == 2.22507e-308 ? '<2.23e-308' : pval;
-          let modifiedQval = pval == 2.22507e-308 ? '<3.34e-308' : qval;
+          let modifiedPval = pval == 2.22507e-308 ? "<2.23e-308" : pval;
+          let modifiedQval = pval == 2.22507e-308 ? "<3.34e-308" : qval;
           let modifiedDb =
-            db == 'jaspar' ? db + '/JASPAR.vertebrates.meme.pngs' : db;
-          let modifiedName = db == 'jaspar' ? name.replace(/::/, '_') : name;
+            db == "jaspar" ? db + "/JASPAR.vertebrates.meme.pngs" : db;
+          let modifiedName = db == "jaspar" ? name.replace(/::/, "_") : name;
           var obj = {
             name: name,
             database: database,
@@ -320,67 +320,67 @@ class TFSummaryTable extends React.Component {
   render() {
     const reactTableColumns = [
       {
-        Header: 'Name',
-        accessor: 'name',
-        width: 'auto',
-        headerStyle: { fontWeight: 'bold', textAlign: 'left' },
+        Header: "Name",
+        accessor: "name",
+        width: "auto",
+        headerStyle: { fontWeight: "bold", textAlign: "left" },
         Cell: (row) => (
-          <div style={{ height: '15px', textAlign: 'left', fontSize: '0.9em' }}>
+          <div style={{ height: "15px", textAlign: "left", fontSize: "0.9em" }}>
             {row.value}
           </div>
         ),
       },
       {
-        Header: 'Database',
-        accessor: 'database',
+        Header: "Database",
+        accessor: "database",
         width: 120,
-        headerStyle: { fontWeight: 'bold', textAlign: 'left', width: '120px' },
+        headerStyle: { fontWeight: "bold", textAlign: "left", width: "120px" },
         Cell: (row) => (
-          <div style={{ height: '15px', textAlign: 'left', fontSize: '0.9em' }}>
+          <div style={{ height: "15px", textAlign: "left", fontSize: "0.9em" }}>
             {row.value}
           </div>
         ),
       },
       {
-        Header: 'p-value',
-        accessor: 'pval',
+        Header: "p-value",
+        accessor: "pval",
         width: 120,
-        headerStyle: { fontWeight: 'bold', textAlign: 'left', width: '180px' },
+        headerStyle: { fontWeight: "bold", textAlign: "left", width: "180px" },
         Cell: (row) => (
-          <div style={{ height: '15px', textAlign: 'left', fontSize: '0.9em' }}>
+          <div style={{ height: "15px", textAlign: "left", fontSize: "0.9em" }}>
             {row.value}
           </div>
         ),
       },
       {
-        Header: 'q-value',
-        accessor: 'qval',
+        Header: "q-value",
+        accessor: "qval",
         width: 120,
-        headerStyle: { fontWeight: 'bold', textAlign: 'left', width: '180px' },
+        headerStyle: { fontWeight: "bold", textAlign: "left", width: "180px" },
         Cell: (row) => (
-          <div style={{ height: '15px', textAlign: 'left', fontSize: '0.9em' }}>
+          <div style={{ height: "15px", textAlign: "left", fontSize: "0.9em" }}>
             {row.value}
           </div>
         ),
       },
       {
-        Header: 'Sequence logo',
-        accessor: 'logo',
-        headerStyle: { fontWeight: 'bold', textAlign: 'left' },
+        Header: "Sequence logo",
+        accessor: "logo",
+        headerStyle: { fontWeight: "bold", textAlign: "left" },
         width: 150,
         height: 100,
         Cell: (row) => (
           <div
             style={{
-              height: '70px',
-              width: 'auto',
-              maxWidth: '100%',
-              textAlign: 'left',
-              fontSize: '0.9em',
+              height: "70px",
+              width: "auto",
+              maxWidth: "100%",
+              textAlign: "left",
+              fontSize: "0.9em",
             }}
           >
             <img
-              style={{ width: '100%', height: 'auto', textAlign: 'left' }}
+              style={{ width: "100%", height: "auto", textAlign: "left" }}
               src={`assets/motif-logos/logos/${row.value.database}/${row.value.name}.png`}
               onError={this.imgError}
               alt="motif logo"
@@ -443,7 +443,7 @@ class TFSummaryTable extends React.Component {
             in the selected variant set.
           </p>
           <p>
-            Multiple-testing correction of <strong>{totalNumberOfTests}</strong>{' '}
+            Multiple-testing correction of <strong>{totalNumberOfTests}</strong>{" "}
             <em>p</em>-value tests (
             <strong>{totalNumberOfTestsWithOneOrMoreOverlap}</strong> test
             results displayed, where there is one or more overlaps between SNP
@@ -466,7 +466,7 @@ class TFSummaryTable extends React.Component {
             showPagination={false}
             defaultSorted={[
               {
-                id: 'pval',
+                id: "pval",
                 desc: false,
               },
             ]}
@@ -474,7 +474,7 @@ class TFSummaryTable extends React.Component {
               this.sortedChange(c, s);
             }}
             getTrProps={(state, rowInfo) => {
-              if (typeof rowInfo == 'undefined') {
+              if (typeof rowInfo == "undefined") {
                 rowInfo = { index: null };
               }
               if (
@@ -538,17 +538,17 @@ class TFSummaryTable extends React.Component {
                     rowInfo.index === this.state.mouseoverRow
                       ? AppConst.settings.style.color
                           .sequenceHighlightedBackground
-                      : 'white',
+                      : "white",
                   color:
                     rowInfo.index === this.state.selectedRow ||
                     rowInfo.index === this.state.mouseoverRow
-                      ? 'black'
-                      : 'black',
+                      ? "black"
+                      : "black",
                   fontWeight:
                     rowInfo.index === this.state.selectedRow ||
                     rowInfo.index === this.state.mouseoverRow
-                      ? 'bold'
-                      : 'normal',
+                      ? "bold"
+                      : "normal",
                 },
               };
             }}

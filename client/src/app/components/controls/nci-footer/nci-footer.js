@@ -1,11 +1,11 @@
-import React from 'react';
-import './nci-footer.scss';
+import React from "react";
+import "./nci-footer.scss";
 
 export const defaultSections = {};
 
 export function NCIFooter({
-  className = 'bg-primary-dark text-light py-4',
-  style = { position: 'relative' },
+  className = "bg-primary-dark text-light py-4",
+  style = { position: "relative" },
 
   title = (
     <div className="mb-4">
@@ -16,59 +16,59 @@ export function NCIFooter({
 
   columns = [
     {
-      title: 'Contact Information',
-      links: [{ title: 'Contact Us', href: 'https://www.cancer.gov/contact' }],
+      title: "Contact Information",
+      links: [{ title: "Contact Us", href: "https://www.cancer.gov/contact" }],
     },
     {
-      title: 'More Information',
+      title: "More Information",
       links: [
         {
-          title: 'About This Website',
-          href: 'https://www.cancer.gov/about-website',
+          title: "About This Website",
+          href: "https://www.cancer.gov/about-website",
         },
-        { title: 'Multimedia', href: 'https://www.cancer.gov/multimedia' },
-        { title: 'Publications', href: 'https://www.cancer.gov/publications' },
+        { title: "Multimedia", href: "https://www.cancer.gov/multimedia" },
+        { title: "Publications", href: "https://www.cancer.gov/publications" },
         {
-          title: 'Site Map',
-          href: 'https://www.cancer.gov/about-website/sitemap',
+          title: "Site Map",
+          href: "https://www.cancer.gov/about-website/sitemap",
         },
         {
-          title: 'Digital Standards for NCI Websites',
-          href: 'https://www.cancer.gov/digital-standards',
+          title: "Digital Standards for NCI Websites",
+          href: "https://www.cancer.gov/digital-standards",
         },
       ],
     },
     {
-      title: 'Policies',
+      title: "Policies",
       links: [
         {
-          href: 'https://www.cancer.gov/policies/accessibility',
-          title: 'Accessibility',
+          href: "https://www.cancer.gov/policies/accessibility",
+          title: "Accessibility",
         },
         {
-          href: 'https://www.cancer.gov/policies/comments',
-          title: 'Content Policy',
+          href: "https://www.cancer.gov/policies/comments",
+          title: "Content Policy",
         },
         {
-          href: 'https://www.cancer.gov/policies/disclaimer',
-          title: 'Disclaimer',
+          href: "https://www.cancer.gov/policies/disclaimer",
+          title: "Disclaimer",
         },
-        { href: 'https://www.cancer.gov/policies/foia', title: 'FOIA' },
+        { href: "https://www.cancer.gov/policies/foia", title: "FOIA" },
         {
-          href: 'https://www.cancer.gov/policies/privacy-security',
-          title: 'Privacy & Security',
-        },
-        {
-          href: 'https://www.cancer.gov/policies/copyright-reuse',
-          title: 'Reuse & Copyright',
+          href: "https://www.cancer.gov/policies/privacy-security",
+          title: "Privacy & Security",
         },
         {
-          href: 'https://www.cancer.gov/syndication',
-          title: 'Syndication Services',
+          href: "https://www.cancer.gov/policies/copyright-reuse",
+          title: "Reuse & Copyright",
         },
         {
-          href: 'https://www.cancer.gov/policies/linking',
-          title: 'Website Linking',
+          href: "https://www.cancer.gov/syndication",
+          title: "Syndication Services",
+        },
+        {
+          href: "https://www.cancer.gov/policies/linking",
+          title: "Website Linking",
         },
       ],
     },
@@ -76,12 +76,12 @@ export function NCIFooter({
 
   footerLinks = [
     {
-      href: 'http://www.hhs.gov/',
-      title: 'U.S. Department of Health and Human Services',
+      href: "http://www.hhs.gov/",
+      title: "U.S. Department of Health and Human Services",
     },
-    { href: 'http://www.nih.gov/', title: 'National Institutes of Health' },
-    { href: 'https://www.cancer.gov/', title: 'National Cancer Institute' },
-    { href: 'http://usa.gov/', title: 'USA.gov' },
+    { href: "http://www.nih.gov/", title: "National Institutes of Health" },
+    { href: "https://www.cancer.gov/", title: "National Cancer Institute" },
+    { href: "http://usa.gov/", title: "USA.gov" },
   ],
 
   footerText = <span>NIH ... Turning Discovery Into Health ®</span>,
