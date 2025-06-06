@@ -3,10 +3,10 @@ const compression = require("compression");
 const config = require("../config");
 const logger = require("./logger");
 const { PythonShell } = require("python-shell");
-// const AWS = require('aws-sdk');
 const path = require("path");
 const fs = require("fs");
 const { validationResult } = require("express-validator");
+const { xss } = require('express-xss-sanitizer');
 import {
   queryProbeNamesValidation,
   queryAggregateValidation,
@@ -43,6 +43,9 @@ apiRouter.use(express.json());
 
 // compress all responses
 apiRouter.use(compression());
+
+// sanitize all requests
+apiRouter.use(xss());
 
 // add cache-control headers to GET requests
 apiRouter.use((request, response, next) => {
