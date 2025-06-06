@@ -6,15 +6,15 @@ const { PythonShell } = require("python-shell");
 const path = require("path");
 const fs = require("fs");
 const { validationResult } = require("express-validator");
-const { xss } = require('express-xss-sanitizer');
-import {
+const { xss } = require("express-xss-sanitizer");
+const {
   queryProbeNamesValidation,
   queryAggregateValidation,
   queryTfAggregateSummaryValidation,
   queryTfSummaryGraphValidation,
   queryTfProbeOverlapSummaryValidation,
   queryTfSummaryValidation,
-} from "./apiValidation.js";
+} = require("./apiValidation.js");
 
 const apiRouter = express.Router();
 
