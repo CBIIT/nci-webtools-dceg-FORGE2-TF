@@ -28,7 +28,7 @@ const queryTfSummaryValidation = [
 const queryTfSummaryGraphValidation = [
   body("tf_summary.output")
     .isString()
-    .matches(/^[A-Za-z0-9_\-]+\.pdf$/) // Only allow filenames like "output-123.pdf"
+    .matches(/^[A-Za-z0-9_.:\-]+\.pdf$/) 
     .withMessage("Invalid output filename"),
 ];
 
