@@ -24,3 +24,6 @@ server/config.json
 **/data/
 **/apache_logs/
 **/tmp/
+
+
+**/.DS_Store

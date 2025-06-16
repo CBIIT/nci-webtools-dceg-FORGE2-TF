@@ -13,7 +13,9 @@
     "aws-sdk": "^2.872.0",
     "compression": "^1.7.4",
     "express": "^4.17.1",
-    "python-shell": "^2.0.3",
+    "express-validator": "^7.2.1",
+    "express-xss-sanitizer": "^2.0.0",
+    "python-shell": "^5.0.0",
     "winston": "^3.3.3",
     "winston-daily-rotate-file": "^4.5.0"
   }
