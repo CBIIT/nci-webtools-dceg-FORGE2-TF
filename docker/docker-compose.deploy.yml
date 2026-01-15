@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  forge2-tf-backend:
+    image: ${BACKEND_IMAGE_LATEST}
+    container_name: forge2-tf-backend
+    restart: always
+    expose:
+      - "8000"
+    volumes:
+      - ${APP_HOST_LOGS_FOLDER}:/deploy/logs
+      - ${APP_HOST_DATA_FOLDER}:/deploy/data
+      - ${APP_HOST_DATA_FOLDER}/tmp:/deploy/tmp
+      - ${APP_HOST_CONFIG_FOLDER}/config.json:/deploy/server/config.json:ro
+    environment:
+      - NODE_ENV=production
+    networks:
+      - forge2-tf-network
+
+  forge2-tf-frontend:
+    image: ${FRONTEND_IMAGE_LATEST}
+    container_name: forge2-tf-frontend
+    restart: always
+    ports:
+      - "${FRONTEND_PORT}:80"
+    volumes:
+      - ${APP_HOST_LOGS_FOLDER}/apache:/var/log/httpd
+      - ${APP_HOST_DATA_FOLDER}/motif-logos:/var/www/html/forge2-tf/assets/motif-logos
+    environment:
+      - API_HOST=http://forge2-tf-backend:8000
+    links:
+      - forge2-tf-backend
+    networks:
+      - forge2-tf-network
+    depends_on:
+      - forge2-tf-backend
+
+networks:
+  forge2-tf-network:
+    driver: bridge

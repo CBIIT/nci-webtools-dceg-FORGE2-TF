@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.dockerfile
+    container_name: backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./logs:/deploy/logs
+      - ./data:/deploy/data
+      - ./tmp:/deploy/tmp
+      - ./server/config.json:/deploy/server/config.json:ro
+    environment:
+      - NODE_ENV=development
+    networks:
+      - forge2-tf-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.dockerfile
+    container_name: frontend
+    ports:
+      - "8101:80"
+    volumes:
+      - ./logs/apache:/var/log/httpd
+      - ./data/motif-logos:/var/www/html/forge2-tf/assets/motif-logos
+    environment:
+      - API_HOST=http://backend:8000
+    links:
+      - backend
+    networks:
+      - forge2-tf-network
+    depends_on:
+      - backend
+
+networks:
+  forge2-tf-network:
+    driver: bridge
