@@ -28,7 +28,7 @@ jobs:
       APP_HOST_DATA_FOLDER: /local/content/docker_apps/forge2-tf/data
       FRONTEND_PORT: 8101
       BACKEND_PORT: 8000
-      DOCKER_COMPOSE_TEMPLATE_PATH: docker/docker-compose.deploy.yml
+      DOCKER_COMPOSE_TEMPLATE_PATH: docker-compose.deploy.yml
 
     permissions:
       id-token: write
