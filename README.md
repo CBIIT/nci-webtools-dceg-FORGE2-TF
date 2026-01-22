@@ -58,7 +58,7 @@ docker compose ps
 
 ### Troubleshooting
 
-- If port 8101 or 8000 is already in use, edit [docker-compose.yml](docker-compose.yml) to use different ports
+- If port 8101 or 8000 is already in use, edit [docker-compose.deploy.yml](docker-compose.deploy.yml) to use different ports
 - Check logs with `docker compose logs backend` or `docker compose logs frontend`
 - Ensure `server/config.json` exists before starting
 
@@ -125,6 +125,5 @@ The workflow automatically:
 
 ### Files
 
-- **[docker-compose.yml](docker-compose.yml)** - Local development configuration
-- **[docker/docker-compose.deploy.yml](docker/docker-compose.deploy.yml)** - Production deployment template (uses environment variables)
+- **[docker-compose.deploy.yml](docker-compose.deploy.yml)** - Production deployment template for GitHub Actions (uses environment variables)
 - **[.github/workflows/forge2-tf-deploy.yml](.github/workflows/forge2-tf-deploy.yml)** - GitHub Actions deployment workflow
