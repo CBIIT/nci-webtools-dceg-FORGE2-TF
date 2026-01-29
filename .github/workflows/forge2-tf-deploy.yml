@@ -46,17 +46,29 @@ jobs:
       - name: Set dynamic environment variables
         run: |
           TIMESTAMP=$(date +"%Y%m%d%H%M%S")
-          REPO=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/analysistools/${{ env.IMAGE_TIER }}/${{ env.APP }}
-          echo "IMAGE_REPOSITORY=$REPO" >> $GITHUB_ENV
           echo "ECR_REGISTRY=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com" >> $GITHUB_ENV
-          echo "FRONTEND_IMAGE=$REPO/frontend:${{ github.ref_name }}-$TIMESTAMP" >> $GITHUB_ENV
-          echo "BACKEND_IMAGE=$REPO/backend:${{ github.ref_name }}-$TIMESTAMP" >> $GITHUB_ENV
-          echo "FRONTEND_IMAGE_LATEST=$REPO/frontend:${{ github.ref_name }}-latest" >> $GITHUB_ENV
-          echo "BACKEND_IMAGE_LATEST=$REPO/backend:${{ github.ref_name }}-latest" >> $GITHUB_ENV
+          echo "ECR_REPOSITORY=${{ env.APP }}" >> $GITHUB_ENV
+          echo "FRONTEND_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/${{ env.APP }}:frontend-${{ inputs.tier }}-$TIMESTAMP" >> $GITHUB_ENV
+          echo "BACKEND_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/${{ env.APP }}:backend-${{ inputs.tier }}-$TIMESTAMP" >> $GITHUB_ENV
+          echo "FRONTEND_IMAGE_LATEST=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/${{ env.APP }}:frontend-${{ inputs.tier }}-latest" >> $GITHUB_ENV
+          echo "BACKEND_IMAGE_LATEST=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/${{ env.APP }}:backend-${{ inputs.tier }}-latest" >> $GITHUB_ENV
 
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2.0.1
+
+      - name: Create ECR repository if it doesn't exist
+        run: |
+          if aws ecr describe-repositories --repository-names "${{ env.APP }}" --region $AWS_REGION 2>/dev/null; then
+            echo "Repository ${{ env.APP }} already exists"
+          else
+            echo "Creating repository ${{ env.APP }}"
+            aws ecr create-repository \
+              --repository-name "${{ env.APP }}" \
+              --region $AWS_REGION \
+              --image-scanning-configuration scanOnPush=true \
+              --encryption-configuration encryptionType=AES256
+          fi
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3.12.0
@@ -70,8 +82,8 @@ jobs:
           tags: |
             ${{ env.BACKEND_IMAGE }}
             ${{ env.BACKEND_IMAGE_LATEST }}
-          cache-from: type=registry,ref=${{ env.IMAGE_REPOSITORY }}/backend-cache
-          cache-to: type=registry,ref=${{ env.IMAGE_REPOSITORY }}/backend-cache,image-manifest=true,oci-mediatypes=true,mode=max
+          cache-from: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:backend-${{ inputs.tier }}-buildcache
+          cache-to: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:backend-${{ inputs.tier }}-buildcache,mode=max
 
       - name: Build and push frontend image
         uses: docker/build-push-action@v6.18.0
@@ -82,8 +94,8 @@ jobs:
           tags: |
             ${{ env.FRONTEND_IMAGE }}
             ${{ env.FRONTEND_IMAGE_LATEST }}
-          cache-from: type=registry,ref=${{ env.IMAGE_REPOSITORY }}/frontend-cache
-          cache-to: type=registry,ref=${{ env.IMAGE_REPOSITORY }}/frontend-cache,image-manifest=true,oci-mediatypes=true,mode=max
+          cache-from: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:frontend-${{ inputs.tier }}-buildcache
+          cache-to: type=registry,ref=${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:frontend-${{ inputs.tier }}-buildcache,mode=max
 
       - name: Prepare docker-compose file
         run: |
