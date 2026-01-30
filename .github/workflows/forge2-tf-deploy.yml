@@ -57,19 +57,6 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2.0.1
 
-      - name: Create ECR repository if it doesn't exist
-        run: |
-          if aws ecr describe-repositories --repository-names "${{ env.APP }}" --region $AWS_REGION 2>/dev/null; then
-            echo "Repository ${{ env.APP }} already exists"
-          else
-            echo "Creating repository ${{ env.APP }}"
-            aws ecr create-repository \
-              --repository-name "${{ env.APP }}" \
-              --region $AWS_REGION \
-              --image-scanning-configuration scanOnPush=true \
-              --encryption-configuration encryptionType=AES256
-          fi
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3.12.0
 
