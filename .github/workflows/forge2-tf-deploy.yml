@@ -1,4 +1,8 @@
 name: Deploy FORGE2-TF to EC2
+permissions:
+  id-token: write
+  contents: read
+
 on:
   workflow_dispatch:
     inputs:
@@ -15,14 +19,13 @@ on:
 
 jobs:
   Deploy:
+    timeout-minutes: 60
     runs-on: ubuntu-latest
-    timeout-minutes: 30
     environment: ${{ inputs.tier }}
     env:
       APP: forge2-tf
       TZ: America/New_York
       AWS_REGION: us-east-1
-      IMAGE_TIER: ${{ contains(fromJson('["dev","qa"]'), inputs.tier) && 'development' || 'release' }}
       APP_HOST_ROOT: /local/content/docker_apps/forge2-tf
       APP_HOST_CONFIG_FOLDER: /local/content/docker_apps/forge2-tf/config
       APP_HOST_LOGS_FOLDER: /local/content/docker_apps/forge2-tf/logs
@@ -31,38 +34,35 @@ jobs:
       BACKEND_PORT: 8000
       DOCKER_COMPOSE_TEMPLATE_PATH: docker-compose.deploy.yml
 
-    permissions:
-      id-token: write
-      contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6.0.1
+        uses: actions/checkout@v6.0.2
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v5.1.1
+        uses: aws-actions/configure-aws-credentials@v6.0.0
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/ec2-role-analysistools-${{ inputs.tier }}-role
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/ec2-role-analysistools-${{ inputs.tier }}-role
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Set dynamic environment variables
         run: |
           TIMESTAMP=$(date +"%Y%m%d%H%M%S")
-          echo "ECR_REGISTRY=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com" >> $GITHUB_ENV
+          echo "ECR_REGISTRY=${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com" >> $GITHUB_ENV
           echo "ECR_REPOSITORY=${{ env.APP }}" >> $GITHUB_ENV
-          echo "FRONTEND_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/${{ env.APP }}:frontend-${{ inputs.tier }}-$TIMESTAMP" >> $GITHUB_ENV
-          echo "BACKEND_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/${{ env.APP }}:backend-${{ inputs.tier }}-$TIMESTAMP" >> $GITHUB_ENV
-          echo "FRONTEND_IMAGE_LATEST=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/${{ env.APP }}:frontend-${{ inputs.tier }}-latest" >> $GITHUB_ENV
-          echo "BACKEND_IMAGE_LATEST=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/${{ env.APP }}:backend-${{ inputs.tier }}-latest" >> $GITHUB_ENV
+          echo "FRONTEND_IMAGE=${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/${{ env.APP }}:frontend-${{ inputs.tier }}-$TIMESTAMP" >> $GITHUB_ENV
+          echo "BACKEND_IMAGE=${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/${{ env.APP }}:backend-${{ inputs.tier }}-$TIMESTAMP" >> $GITHUB_ENV
+          echo "FRONTEND_IMAGE_LATEST=${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/${{ env.APP }}:frontend-${{ inputs.tier }}-latest" >> $GITHUB_ENV
+          echo "BACKEND_IMAGE_LATEST=${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/${{ env.APP }}:backend-${{ inputs.tier }}-latest" >> $GITHUB_ENV
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2.0.1
+        uses: aws-actions/amazon-ecr-login@v2.1.0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3.12.0
+        uses: docker/setup-buildx-action@v4.0.0
 
       - name: Build and push backend image
-        uses: docker/build-push-action@v6.18.0
+        uses: docker/build-push-action@v7.0.0
         with:
           context: .
           file: docker/backend.dockerfile
@@ -74,7 +74,7 @@ jobs:
           cache-to: type=inline
 
       - name: Build and push frontend image
-        uses: docker/build-push-action@v6.18.0
+        uses: docker/build-push-action@v7.0.0
         with:
           context: .
           file: docker/frontend.dockerfile
@@ -109,13 +109,13 @@ jobs:
         id: get-instance
         run: |
           INSTANCE_ID=$(aws ec2 describe-instances \
-            --filters "Name=tag:Name,Values=${{ secrets.EC2_INSTANCE_NAME }}" \
+            --filters "Name=tag:Name,Values=${{ vars.EC2_INSTANCE_NAME }}" \
                       "Name=instance-state-name,Values=running" \
             --query "Reservations[0].Instances[0].InstanceId" \
             --output text)
 
           if [ "$INSTANCE_ID" == "None" ] || [ -z "$INSTANCE_ID" ]; then
-            echo "Error: Could not find running EC2 instance with name ${{ secrets.EC2_INSTANCE_NAME }}"
+            echo "Error: Could not find running EC2 instance with name ${{ vars.EC2_INSTANCE_NAME }}"
             exit 1
           fi
 
@@ -150,6 +150,9 @@ jobs:
                 "echo '=== Finding and stopping containers on port ${{ env.FRONTEND_PORT }} ==='",
                 "CONTAINER_${{ env.FRONTEND_PORT }}=$(docker ps --format '{{.ID}} {{.Ports}}' | grep '0.0.0.0:${{ env.FRONTEND_PORT }}' | awk '{print $1}')",
                 "if [ -n \"$CONTAINER_${{ env.FRONTEND_PORT }}\" ]; then echo \"Stopping container using port ${{ env.FRONTEND_PORT }}: $CONTAINER_${{ env.FRONTEND_PORT }}\"; docker stop $CONTAINER_${{ env.FRONTEND_PORT }}; fi",
+                "echo '=== Finding and stopping containers on port ${{ env.BACKEND_PORT }} ==='",
+                "CONTAINER_${{ env.BACKEND_PORT }}=$(docker ps --format '{{.ID}} {{.Ports}}' | grep '0.0.0.0:${{ env.BACKEND_PORT }}' | awk '{print $1}')",
+                "if [ -n \"$CONTAINER_${{ env.BACKEND_PORT }}\" ]; then echo \"Stopping container using port ${{ env.BACKEND_PORT }}: $CONTAINER_${{ env.BACKEND_PORT }}\"; docker stop $CONTAINER_${{ env.BACKEND_PORT }}; fi",
                 "echo '=== Running compose down ==='",
                 "docker compose down --remove-orphans || true",
                 "echo '=== Removing ${{ env.APP }} containers ==='",
@@ -225,3 +228,10 @@ jobs:
             --instance-id "${{ steps.get-instance.outputs.instance_id }}" \
             --query "StandardOutputContent" \
             --output text
+
+      - name: Deployment summary
+        run: |
+          echo "## Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tier:** ${{ inputs.tier }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
