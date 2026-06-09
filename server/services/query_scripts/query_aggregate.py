@@ -12,6 +12,12 @@ from multiprocessing import Pool
 tabix_bin = os.path.join('tabix')
 pts_bin = os.path.join('pts_lbsearch')
 
+# Local-run flag. When TEST_ENV is set to "LOCAL" (case-insensitive), use
+# session-token-aware S3 auth so temporary SSO credentials (ASIA...) work, and
+# surface S3 auth/permission errors instead of masking them as "file not found".
+# When unset/other, behavior is identical to the original deployed code path.
+LOCAL_TEST_ENV = os.environ.get('TEST_ENV', '').strip().upper() == 'LOCAL'
+
 probe_fns = {
   'All' : 'probes.bed.idsort.txt'
 }
@@ -81,25 +87,37 @@ def error(code, message):
 
 def checkS3File(bucket, filePath):
   if ('aws_access_key_id' in aws_info and len(aws_info['aws_access_key_id']) > 0 and 'aws_secret_access_key' in aws_info and len(aws_info['aws_secret_access_key']) > 0):
-    session = boto3.Session(
-      aws_access_key_id=aws_info['aws_access_key_id'],
-      aws_secret_access_key=aws_info['aws_secret_access_key'],
-    )
+    if LOCAL_TEST_ENV:
+      # Pass the session token so temporary (ASIA...) SSO creds authenticate.
+      session = boto3.Session(
+        aws_access_key_id=aws_info['aws_access_key_id'],
+        aws_secret_access_key=aws_info['aws_secret_access_key'],
+        aws_session_token=aws_info.get('aws_session_token') or None,
+      )
+    else:
+      session = boto3.Session(
+        aws_access_key_id=aws_info['aws_access_key_id'],
+        aws_secret_access_key=aws_info['aws_secret_access_key'],
+      )
     s3 = session.resource('s3')
-  else: 
+  else:
     s3 = boto3.resource('s3')
   try:
     s3.Object(bucket, filePath).load()
   except botocore.exceptions.ClientError as e:
-    if e.response['Error']['Code'] == "404":
-      return False
-    else:
-      return False
-  else: 
+    if LOCAL_TEST_ENV and e.response['Error']['Code'] != "404":
+      # Real auth/permission error, not a missing file -- surface it instead of
+      # reporting a misleading "could not find ... file".
+      error(400, 'S3 access error (not a missing object) for [s3://%s/%s]: %s' % (bucket, filePath, e))
+    return False
+  else:
     return True
 
 if ('aws_access_key_id' in aws_info and len(aws_info['aws_access_key_id']) > 0 and 'aws_secret_access_key' in aws_info and len(aws_info['aws_secret_access_key']) > 0):
   export_s3_keys = "export AWS_ACCESS_KEY_ID=%s; export AWS_SECRET_ACCESS_KEY=%s;" % (aws_info['aws_access_key_id'], aws_info['aws_secret_access_key'])
+  if LOCAL_TEST_ENV and aws_info.get('aws_session_token'):
+    # tabix shells out with these exported creds; temporary creds need the token.
+    export_s3_keys += " export AWS_SESSION_TOKEN=%s;" % (aws_info['aws_session_token'])
 else:
   # retrieve aws credentials here
   session = boto3.Session()
