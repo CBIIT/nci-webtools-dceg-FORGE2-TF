@@ -1,0 +1,12 @@
+# Python CDK runtime dependencies for the FORGE2-TF infrastructure.
+#
+# aws-cdk-lib is pinned to the same version as the TypeScript stack
+# (infrastructure/package.json) so both produce equivalent CloudFormation.
+# The CDK CLI itself (the `cdk` command) is a Node tool installed separately,
+# e.g. `npm install -g aws-cdk` — it is NOT a pip package.
+#
+# Install into a virtualenv:
+#   python3 -m venv .venv && source .venv/bin/activate
+#   pip install -r requirements.txt
+aws-cdk-lib==2.232.1
+constructs>=10.0.0,<11.0.0

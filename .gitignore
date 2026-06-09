@@ -27,3 +27,18 @@ server/config.json
 
 
 **/.DS_Store
+
+# --- serverless (ECS Fargate) additions ---
+# Keep the local data/logs skeleton (placeholders) but ignore staged contents.
+!data/
+!data/README.md
+!data/motif-logos/
+!data/tmp/
+!logs/
+!**/.gitkeep
+
+# CDK transient / secret files (TypeScript + Python infrastructure)
+**/cdk.out/
+**/cdk.env
+**/.venv/
+**/__pycache__/

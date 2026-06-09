@@ -1,0 +1,114 @@
+name: Deploy Serverless ECR
+
+# Serverless (ECS Fargate) ECR repository provisioning via AWS CDK.
+# Distinct from the EC2 pipeline (forge2-tf-deploy.yml). Choose the CDK
+# implementation language (TypeScript or Python) at run time.
+
+permissions:
+  id-token: write
+  contents: read
+
+on:
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: "Deploy environment"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - stage
+      iac_language:
+        description: "CDK implementation to use"
+        required: true
+        default: "typescript"
+        type: choice
+        options:
+          - typescript
+          - python
+
+jobs:
+  deploy-ecr:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.tier }}
+    env:
+      AWS_REGION: us-east-1
+      AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+      TIER: ${{ inputs.tier }}
+      CICD_ROLE_ARN: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/power-user-github-actions-cicd
+
+    steps:
+      - uses: "actions/checkout@v6.0.2"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6.0.0
+        with:
+          role-to-assume: ${{ env.CICD_ROLE_ARN }}
+          role-session-name: ${{ env.TIER }}-forge2-tf-ecr-${{ github.run_id }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Select IaC language
+        run: |
+          if [ "${{ inputs.iac_language }}" = "python" ]; then
+            echo "CDK_DIR=infrastructure-python" >> "$GITHUB_ENV"
+            echo "CDK_APP=python3 app_ecr.py" >> "$GITHUB_ENV"
+            # Python path uses the globally-installed CDK CLI.
+            echo "CDK_EXEC=cdk" >> "$GITHUB_ENV"
+          else
+            echo "CDK_DIR=infrastructure" >> "$GITHUB_ENV"
+            echo "CDK_APP=npx ts-node bin/ecr.ts" >> "$GITHUB_ENV"
+            # TypeScript path uses the CDK CLI from local devDependencies.
+            echo "CDK_EXEC=npx cdk" >> "$GITHUB_ENV"
+          fi
+
+      - name: Download env file from S3
+        run: |
+          aws s3 cp \
+            "s3://${{ vars.CICD_BUCKET }}/env/${{ env.TIER }}/forge2-tf/cdk.env" \
+            "${{ env.CDK_DIR }}/cdk.env"
+
+      - name: Load CDK environment variables
+        working-directory: ${{ env.CDK_DIR }}
+        run: |
+          set -a
+          source cdk.env
+          set +a
+          env | grep -v '^_' >> "$GITHUB_ENV"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6.3.0
+        with:
+          node-version: "24"
+
+      - name: Install TypeScript dependencies
+        if: ${{ inputs.iac_language == 'typescript' }}
+        working-directory: ${{ env.CDK_DIR }}
+        run: npm ci
+
+      - name: Set up Python
+        if: ${{ inputs.iac_language == 'python' }}
+        uses: actions/setup-python@v5.3.0
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies (CDK CLI + libs)
+        if: ${{ inputs.iac_language == 'python' }}
+        working-directory: ${{ env.CDK_DIR }}
+        run: |
+          npm install -g aws-cdk
+          pip install -r requirements.txt
+
+      - name: CDK diff (preview changes)
+        working-directory: ${{ env.CDK_DIR }}
+        run: ${{ env.CDK_EXEC }} diff --app "${{ env.CDK_APP }}" || true
+
+      - name: CDK deploy
+        working-directory: ${{ env.CDK_DIR }}
+        run: ${{ env.CDK_EXEC }} deploy --app "${{ env.CDK_APP }}" --require-approval never
+
+      - name: Clean up env files
+        if: always()
+        working-directory: ${{ env.CDK_DIR }}
+        run: rm -f cdk.env

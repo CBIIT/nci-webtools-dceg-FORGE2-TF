@@ -65,7 +65,7 @@ RUN cd /tmp \
 # install R packages
 RUN Rscript -e "Sys.setenv(MAKEFLAGS = '-j2'); install.packages(c('optparse'), repos='https://cloud.r-project.org/')"
 
-RUN mkdir -p /deploy/server /deploy/logs
+RUN mkdir -p /deploy/server /deploy/logs /deploy/data /deploy/tmp
 
 WORKDIR /deploy/server
 
@@ -77,4 +77,11 @@ RUN npm install
 # copy the rest of the application
 COPY . /deploy/
 
-CMD npm start
+# Render config.json from environment at runtime (Fargate has no host bind-mount
+# for config.json) then start the app.
+COPY docker/backend-entrypoint.sh /usr/local/bin/backend-entrypoint.sh
+RUN chmod +x /usr/local/bin/backend-entrypoint.sh
+
+EXPOSE 8000
+
+CMD ["/usr/local/bin/backend-entrypoint.sh"]
