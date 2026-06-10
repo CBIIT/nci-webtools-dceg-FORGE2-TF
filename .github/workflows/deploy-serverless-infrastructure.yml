@@ -80,7 +80,11 @@ jobs:
           set -a
           source cdk.env
           set +a
-          env | grep -v '^_' >> "$GITHUB_ENV"
+
+          while IFS='=' read -r key _; do
+            [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
+            echo "${key}=${!key}" >> "$GITHUB_ENV"
+          done < <(grep -E '^[A-Za-z_][A-Za-z0-9_]*=' cdk.env)
 
       - name: Setup Node.js
         uses: actions/setup-node@v6.3.0
