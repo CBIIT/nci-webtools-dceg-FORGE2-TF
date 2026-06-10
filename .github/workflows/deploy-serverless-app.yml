@@ -131,8 +131,12 @@ jobs:
 
       - name: Render task definition
         run: |
-          envsubst < $TASK_DEFINITION_TEMPLATE_PATH/web.yml > web.yml
+          if [ ! -f "$TASK_DEFINITION_TEMPLATE_PATH/web.yml" ]; then
+            echo "Error: task definition template not found at '$TASK_DEFINITION_TEMPLATE_PATH/web.yml' in the checked-out ref."
+            exit 1
+          fi
 
+          envsubst < "$TASK_DEFINITION_TEMPLATE_PATH/web.yml" > web.yml
           echo "=== Web Task Definition ==="
           cat web.yml
 
