@@ -66,10 +66,14 @@ jobs:
 
       - name: Download env file from S3
         run: |
+          if [ ! -d "${{ env.CDK_DIR }}" ]; then
+            echo "Error: CDK directory '${{ env.CDK_DIR }}' not found in the checked-out ref."
+            exit 1
+          fi
+
           aws s3 cp \
             "s3://${{ vars.CICD_BUCKET }}/env/${{ env.TIER }}/forge2-tf/cdk.env" \
             "${{ env.CDK_DIR }}/cdk.env"
-
       - name: Load CDK environment variables
         working-directory: ${{ env.CDK_DIR }}
         run: |
