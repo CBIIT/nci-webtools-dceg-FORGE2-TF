@@ -1,0 +1,180 @@
+name: Deploy Serverless App
+
+# Serverless (ECS Fargate) application deployment: build & push the frontend and
+# backend images, render the task definition (.github/aws/web.yml), register it,
+# and force a new ECS service deployment. This is the data-plane workflow and is
+# IaC-language agnostic (it consumes the SSM parameters published by Deploy
+# Serverless Infrastructure, regardless of whether they were created by the
+# TypeScript or Python CDK stack). Distinct from the EC2 pipeline
+# (forge2-tf-deploy.yml).
+
+on:
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: "Deploy environment"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - qa
+          - stage
+          - prod
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-app:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.tier }}
+    env:
+      APP: forge2-tf
+      TZ: America/New_York
+      AWS_REGION: us-east-1
+      TASK_DEFINITION_TEMPLATE_PATH: .github/aws
+      WEB_CONTAINER_PORT: 80
+      BACKEND_CONTAINER_PORT: 8000
+      ECS_WEB_TASK_CPU_UNITS: 1024
+      ECS_WEB_TASK_MEMORY_UNITS: 2048
+      S3_BUCKET: nci-cbiit-dceg-dev
+      TIER: ${{ inputs.tier }}
+      # dev/qa build "development" images; stage/prod build "release" images
+      # (matches the EC2 pipeline convention and the sibling Fargate apps).
+      IMAGE_TIER: ${{ contains(fromJson('["dev","qa"]'), inputs.tier) && 'development' || 'release' }}
+      CICD_ROLE_ARN: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/power-user-github-actions-cicd
+
+    steps:
+      - uses: "actions/checkout@v6.0.2"
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6.0.0
+        with:
+          role-to-assume: ${{ env.CICD_ROLE_ARN }}
+          role-session-name: ${{ env.TIER }}-${{ env.APP }}-deploy-${{ github.run_id }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set dynamic environment variables
+        run: |
+          TIMESTAMP=$(date +"%Y%m%d%H%M%S")
+          REPO=${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/$APP
+          echo "IMAGE_REPOSITORY=$REPO" >> $GITHUB_ENV
+          echo "FRONTEND_IMAGE=$REPO:frontend-$IMAGE_TIER-$TIMESTAMP" >> $GITHUB_ENV
+          echo "FRONTEND_IMAGE_LATEST=$REPO:frontend-$IMAGE_TIER-latest" >> $GITHUB_ENV
+          echo "BACKEND_IMAGE=$REPO:backend-$IMAGE_TIER-$TIMESTAMP" >> $GITHUB_ENV
+          echo "BACKEND_IMAGE_LATEST=$REPO:backend-$IMAGE_TIER-latest" >> $GITHUB_ENV
+          echo "PARAMETER_PATH=/analysistools/${TIER}/${APP}" >> $GITHUB_ENV
+          echo "ENVIRONMENT_TIER=${TIER^^}" >> $GITHUB_ENV
+
+      - name: Retrieve SSM parameters
+        run: |
+          PARAMETER_PATH="/analysistools/${TIER}/${APP}"
+
+          declare -A PARAMS=(
+            ["ecs_cluster"]="ECS_CLUSTER"
+            ["ecs_web_task"]="ECS_WEB_TASK"
+            ["ecs_web_service"]="ECS_WEB_SERVICE"
+            ["role_arn"]="ROLE_ARN"
+            ["efs_file_system_id"]="EFS_FILE_SYSTEM_ID"
+            ["efs_access_point_id"]="EFS_ACCESS_POINT_ID"
+            ["efs_motif_logos_access_point_id"]="EFS_MOTIF_LOGOS_ACCESS_POINT_ID"
+          )
+
+          for ssm_name in "${!PARAMS[@]}"; do
+            env_var="${PARAMS[$ssm_name]}"
+            value=$(aws ssm get-parameter \
+              --name "${PARAMETER_PATH}/${ssm_name}" \
+              --with-decryption \
+              --query "Parameter.Value" \
+              --output text)
+            echo "${env_var}=${value}" >> $GITHUB_ENV
+            echo "Retrieved ${ssm_name} -> ${env_var}"
+          done
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2.1.0
+        with:
+          mask-password: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4.0.0
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v7.0.0
+        with:
+          context: .
+          file: docker/backend.dockerfile
+          pull: true
+          push: true
+          tags: |
+            ${{ env.BACKEND_IMAGE }}
+            ${{ env.BACKEND_IMAGE_LATEST }}
+          cache-from: type=registry,ref=${{ env.BACKEND_IMAGE_LATEST }}
+          cache-to: type=inline
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v7.0.0
+        with:
+          context: .
+          file: docker/frontend.dockerfile
+          pull: true
+          push: true
+          tags: |
+            ${{ env.FRONTEND_IMAGE }}
+            ${{ env.FRONTEND_IMAGE_LATEST }}
+          cache-from: type=registry,ref=${{ env.FRONTEND_IMAGE_LATEST }}
+          cache-to: type=inline
+
+      - name: Render task definition
+        run: |
+          if [ ! -f "$TASK_DEFINITION_TEMPLATE_PATH/web.yml" ]; then
+            echo "Error: task definition template not found at '$TASK_DEFINITION_TEMPLATE_PATH/web.yml' in the checked-out ref."
+            exit 1
+          fi
+
+          envsubst < "$TASK_DEFINITION_TEMPLATE_PATH/web.yml" > web.yml
+          echo "=== Web Task Definition ==="
+          cat web.yml
+
+      - name: Register task definition
+        run: |
+          aws ecs register-task-definition --cli-input-yaml file://web.yml
+
+      - name: Update web service
+        run: |
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.ECS_WEB_SERVICE }} \
+            --task-definition ${{ env.ECS_WEB_TASK }} \
+            --desired-count 1 \
+            --propagate-tags TASK_DEFINITION \
+            --force-new-deployment
+
+      - name: Wait for service stability
+        run: |
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_WEB_SERVICE }}
+
+      - name: Remove old task definitions
+        run: |
+          for family in "$ECS_WEB_TASK"; do
+              echo "Pruning old revisions for family: $family"
+              aws ecs list-task-definitions --family-prefix "$family" --sort DESC --query 'taskDefinitionArns[3:]' --output text \
+                  | xargs -n1 -r aws ecs deregister-task-definition --task-definition
+          done
+
+      - name: Deployment summary
+        run: |
+          echo "## Serverless Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **App:** ${{ env.APP }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tier:** ${{ env.TIER }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image tier:** ${{ env.IMAGE_TIER }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend image:** ${{ env.FRONTEND_IMAGE }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Backend image:** ${{ env.BACKEND_IMAGE }}" >> $GITHUB_STEP_SUMMARY
