@@ -37,8 +37,10 @@ server/config.json
 !logs/
 !**/.gitkeep
 
-# CDK transient / secret files (TypeScript + Python infrastructure)
+# CDK transient / secret files
 **/cdk.out/
 **/cdk.env
+**/cdk.context.json
 **/.venv/
 **/__pycache__/
+*.pyc

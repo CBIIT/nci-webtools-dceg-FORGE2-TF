@@ -24,6 +24,14 @@ export interface EcsAppStackProps extends cdk.StackProps {
   listenerArn: string;
   appRoleArn: string;
 
+  // EFS is provisioned outside the app deploy (by the platform team) and imported
+  // here by ID — the same pattern every other DCEG app that mounts EFS uses
+  // (pimixture, ezQTL, mSigPortal, linkage). This stack creates only the scoped
+  // access points, never the filesystem / mount targets / security group.
+  efsId: string;
+  posixUid: number;
+  posixGid: number;
+
   listenerRulePriority: number;
   healthCheckPath: string;
   gracePeriod: number;
@@ -55,6 +63,9 @@ export class EcsAppStack extends cdk.Stack {
       clusterArn,
       listenerArn,
       appRoleArn,
+      efsId,
+      posixUid,
+      posixGid,
       listenerRulePriority,
       healthCheckPath,
       gracePeriod,
@@ -109,68 +120,64 @@ export class EcsAppStack extends cdk.Stack {
     //   /local/content/docker_apps/forge2-tf/data
     // (tabix .gz.tbi files, the SQLite SNP-filter DB, and motif-logos).
     // Fargate has no persistent host disk, so that data lives on an EFS
-    // filesystem and is mounted into the task at /deploy/data.
+    // filesystem mounted into the task at /deploy/data.
+    //
+    // The filesystem itself (plus its mount targets, security group and the
+    // NFS/2049 ingress from the task security group) is provisioned by the
+    // platform team OUTSIDE this app deploy and passed in as EFS_ID. This stack
+    // creates only the two scoped access points and resolves their IDs to SSM,
+    // matching pimixture / ezQTL / mSigPortal / linkage. The real task
+    // definition (web.yml, rendered by deploy-app) does the IAM-auth mount.
     // -------------------------------------------------------------------------
-    const efsSecurityGroup = new ec2.SecurityGroup(this, "EfsSecurityGroup", {
-      vpc,
-      description: `${tier}-${appName} EFS security group`,
-      allowAllOutbound: true,
-    });
 
-    // Allow NFS (2049) from each application security group attached to the task.
-    securityGroups.forEach((sg, i) => {
-      efsSecurityGroup.addIngressRule(
-        ec2.Peer.securityGroupId(sg.securityGroupId),
-        ec2.Port.tcp(2049),
-        `Allow NFS from app SG ${i}`
-      );
-    });
-
-    const fileSystem = new efs.FileSystem(this, "DataFileSystem", {
-      vpc,
-      vpcSubnets: { subnets },
-      securityGroup: efsSecurityGroup,
-      lifecyclePolicy: efs.LifecyclePolicy.AFTER_30_DAYS,
-      performanceMode: efs.PerformanceMode.GENERAL_PURPOSE,
-      throughputMode: efs.ThroughputMode.BURSTING,
-      encrypted: true,
-      enableAutomaticBackups: tier === "prod",
-      // Retain data on stack deletion so the reference data set is never lost.
-      removalPolicy: cdk.RemovalPolicy.RETAIN,
-      fileSystemName: `${tier}-${appName}-data`,
-    });
-
-    const accessPoint = fileSystem.addAccessPoint("DataAccessPoint", {
-      path: "/data",
-      createAcl: { ownerGid: "0", ownerUid: "0", permissions: "0755" },
-      posixUser: { gid: "0", uid: "0" },
+    // Primary data access point → the application mounts this at /deploy/data.
+    const accessPoint = new efs.CfnAccessPoint(this, "DataAccessPoint", {
+      fileSystemId: efsId,
+      posixUser: { uid: posixUid.toString(), gid: posixGid.toString() },
+      rootDirectory: {
+        path: "/data",
+        creationInfo: {
+          ownerUid: posixUid.toString(),
+          ownerGid: posixGid.toString(),
+          permissions: "0755",
+        },
+      },
+      accessPointTags: [
+        { key: "Name", value: `${tier}-${appName}-data-ap` },
+        { key: "ApplicationName", value: appName },
+        { key: "Project", value: "dceg-analysistools" },
+        { key: "CreatedBy", value: "cdk" },
+        { key: "EnvironmentTier", value: tier.toUpperCase() },
+        { key: "ResourceFunction", value: "efs" },
+      ],
     });
 
     // Second access point scoped to just the motif-logos subdirectory, which the
     // frontend mounts read-only into its served assets path. EFS mount points
     // cannot target a subpath of a volume, so a dedicated access point is used.
-    const motifLogosAccessPoint = fileSystem.addAccessPoint(
+    const motifLogosAccessPoint = new efs.CfnAccessPoint(
+      this,
       "MotifLogosAccessPoint",
       {
-        path: "/data/motif-logos",
-        createAcl: { ownerGid: "0", ownerUid: "0", permissions: "0755" },
-        posixUser: { gid: "0", uid: "0" },
+        fileSystemId: efsId,
+        posixUser: { uid: posixUid.toString(), gid: posixGid.toString() },
+        rootDirectory: {
+          path: "/data/motif-logos",
+          creationInfo: {
+            ownerUid: posixUid.toString(),
+            ownerGid: posixGid.toString(),
+            permissions: "0755",
+          },
+        },
+        accessPointTags: [
+          { key: "Name", value: `${tier}-${appName}-motif-logos-ap` },
+          { key: "ApplicationName", value: appName },
+          { key: "Project", value: "dceg-analysistools" },
+          { key: "CreatedBy", value: "cdk" },
+          { key: "EnvironmentTier", value: tier.toUpperCase() },
+          { key: "ResourceFunction", value: "efs" },
+        ],
       }
-    );
-
-    // Grant the task role permission to mount/write the EFS access points.
-    // APP_ROLE_ARN is the shared analysistools task role, imported above with
-    // fromRoleArn (mutable by default), so CDK attaches a scoped inline policy
-    // for THIS filesystem only — the same mechanism that already adds the
-    // per-app CloudWatch log-group grants to that role. Required because the
-    // task definition mounts these access points with IAM authorization
-    // (authorizationConfig.iam = ENABLED) and they run as root (uid/gid 0,
-    // hence ClientRootAccess).
-    fileSystem.grant(
-      taskRole,
-      "elasticfilesystem:ClientMount",
-      "elasticfilesystem:ClientWrite",
-      "elasticfilesystem:ClientRootAccess"
     );
 
     // CloudWatch log group
@@ -198,31 +205,10 @@ export class EcsAppStack extends cdk.Stack {
       taskRole,
     });
 
-    taskDef.addVolume({
-      name: "data",
-      efsVolumeConfiguration: {
-        fileSystemId: fileSystem.fileSystemId,
-        transitEncryption: "ENABLED",
-        authorizationConfig: {
-          accessPointId: accessPoint.accessPointId,
-          iam: "ENABLED",
-        },
-      },
-    });
-
-    taskDef.addVolume({
-      name: "motif-logos",
-      efsVolumeConfiguration: {
-        fileSystemId: fileSystem.fileSystemId,
-        transitEncryption: "ENABLED",
-        authorizationConfig: {
-          accessPointId: motifLogosAccessPoint.accessPointId,
-          iam: "ENABLED",
-        },
-      },
-    });
-
-    const placeholder = taskDef.addContainer("WebContainer", {
+    // The placeholder mounts no EFS volumes — the real task definition rendered
+    // by deploy-app (web.yml) declares the `data` / `motif-logos` volumes and
+    // mounts via the access-point IDs published to SSM below.
+    taskDef.addContainer("WebContainer", {
       containerName: "frontend",
       image: ecs.ContainerImage.fromRegistry("nginx:alpine"),
       essential: true,
@@ -237,12 +223,6 @@ export class EcsAppStack extends cdk.Stack {
         logGroup,
         streamPrefix: "frontend",
       }),
-    });
-
-    placeholder.addMountPoints({
-      containerPath: "/deploy/data",
-      sourceVolume: "data",
-      readOnly: false,
     });
 
     // Target group
@@ -290,9 +270,6 @@ export class EcsAppStack extends cdk.Stack {
     });
 
     service.attachToApplicationTargetGroup(tg);
-
-    // Allow the task to reach the EFS mount targets.
-    fileSystem.connections.allowDefaultPortFrom(service);
 
     // Prevent CDK from reverting task definitions registered by deploy-app workflow
     const cfnService = service.node.defaultChild as ecs.CfnService;
@@ -355,17 +332,17 @@ export class EcsAppStack extends cdk.Stack {
 
     new ssm.StringParameter(this, "SsmEfsFileSystemId", {
       parameterName: `/${appNamespace}/${tier}/${appName}/efs_file_system_id`,
-      stringValue: fileSystem.fileSystemId,
+      stringValue: efsId,
     });
 
     new ssm.StringParameter(this, "SsmEfsAccessPointId", {
       parameterName: `/${appNamespace}/${tier}/${appName}/efs_access_point_id`,
-      stringValue: accessPoint.accessPointId,
+      stringValue: accessPoint.attrAccessPointId,
     });
 
     new ssm.StringParameter(this, "SsmEfsMotifLogosAccessPointId", {
       parameterName: `/${appNamespace}/${tier}/${appName}/efs_motif_logos_access_point_id`,
-      stringValue: motifLogosAccessPoint.accessPointId,
+      stringValue: motifLogosAccessPoint.attrAccessPointId,
     });
 
     // Stack outputs
@@ -385,12 +362,12 @@ export class EcsAppStack extends cdk.Stack {
     });
 
     new cdk.CfnOutput(this, "EfsFileSystemId", {
-      value: fileSystem.fileSystemId,
+      value: efsId,
       description: "EFS File System ID (stage data into the /data access point)",
     });
 
     new cdk.CfnOutput(this, "EfsAccessPointId", {
-      value: accessPoint.accessPointId,
+      value: accessPoint.attrAccessPointId,
       description: "EFS Access Point ID",
     });
   }

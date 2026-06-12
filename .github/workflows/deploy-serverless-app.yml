@@ -2,11 +2,9 @@ name: Deploy Serverless App
 
 # Serverless (ECS Fargate) application deployment: build & push the frontend and
 # backend images, render the task definition (.github/aws/web.yml), register it,
-# and force a new ECS service deployment. This is the data-plane workflow and is
-# IaC-language agnostic (it consumes the SSM parameters published by Deploy
-# Serverless Infrastructure, regardless of whether they were created by the
-# TypeScript or Python CDK stack). Distinct from the EC2 pipeline
-# (forge2-tf-deploy.yml).
+# and force a new ECS service deployment. This is the data-plane workflow: it
+# consumes the SSM parameters published by Deploy Serverless Infrastructure.
+# Distinct from the EC2 pipeline (forge2-tf-deploy.yml).
 
 on:
   workflow_dispatch:

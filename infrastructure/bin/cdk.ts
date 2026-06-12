@@ -42,6 +42,11 @@ new EcsAppStack(app, `Forge2TfStack-${TIER}`, {
   listenerArn: process.env.LISTENER_ARN || "",
   appRoleArn: process.env.APP_ROLE_ARN || "",
 
+  // EFS filesystem provisioned by the platform team and imported by ID.
+  efsId: process.env.EFS_ID || "",
+  posixUid: Number(process.env.POSIX_UID || "1000"),
+  posixGid: Number(process.env.POSIX_GID || "1000"),
+
   listenerRulePriority: Number(process.env.LISTENER_RULE_PRIORITY || "900"),
   healthCheckPath: process.env.HEALTH_CHECK_PATH || "/forge2-tf/",
   gracePeriod: Number(process.env.GRACE_PERIOD || "120"),

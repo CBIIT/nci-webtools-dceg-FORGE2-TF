@@ -73,8 +73,8 @@ The workflow automatically:
 In addition to the EC2 + docker-compose pipeline documented above, this repo now
 also supports a **serverless deployment on AWS ECS Fargate**. The two models
 coexist: the EC2 path (`forge2-tf-deploy.yml`) is unchanged, and the serverless
-path lives in separate, clearly-named workflows and an `infrastructure/` /
-`infrastructure-python/` IaC layer. Pick whichever you need per environment.
+path lives in separate, clearly-named workflows and an `infrastructure/`
+TypeScript CDK layer.
 
 This mirrors the CBIIT Fargate pattern used by `nci-webtools-dceg-pimixture`
 and `nci-analysis-tools-web-presence`.
@@ -100,19 +100,16 @@ start from task environment variables by
 `config.json` is bind-mounted (local/EC2), the entrypoint detects it and leaves
 it untouched, so the legacy local flow is unaffected.
 
-### Infrastructure as Code (choose one language)
+### Infrastructure as Code
 
-Two functionally-equivalent CDK implementations are provided; you only need one:
-
-- **[infrastructure/](infrastructure/)** — TypeScript CDK (`bin/cdk.ts`, `bin/ecr.ts`)
-- **[infrastructure-python/](infrastructure-python/)** — Python CDK (`app.py`, `app_ecr.py`)
-
-The serverless workflows take an `iac_language` input so you can select
-`typescript` (default) or `python` at run time.
+The serverless stack is defined in TypeScript CDK under
+**[infrastructure/](infrastructure/)** (`bin/cdk.ts`, `bin/ecr.ts`,
+`lib/*-stack.ts`). This matches the reference apps (`pimixture`,
+`analysistools-portal`), which are all TypeScript.
 
 ### Serverless workflows
 
-All are `workflow_dispatch` (Actions → Run workflow → pick a tier and IaC language):
+All are `workflow_dispatch` (Actions → Run workflow → pick a tier):
 
 1. **[deploy-serverless-ecr.yml](.github/workflows/deploy-serverless-ecr.yml)** — create/update the `forge2-tf` ECR repository (CDK).
 2. **[deploy-serverless-infrastructure.yml](.github/workflows/deploy-serverless-infrastructure.yml)** — provision the ECS service, EFS + access points, ALB target group/rule, log group, autoscaling, and SSM parameters (CDK).

@@ -1,10 +1,10 @@
 name: Deploy Serverless Infrastructure
 
-# Serverless (ECS Fargate) infrastructure provisioning via AWS CDK:
-# ECS service, EFS filesystem + access points, ALB target group / listener rule,
-# log group, autoscaling schedule, and SSM parameters consumed by Deploy
-# Serverless App. Distinct from the EC2 pipeline (forge2-tf-deploy.yml).
-# Choose the CDK implementation language (TypeScript or Python) at run time.
+# Serverless (ECS Fargate) infrastructure provisioning via AWS CDK (TypeScript):
+# ECS service, EFS access points (against the platform-provisioned filesystem),
+# ALB target group / listener rule, log group, autoscaling schedule, and SSM
+# parameters consumed by Deploy Serverless App. Distinct from the EC2 pipeline
+# (forge2-tf-deploy.yml).
 
 on:
   workflow_dispatch:
@@ -19,14 +19,6 @@ on:
           - qa
           - stage
           - prod
-      iac_language:
-        description: "CDK implementation to use"
-        required: true
-        default: "typescript"
-        type: choice
-        options:
-          - typescript
-          - python
 
 permissions:
   id-token: write
@@ -42,6 +34,9 @@ jobs:
       AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
       TIER: ${{ inputs.tier }}
       CICD_ROLE_ARN: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/power-user-github-actions-cicd
+      CDK_DIR: infrastructure
+      CDK_EXEC: npx cdk
+      CDK_APP: npx ts-node bin/cdk.ts
 
     steps:
       - uses: "actions/checkout@v6.0.2"
@@ -53,20 +48,6 @@ jobs:
           role-session-name: ${{ env.TIER }}-forge2-tf-infra-${{ github.run_id }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Select IaC language
-        run: |
-          if [ "${{ inputs.iac_language }}" = "python" ]; then
-            echo "CDK_DIR=infrastructure-python" >> "$GITHUB_ENV"
-            echo "CDK_APP=python3 app.py" >> "$GITHUB_ENV"
-            # Python path uses the globally-installed CDK CLI.
-            echo "CDK_EXEC=cdk" >> "$GITHUB_ENV"
-          else
-            echo "CDK_DIR=infrastructure" >> "$GITHUB_ENV"
-            echo "CDK_APP=npx ts-node bin/cdk.ts" >> "$GITHUB_ENV"
-            # TypeScript path uses the CDK CLI from local devDependencies.
-            echo "CDK_EXEC=npx cdk" >> "$GITHUB_ENV"
-          fi
-
       - name: Download env file from S3
         run: |
           aws s3 cp \
@@ -76,10 +57,12 @@ jobs:
       - name: Load CDK environment variables
         working-directory: ${{ env.CDK_DIR }}
         run: |
-          set -a
-          source cdk.env
-          set +a
-          env | grep -v '^_' >> "$GITHUB_ENV"
+          # Append cdk.env key=value lines straight to $GITHUB_ENV, skipping
+          # blanks and comments. Avoids dumping the whole runner environment.
+          while IFS= read -r line || [ -n "$line" ]; do
+            case "$line" in ''|\#*) continue ;; esac
+            echo "$line" >> "$GITHUB_ENV"
+          done < cdk.env
 
       - name: Setup Node.js
         uses: actions/setup-node@v6.3.0
@@ -87,22 +70,8 @@ jobs:
           node-version: "24"
 
       - name: Install TypeScript dependencies
-        if: ${{ inputs.iac_language == 'typescript' }}
         working-directory: ${{ env.CDK_DIR }}
         run: npm ci
-
-      - name: Set up Python
-        if: ${{ inputs.iac_language == 'python' }}
-        uses: actions/setup-python@v5.3.0
-        with:
-          python-version: "3.12"
-
-      - name: Install Python dependencies (CDK CLI + libs)
-        if: ${{ inputs.iac_language == 'python' }}
-        working-directory: ${{ env.CDK_DIR }}
-        run: |
-          npm install -g aws-cdk
-          pip install -r requirements.txt
 
       - name: CDK diff (preview changes)
         working-directory: ${{ env.CDK_DIR }}
@@ -123,4 +92,3 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Environment:** ${{ env.TIER }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Region:** ${{ env.AWS_REGION }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **IaC language:** ${{ inputs.iac_language }}" >> $GITHUB_STEP_SUMMARY

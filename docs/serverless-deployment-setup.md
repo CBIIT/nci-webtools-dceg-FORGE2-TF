@@ -3,8 +3,8 @@
 One-time setup required before the `deploy-serverless-*` GitHub Actions
 workflows can run. This covers the **GitHub-side** configuration and the
 **AWS-side** prerequisites the workflows assume already exist. The application
-code and IaC (`infrastructure/`, `infrastructure-python/`) are already in the
-repo; this is the glue that lets Actions assume a role, read config, and deploy.
+code and the TypeScript CDK IaC (`infrastructure/`) are already in the repo; this
+is the glue that lets Actions assume a role, read config, and deploy.
 
 > Conventions used below
 > - `<AWS_ACCOUNT_ID>` — the 12-digit account for the tier you're deploying to
@@ -24,6 +24,7 @@ repo; this is the glue that lets Actions assume a role, read config, and deploy.
 | GitHub Environments `dev`/`qa`/`stage`/`prod` | repo settings | you (this runbook) |
 | Env vars `AWS_ACCOUNT_ID`, `CICD_BUCKET` | each GitHub Environment | you (this runbook) |
 | Imported shared resources (VPC, cluster, ALB, app role) | each AWS account | platform team (referenced, not created) |
+| EFS filesystem + mount targets + SG (NFS/2049 ingress from task SG) | each AWS account, per tier | platform team (provisioned outside this deploy; hands back `EFS_ID`) |
 
 The existing EC2 workflow (`forge2-tf-deploy.yml`) already uses GitHub OIDC to
 assume `ec2-role-analysistools-<tier>-role`, so the **OIDC provider almost
@@ -185,10 +186,10 @@ aws iam put-role-policy \
 
 ## 3. Per-tier `cdk.env` in S3
 
-The CDK workflows download `s3://<CICD_BUCKET>/env/<tier>/forge2-tf/cdk.env`,
-`source` it, and export it into the job environment. Build it from
-[`infrastructure/cdk.env.example`](../infrastructure/cdk.env.example) (the Python
-stack reads the identical variable set). Upload one per tier.
+The CDK workflows download `s3://<CICD_BUCKET>/env/<tier>/forge2-tf/cdk.env` and
+load it into the job environment (key=value lines). Build it from
+[`infrastructure/cdk.env.example`](../infrastructure/cdk.env.example). Upload one
+per tier.
 
 ```sh
 # example for dev — fill in the real imported-resource IDs from the platform team
@@ -210,6 +211,13 @@ SECURITY_GROUP_IDS=sg-xxxxxxxx
 CLUSTER_ARN=arn:aws:ecs:us-east-1:123456789012:cluster/analysistools-dev
 LISTENER_ARN=arn:aws:elasticloadbalancing:us-east-1:123456789012:listener/app/.../...
 APP_ROLE_ARN=arn:aws:iam::123456789012:role/analysistools-dev-forge2-tf-role
+
+# Imported EFS (platform team provisions the filesystem + mount targets + SG and
+# NFS/2049 ingress from the task SG, then hands you the EFS_ID). This stack only
+# creates the /data and /data/motif-logos access points against it.
+EFS_ID=fs-xxxxxxxxxxxxxxxxx
+POSIX_UID=1000
+POSIX_GID=1000
 
 # ALB routing / health check
 LISTENER_RULE_PRIORITY=900
@@ -248,17 +256,17 @@ Notes:
 
 ## 4. First-run order
 
-Run from the **Actions** tab (each is "Run workflow", pick the tier — and for
-the CDK ones, the `iac_language`: `typescript` default, or `python`):
+Run from the **Actions** tab (each is "Run workflow", pick the tier):
 
 1. **Deploy Serverless ECR** → creates the `forge2-tf` ECR repository.
-2. **Deploy Serverless Infrastructure** → ECS service, EFS + access points, ALB
-   target group/rule, log group, autoscaling, and the SSM parameters the app
-   workflow reads.
+2. **Deploy Serverless Infrastructure** → ECS service, EFS access points (against
+   the platform-provisioned filesystem, `EFS_ID`), ALB target group/rule, log
+   group, autoscaling, and the SSM parameters the app workflow reads.
 3. **Stage the EFS data set** (manual, once per environment) — copy the tabix
    `*.gz.tbi` indexes, the SQLite SNP-filter DB (see [`scripts/`](../scripts)),
    and `motif-logos/` onto the EFS access-point root (mount from a bastion or a
-   one-off ECS task). Data persists across deploys (EFS is `RETAIN`).
+   one-off ECS task). Data persists across deploys (the filesystem is owned and
+   retained by the platform team, outside this app's CDK).
 4. **Deploy Serverless App** → builds & pushes images, renders the task
    definition, registers it, and forces a new service deployment.
 
