@@ -26,7 +26,6 @@ if [ -f "$CONFIG_PATH" ]; then
 else
   : "${SERVER_PORT:=8000}"
   : "${CLIENT_FOLDER:=../client/build}"
-  : "${LOGS_FOLDER:=/deploy/logs}"
   : "${LOG_LEVEL:=info}"
   : "${DATA_FOLDER:=/deploy/data}"
   : "${TMP_FOLDER:=/deploy/tmp}"
@@ -35,8 +34,9 @@ else
   : "${S3_SUBFOLDER:=forge2-tf}"
 
   # Ensure runtime directories exist (DATA_FOLDER is the EFS mount on Fargate;
-  # the others are task-local ephemeral storage).
-  mkdir -p "$LOGS_FOLDER" "$TMP_FOLDER" "$DATA_FOLDER"
+  # TMP_FOLDER is task-local ephemeral storage). No logs folder: logs go to
+  # stdout → FireLens → Datadog.
+  mkdir -p "$TMP_FOLDER" "$DATA_FOLDER"
 
   cat > "$CONFIG_PATH" <<EOF
 {
@@ -45,7 +45,6 @@ else
     "client": "${CLIENT_FOLDER}"
   },
   "logs": {
-    "folder": "${LOGS_FOLDER}",
     "level": "${LOG_LEVEL}"
   },
   "data": {

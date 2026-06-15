@@ -125,17 +125,28 @@ export class EcsAppStack extends cdk.Stack {
     // The filesystem itself (plus its mount targets, security group and the
     // NFS/2049 ingress from the task security group) is provisioned by the
     // platform team OUTSIDE this app deploy and passed in as EFS_ID. This stack
-    // creates only the two scoped access points and resolves their IDs to SSM,
-    // matching pimixture / ezQTL / mSigPortal / linkage. The real task
+    // creates only a SINGLE scoped access point (`/data`) and resolves its ID to
+    // SSM, matching pimixture / ezQTL / mSigPortal / linkage. The real task
     // definition (web.yml, rendered by deploy-app) does the IAM-auth mount.
+    //
+    // motif-logos is NOT a separate access point — it is just the
+    // `/${appName}/motif-logos` subdirectory of this one filesystem tree. The
+    // frontend mounts that subpath via an efsVolumeConfiguration.rootDirectory
+    // (no second access point) in web.yml.
+    //
+    // Naming/convention: the access point roots at `/${appName}` (e.g.
+    // `/forge2-tf`) — matching every sibling app on this shared dev filesystem
+    // (pimixture → /pimixture, ezqtl → /ezqtl, …). The tier lives only in the
+    // access-point *name* (`${tier}-${appName}` → `dev-forge2-tf`), because each
+    // tier has its own filesystem.
     // -------------------------------------------------------------------------
 
-    // Primary data access point → the application mounts this at /deploy/data.
+    // Single data access point → the backend mounts this at /deploy/data.
     const accessPoint = new efs.CfnAccessPoint(this, "DataAccessPoint", {
       fileSystemId: efsId,
       posixUser: { uid: posixUid.toString(), gid: posixGid.toString() },
       rootDirectory: {
-        path: "/data",
+        path: `/${appName}`,
         creationInfo: {
           ownerUid: posixUid.toString(),
           ownerGid: posixGid.toString(),
@@ -143,7 +154,7 @@ export class EcsAppStack extends cdk.Stack {
         },
       },
       accessPointTags: [
-        { key: "Name", value: `${tier}-${appName}-data-ap` },
+        { key: "Name", value: `${tier}-${appName}` },
         { key: "ApplicationName", value: appName },
         { key: "Project", value: "dceg-analysistools" },
         { key: "CreatedBy", value: "cdk" },
@@ -151,34 +162,6 @@ export class EcsAppStack extends cdk.Stack {
         { key: "ResourceFunction", value: "efs" },
       ],
     });
-
-    // Second access point scoped to just the motif-logos subdirectory, which the
-    // frontend mounts read-only into its served assets path. EFS mount points
-    // cannot target a subpath of a volume, so a dedicated access point is used.
-    const motifLogosAccessPoint = new efs.CfnAccessPoint(
-      this,
-      "MotifLogosAccessPoint",
-      {
-        fileSystemId: efsId,
-        posixUser: { uid: posixUid.toString(), gid: posixGid.toString() },
-        rootDirectory: {
-          path: "/data/motif-logos",
-          creationInfo: {
-            ownerUid: posixUid.toString(),
-            ownerGid: posixGid.toString(),
-            permissions: "0755",
-          },
-        },
-        accessPointTags: [
-          { key: "Name", value: `${tier}-${appName}-motif-logos-ap` },
-          { key: "ApplicationName", value: appName },
-          { key: "Project", value: "dceg-analysistools" },
-          { key: "CreatedBy", value: "cdk" },
-          { key: "EnvironmentTier", value: tier.toUpperCase() },
-          { key: "ResourceFunction", value: "efs" },
-        ],
-      }
-    );
 
     // CloudWatch log group
     const logGroup = new logs.LogGroup(this, "WebLogGroup", {
@@ -338,11 +321,6 @@ export class EcsAppStack extends cdk.Stack {
     new ssm.StringParameter(this, "SsmEfsAccessPointId", {
       parameterName: `/${appNamespace}/${tier}/${appName}/efs_access_point_id`,
       stringValue: accessPoint.attrAccessPointId,
-    });
-
-    new ssm.StringParameter(this, "SsmEfsMotifLogosAccessPointId", {
-      parameterName: `/${appNamespace}/${tier}/${appName}/efs_motif_logos_access_point_id`,
-      stringValue: motifLogosAccessPoint.attrAccessPointId,
     });
 
     // Stack outputs
