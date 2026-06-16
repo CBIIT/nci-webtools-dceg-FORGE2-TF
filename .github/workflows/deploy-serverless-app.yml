@@ -1,10 +1,7 @@
 name: Deploy Serverless App
 
-# Serverless (ECS Fargate) application deployment: build & push the frontend and
-# backend images, render the task definition (.github/aws/web.yml), register it,
-# and force a new ECS service deployment. This is the data-plane workflow: it
-# consumes the SSM parameters published by Deploy Serverless Infrastructure.
-# Distinct from the EC2 pipeline (forge2-tf-deploy.yml).
+# Build/push images, render the task definition (.github/aws/web.yml), register
+# it, and roll the ECS service. Consumes SSM params from the infrastructure deploy.
 
 on:
   workflow_dispatch:
@@ -40,9 +37,8 @@ jobs:
       ECS_WEB_TASK_MEMORY_UNITS: 2048
       S3_BUCKET: nci-cbiit-dceg-dev
       TIER: ${{ inputs.tier }}
-      # dev/qa build "development" images; stage/prod build "release" images
-      # (matches the EC2 pipeline convention and the sibling Fargate apps).
-      IMAGE_TIER: ${{ contains(fromJson('["dev","qa"]'), inputs.tier) && 'development' || 'release' }}
+      DATA_FOLDER: /deploy/data
+      TMP_FOLDER: /deploy/data/tmp
       CICD_ROLE_ARN: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/power-user-github-actions-cicd
 
     steps:
@@ -60,10 +56,10 @@ jobs:
           TIMESTAMP=$(date +"%Y%m%d%H%M%S")
           REPO=${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/$APP
           echo "IMAGE_REPOSITORY=$REPO" >> $GITHUB_ENV
-          echo "FRONTEND_IMAGE=$REPO:frontend-$IMAGE_TIER-$TIMESTAMP" >> $GITHUB_ENV
-          echo "FRONTEND_IMAGE_LATEST=$REPO:frontend-$IMAGE_TIER-latest" >> $GITHUB_ENV
-          echo "BACKEND_IMAGE=$REPO:backend-$IMAGE_TIER-$TIMESTAMP" >> $GITHUB_ENV
-          echo "BACKEND_IMAGE_LATEST=$REPO:backend-$IMAGE_TIER-latest" >> $GITHUB_ENV
+          echo "FRONTEND_IMAGE=$REPO:frontend-$TIMESTAMP" >> $GITHUB_ENV
+          echo "FRONTEND_IMAGE_LATEST=$REPO:frontend-latest" >> $GITHUB_ENV
+          echo "BACKEND_IMAGE=$REPO:backend-$TIMESTAMP" >> $GITHUB_ENV
+          echo "BACKEND_IMAGE_LATEST=$REPO:backend-latest" >> $GITHUB_ENV
           echo "PARAMETER_PATH=/analysistools/${TIER}/${APP}" >> $GITHUB_ENV
           echo "ENVIRONMENT_TIER=${TIER^^}" >> $GITHUB_ENV
 
@@ -166,7 +162,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **App:** ${{ env.APP }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Tier:** ${{ env.TIER }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Image tier:** ${{ env.IMAGE_TIER }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Frontend image:** ${{ env.FRONTEND_IMAGE }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Backend image:** ${{ env.BACKEND_IMAGE }}" >> $GITHUB_STEP_SUMMARY

@@ -1,7 +1,6 @@
 name: Deploy Serverless ECR
 
-# Serverless (ECS Fargate) ECR repository provisioning via AWS CDK (TypeScript).
-# Distinct from the EC2 pipeline (forge2-tf-deploy.yml).
+# Provision the ECR repository (CDK, TypeScript).
 
 permissions:
   id-token: write
@@ -52,8 +51,6 @@ jobs:
       - name: Load CDK environment variables
         working-directory: ${{ env.CDK_DIR }}
         run: |
-          # Append cdk.env key=value lines straight to $GITHUB_ENV, skipping
-          # blanks and comments. Avoids dumping the whole runner environment.
           while IFS= read -r line || [ -n "$line" ]; do
             case "$line" in ''|\#*) continue ;; esac
             echo "$line" >> "$GITHUB_ENV"

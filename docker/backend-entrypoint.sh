@@ -1,41 +1,22 @@
 #!/bin/sh
-# Backend container entrypoint.
-#
-# Two supported topologies share this image:
-#
-#   1. Serverless / Fargate: there is no host to bind-mount config.json from, so
-#      the ECS task definition supplies the values as environment variables and
-#      this script materializes /deploy/server/config.json before the Node app
-#      (which does `require('./config.json')`) starts.
-#
-#   2. Local dev / EC2 (docker-compose): config.json is bind-mounted into
-#      /deploy/server/config.json (often read-only). In that case we MUST NOT
-#      try to overwrite it -- we detect the existing file and use it as-is, so
-#      the legacy "run local as before" flow keeps working unchanged.
-#
-# AWS credentials are intentionally left blank when rendering: on Fargate the
-# ECS task role provides them automatically to aws-sdk / boto3 via the container
-# credential endpoint. For local runs, credentials are passed via environment.
+# Render config.json from env (Fargate), or keep an existing bind-mounted
+# config.json (local/EC2). AWS creds come from the task role.
 set -e
 
 CONFIG_PATH=/deploy/server/config.json
 
 if [ -f "$CONFIG_PATH" ]; then
-  # Bind-mounted (local/EC2) config present -- respect it, never clobber.
   echo "Using existing $CONFIG_PATH (bind-mounted); skipping env render."
 else
   : "${SERVER_PORT:=8000}"
   : "${CLIENT_FOLDER:=../client/build}"
   : "${LOG_LEVEL:=info}"
   : "${DATA_FOLDER:=/deploy/data}"
-  : "${TMP_FOLDER:=/deploy/tmp}"
+  : "${TMP_FOLDER:=/deploy/data/tmp}"
   : "${AWS_REGION:=us-east-1}"
   : "${S3_BUCKET:=nci-cbiit-dceg-dev}"
   : "${S3_SUBFOLDER:=forge2-tf}"
 
-  # Ensure runtime directories exist (DATA_FOLDER is the EFS mount on Fargate;
-  # TMP_FOLDER is task-local ephemeral storage). No logs folder: logs go to
-  # stdout → FireLens → Datadog.
   mkdir -p "$TMP_FOLDER" "$DATA_FOLDER"
 
   cat > "$CONFIG_PATH" <<EOF

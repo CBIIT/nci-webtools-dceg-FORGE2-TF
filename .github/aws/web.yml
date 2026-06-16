@@ -6,10 +6,7 @@ executionRoleArn: "${ROLE_ARN}"
 taskRoleArn: "${ROLE_ARN}"
 requiresCompatibilities:
   - FARGATE
-# Persistent reference data (tabix .gz.tbi files, SQLite SNP-filter DB,
-# motif-logos) lives on EFS. A single access point roots the data tree at
-# /deploy/data; motif-logos is the `motif-logos` subdirectory of that same tree,
-# exposed to the frontend via a rootDirectory volume (no second access point).
+# Reference data on EFS; motif-logos is a subdirectory of the data volume.
 volumes:
   - name: data
     efsVolumeConfiguration:
@@ -26,7 +23,7 @@ volumes:
       authorizationConfig:
         iam: ENABLED
 containerDefinitions:
-  # FireLens (fluent-bit) sidecar: routes container stdout/stderr to Datadog.
+  # FireLens (fluent-bit) → Datadog
   - name: logs
     image: public.ecr.aws/aws-observability/aws-for-fluent-bit:stable
     essential: true
@@ -40,7 +37,7 @@ containerDefinitions:
         awslogs-region: "${AWS_REGION}"
         awslogs-stream-prefix: logs
 
-  # Node backend: runs the Python/R query scripts against the EFS data set.
+  # Node backend
   - name: backend
     image: "${BACKEND_IMAGE_LATEST}"
     essential: true
@@ -53,9 +50,9 @@ containerDefinitions:
       - name: SERVER_PORT
         value: "${BACKEND_CONTAINER_PORT}"
       - name: DATA_FOLDER
-        value: /deploy/data
+        value: "${DATA_FOLDER}"
       - name: TMP_FOLDER
-        value: /deploy/tmp
+        value: "${TMP_FOLDER}"
       - name: LOG_LEVEL
         value: info
       - name: AWS_REGION
@@ -84,8 +81,7 @@ containerDefinitions:
         - name: apikey
           valueFrom: /analysistools/${TIER}/datadog/api_key
 
-  # Apache frontend: serves the built client and reverse-proxies
-  # /forge2-tf/api -> the backend over the shared task network (localhost).
+  # Apache frontend
   - name: frontend
     image: "${FRONTEND_IMAGE_LATEST}"
     essential: true

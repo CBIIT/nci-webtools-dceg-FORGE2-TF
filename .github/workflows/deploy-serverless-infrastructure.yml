@@ -1,10 +1,7 @@
 name: Deploy Serverless Infrastructure
 
-# Serverless (ECS Fargate) infrastructure provisioning via AWS CDK (TypeScript):
-# ECS service, EFS access points (against the platform-provisioned filesystem),
-# ALB target group / listener rule, log group, autoscaling schedule, and SSM
-# parameters consumed by Deploy Serverless App. Distinct from the EC2 pipeline
-# (forge2-tf-deploy.yml).
+# Provision the Fargate infrastructure (ECS service, EFS access point, ALB
+# target group/rule, log group, autoscaling, SSM params) via CDK (TypeScript).
 
 on:
   workflow_dispatch:
@@ -57,8 +54,6 @@ jobs:
       - name: Load CDK environment variables
         working-directory: ${{ env.CDK_DIR }}
         run: |
-          # Append cdk.env key=value lines straight to $GITHUB_ENV, skipping
-          # blanks and comments. Avoids dumping the whole runner environment.
           while IFS= read -r line || [ -n "$line" ]; do
             case "$line" in ''|\#*) continue ;; esac
             echo "$line" >> "$GITHUB_ENV"

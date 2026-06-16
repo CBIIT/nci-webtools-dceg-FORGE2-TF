@@ -24,10 +24,6 @@ export interface EcsAppStackProps extends cdk.StackProps {
   listenerArn: string;
   appRoleArn: string;
 
-  // EFS is provisioned outside the app deploy (by the platform team) and imported
-  // here by ID — the same pattern every other DCEG app that mounts EFS uses
-  // (pimixture, ezQTL, mSigPortal, linkage). This stack creates only the scoped
-  // access points, never the filesystem / mount targets / security group.
   efsId: string;
   posixUid: number;
   posixGid: number;
@@ -71,7 +67,6 @@ export class EcsAppStack extends cdk.Stack {
       gracePeriod,
     } = props;
 
-    // Stack-level tags
     cdk.Tags.of(this).add("EnvironmentTier", tier);
     cdk.Tags.of(this).add("ResourceName", `${tier}-${appName}`);
     cdk.Tags.of(this).add("ManagedBy", "cdk");
@@ -79,7 +74,6 @@ export class EcsAppStack extends cdk.Stack {
     cdk.Tags.of(this).add("Project", "dceg-analysistools");
     cdk.Tags.of(this).add("ApplicationName", appName);
 
-    // Import existing shared resources
     const vpc = ec2.Vpc.fromLookup(this, "Vpc", { vpcId });
 
     const subnets = subnetIds.map((sid, i) =>
@@ -113,35 +107,7 @@ export class EcsAppStack extends cdk.Stack {
       }
     );
 
-    // -------------------------------------------------------------------------
-    // Persistent storage (EFS) for the FORGE2-TF reference data set.
-    //
-    // On EC2 the application relied on host bind-mounts under
-    //   /local/content/docker_apps/forge2-tf/data
-    // (tabix .gz.tbi files, the SQLite SNP-filter DB, and motif-logos).
-    // Fargate has no persistent host disk, so that data lives on an EFS
-    // filesystem mounted into the task at /deploy/data.
-    //
-    // The filesystem itself (plus its mount targets, security group and the
-    // NFS/2049 ingress from the task security group) is provisioned by the
-    // platform team OUTSIDE this app deploy and passed in as EFS_ID. This stack
-    // creates only a SINGLE scoped access point (`/data`) and resolves its ID to
-    // SSM, matching pimixture / ezQTL / mSigPortal / linkage. The real task
-    // definition (web.yml, rendered by deploy-app) does the IAM-auth mount.
-    //
-    // motif-logos is NOT a separate access point — it is just the
-    // `/${appName}/motif-logos` subdirectory of this one filesystem tree. The
-    // frontend mounts that subpath via an efsVolumeConfiguration.rootDirectory
-    // (no second access point) in web.yml.
-    //
-    // Naming/convention: the access point roots at `/${appName}` (e.g.
-    // `/forge2-tf`) — matching every sibling app on this shared dev filesystem
-    // (pimixture → /pimixture, ezqtl → /ezqtl, …). The tier lives only in the
-    // access-point *name* (`${tier}-${appName}` → `dev-forge2-tf`), because each
-    // tier has its own filesystem.
-    // -------------------------------------------------------------------------
-
-    // Single data access point → the backend mounts this at /deploy/data.
+    // EFS access point on the shared, platform-provisioned filesystem.
     const accessPoint = new efs.CfnAccessPoint(this, "DataAccessPoint", {
       fileSystemId: efsId,
       posixUser: { uid: posixUid.toString(), gid: posixGid.toString() },
@@ -163,23 +129,14 @@ export class EcsAppStack extends cdk.Stack {
       ],
     });
 
-    // CloudWatch log group
     const logGroup = new logs.LogGroup(this, "WebLogGroup", {
       logGroupName: `/${appNamespace}/${tier}/${appName}/web`,
       retention: logs.RetentionDays.SIX_MONTHS,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    // -------------------------------------------------------------------------
-    // Placeholder task definition.
-    //
-    // As in the analysistools-portal reference stack, the real task definition
-    // (frontend + backend + firelens, with the EFS volume) is rendered and
-    // registered by the deploy-app GitHub workflow from .github/aws/web.yml.
-    // This placeholder only exists so the service can be created/updated by CDK;
-    // the CfnService override below pins the service to the task-definition
-    // *family* so CDK never reverts the workflow-registered revision.
-    // -------------------------------------------------------------------------
+    // Placeholder task definition; the real one is registered by deploy-app from
+    // web.yml. The CfnService override below pins the service to the family.
     const taskDef = new ecs.FargateTaskDefinition(this, "WebTaskDef", {
       family: `${tier}-${appName}-${appService}`,
       cpu: props.cpu,
@@ -188,9 +145,6 @@ export class EcsAppStack extends cdk.Stack {
       taskRole,
     });
 
-    // The placeholder mounts no EFS volumes — the real task definition rendered
-    // by deploy-app (web.yml) declares the `data` / `motif-logos` volumes and
-    // mounts via the access-point IDs published to SSM below.
     taskDef.addContainer("WebContainer", {
       containerName: "frontend",
       image: ecs.ContainerImage.fromRegistry("nginx:alpine"),
@@ -208,7 +162,6 @@ export class EcsAppStack extends cdk.Stack {
       }),
     });
 
-    // Target group
     const tg = new elbv2.ApplicationTargetGroup(this, "WebTG", {
       targetGroupName: `${tier}-${appName}-${appService}`,
       port: props.containerPort,
@@ -223,7 +176,6 @@ export class EcsAppStack extends cdk.Stack {
       },
     });
 
-    // ALB listener rule: route the app's host + path prefix to this service.
     listener.addTargetGroups("WebListenerRule", {
       targetGroups: [tg],
       conditions: [
@@ -236,7 +188,6 @@ export class EcsAppStack extends cdk.Stack {
       priority: listenerRulePriority,
     });
 
-    // Fargate service
     const service = new ecs.FargateService(this, "WebService", {
       serviceName: `${tier}-${appName}-${appService}`,
       cluster,
@@ -254,7 +205,7 @@ export class EcsAppStack extends cdk.Stack {
 
     service.attachToApplicationTargetGroup(tg);
 
-    // Prevent CDK from reverting task definitions registered by deploy-app workflow
+    // Let deploy-app own the task-definition revision and desired count.
     const cfnService = service.node.defaultChild as ecs.CfnService;
     cfnService.addPropertyOverride(
       "TaskDefinition",
@@ -262,7 +213,6 @@ export class EcsAppStack extends cdk.Stack {
     );
     cfnService.addPropertyDeletionOverride("DesiredCount");
 
-    // Scheduled auto-scaling (non-prod: scale to 0 nights/weekends)
     if (props.nonProdSchedule) {
       const scalable = service.autoScaleTaskCount({
         minCapacity: 0,
@@ -292,7 +242,6 @@ export class EcsAppStack extends cdk.Stack {
       });
     }
 
-    // SSM parameters for deploy-app workflow
     new ssm.StringParameter(this, "SsmEcsCluster", {
       parameterName: `/${appNamespace}/${tier}/${appName}/ecs_cluster`,
       stringValue: clusterName,
@@ -323,7 +272,6 @@ export class EcsAppStack extends cdk.Stack {
       stringValue: accessPoint.attrAccessPointId,
     });
 
-    // Stack outputs
     new cdk.CfnOutput(this, "WebServiceName", {
       value: service.serviceName,
       description: "ECS Service Name",
@@ -341,7 +289,7 @@ export class EcsAppStack extends cdk.Stack {
 
     new cdk.CfnOutput(this, "EfsFileSystemId", {
       value: efsId,
-      description: "EFS File System ID (stage data into the /data access point)",
+      description: "EFS File System ID",
     });
 
     new cdk.CfnOutput(this, "EfsAccessPointId", {
