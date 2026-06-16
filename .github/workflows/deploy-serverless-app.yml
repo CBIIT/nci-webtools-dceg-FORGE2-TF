@@ -35,7 +35,7 @@ jobs:
       BACKEND_CONTAINER_PORT: 8000
       ECS_WEB_TASK_CPU_UNITS: 1024
       ECS_WEB_TASK_MEMORY_UNITS: 2048
-      S3_BUCKET: nci-cbiit-dceg-dev
+      S3_BUCKET: ${{ vars.S3_BUCKET }}
       TIER: ${{ inputs.tier }}
       DATA_FOLDER: /deploy/data
       TMP_FOLDER: /deploy/data/tmp
