@@ -14,7 +14,7 @@ else
   : "${DATA_FOLDER:=/deploy/data}"
   : "${TMP_FOLDER:=/deploy/data/tmp}"
   : "${AWS_REGION:=us-east-1}"
-  : "${S3_BUCKET:=nci-cbiit-dceg-dev}"
+  : "${S3_BUCKET:=nci-cbiit-dceg-data-nonprod}"
   : "${S3_SUBFOLDER:=forge2-tf}"
 
   mkdir -p "$TMP_FOLDER" "$DATA_FOLDER"
