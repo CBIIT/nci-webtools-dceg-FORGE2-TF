@@ -46,8 +46,7 @@ else
 }
 EOF
 
-  echo "Rendered $CONFIG_PATH from environment:"
-  cat "$CONFIG_PATH"
+  echo "Rendered $CONFIG_PATH from environment."
 fi
 
 exec npm start
