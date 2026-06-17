@@ -1,12 +1,7 @@
 name: Deploy Serverless App
 
-# Serverless (ECS Fargate) application deployment: build & push the frontend and
-# backend images, render the task definition (.github/aws/web.yml), register it,
-# and force a new ECS service deployment. This is the data-plane workflow and is
-# IaC-language agnostic (it consumes the SSM parameters published by Deploy
-# Serverless Infrastructure, regardless of whether they were created by the
-# TypeScript or Python CDK stack). Distinct from the EC2 pipeline
-# (forge2-tf-deploy.yml).
+# Build/push images, render the task definition (.github/aws/web.yml), register
+# it, and roll the ECS service. Consumes SSM params from the infrastructure deploy.
 
 on:
   workflow_dispatch:
@@ -40,22 +35,20 @@ jobs:
       BACKEND_CONTAINER_PORT: 8000
       ECS_WEB_TASK_CPU_UNITS: 1024
       ECS_WEB_TASK_MEMORY_UNITS: 2048
-      S3_BUCKET: nci-cbiit-dceg-dev
+      S3_BUCKET: ${{ vars.S3_BUCKET }}
       TIER: ${{ inputs.tier }}
-      # dev/qa build "development" images; stage/prod build "release" images
-      # (matches the EC2 pipeline convention and the sibling Fargate apps).
-      IMAGE_TIER: ${{ contains(fromJson('["dev","qa"]'), inputs.tier) && 'development' || 'release' }}
+      DATA_FOLDER: /deploy/data
+      TMP_FOLDER: /deploy/data/tmp
       CICD_ROLE_ARN: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/power-user-github-actions-cicd
 
     steps:
       - uses: "actions/checkout@v6.0.2"
-        with:
-          ref: ${{ inputs.ref || github.ref }}
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6.0.0
         with:
           role-to-assume: ${{ env.CICD_ROLE_ARN }}
-          role-session-name: ${{ env.TIER }}-${{ env.APP }}-deploy-${{ github.run_id }}
+          role-session-name: ${{ env.TIER }}-${{ env.APP }}-deploy-${{ github.ref_name }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Set dynamic environment variables
@@ -63,10 +56,10 @@ jobs:
           TIMESTAMP=$(date +"%Y%m%d%H%M%S")
           REPO=${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/$APP
           echo "IMAGE_REPOSITORY=$REPO" >> $GITHUB_ENV
-          echo "FRONTEND_IMAGE=$REPO:frontend-$IMAGE_TIER-$TIMESTAMP" >> $GITHUB_ENV
-          echo "FRONTEND_IMAGE_LATEST=$REPO:frontend-$IMAGE_TIER-latest" >> $GITHUB_ENV
-          echo "BACKEND_IMAGE=$REPO:backend-$IMAGE_TIER-$TIMESTAMP" >> $GITHUB_ENV
-          echo "BACKEND_IMAGE_LATEST=$REPO:backend-$IMAGE_TIER-latest" >> $GITHUB_ENV
+          echo "FRONTEND_IMAGE=$REPO:frontend-$TIMESTAMP" >> $GITHUB_ENV
+          echo "FRONTEND_IMAGE_LATEST=$REPO:frontend-latest" >> $GITHUB_ENV
+          echo "BACKEND_IMAGE=$REPO:backend-$TIMESTAMP" >> $GITHUB_ENV
+          echo "BACKEND_IMAGE_LATEST=$REPO:backend-latest" >> $GITHUB_ENV
           echo "PARAMETER_PATH=/analysistools/${TIER}/${APP}" >> $GITHUB_ENV
           echo "ENVIRONMENT_TIER=${TIER^^}" >> $GITHUB_ENV
 
@@ -81,7 +74,6 @@ jobs:
             ["role_arn"]="ROLE_ARN"
             ["efs_file_system_id"]="EFS_FILE_SYSTEM_ID"
             ["efs_access_point_id"]="EFS_ACCESS_POINT_ID"
-            ["efs_motif_logos_access_point_id"]="EFS_MOTIF_LOGOS_ACCESS_POINT_ID"
           )
 
           for ssm_name in "${!PARAMS[@]}"; do
@@ -131,12 +123,8 @@ jobs:
 
       - name: Render task definition
         run: |
-          if [ ! -f "$TASK_DEFINITION_TEMPLATE_PATH/web.yml" ]; then
-            echo "Error: task definition template not found at '$TASK_DEFINITION_TEMPLATE_PATH/web.yml' in the checked-out ref."
-            exit 1
-          fi
+          envsubst < $TASK_DEFINITION_TEMPLATE_PATH/web.yml > web.yml
 
-          envsubst < "$TASK_DEFINITION_TEMPLATE_PATH/web.yml" > web.yml
           echo "=== Web Task Definition ==="
           cat web.yml
 
@@ -174,7 +162,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **App:** ${{ env.APP }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Tier:** ${{ env.TIER }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Image tier:** ${{ env.IMAGE_TIER }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Frontend image:** ${{ env.FRONTEND_IMAGE }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Backend image:** ${{ env.BACKEND_IMAGE }}" >> $GITHUB_STEP_SUMMARY
