@@ -41,6 +41,3 @@ server/config.json
 **/cdk.out/
 **/cdk.env
 **/cdk.context.json
-**/.venv/
-**/__pycache__/
-*.pyc

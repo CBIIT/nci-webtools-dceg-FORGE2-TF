@@ -39,7 +39,7 @@ containerDefinitions:
 
   # Node backend
   - name: backend
-    image: "${BACKEND_IMAGE_LATEST}"
+    image: "${BACKEND_IMAGE}"
     essential: true
     portMappings:
       - protocol: tcp
@@ -83,7 +83,7 @@ containerDefinitions:
 
   # Apache frontend
   - name: frontend
-    image: "${FRONTEND_IMAGE_LATEST}"
+    image: "${FRONTEND_IMAGE}"
     essential: true
     dependsOn:
       - containerName: backend
