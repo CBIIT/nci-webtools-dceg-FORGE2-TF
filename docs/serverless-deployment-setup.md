@@ -1,10 +1,8 @@
 # Serverless (ECS Fargate) Deployment — Setup Runbook
 
-One-time setup required before the `deploy-serverless-*` GitHub Actions
-workflows can run. This covers the **GitHub-side** configuration and the
-**AWS-side** prerequisites the workflows assume already exist. The application
-code and the TypeScript CDK IaC (`infrastructure/`) are already in the repo; this
-is the glue that lets Actions assume a role, read config, and deploy.
+One-time GitHub- and AWS-side setup required before the `deploy-serverless-*`
+workflows can run (the app code and TS CDK in `infrastructure/` are already in the
+repo).
 
 > Conventions used below
 > - `<AWS_ACCOUNT_ID>` — the 12-digit account for the tier you're deploying to
@@ -121,9 +119,8 @@ aws iam create-role \
 
 **Permissions policy.** The role must be able to run CDK (CloudFormation, plus
 the resource types the stacks create) and the app deploy (ECR push, task-def
-register, service update, SSM reads). The simplest path in a non-prod account is
-the AWS managed `PowerUserAccess` (the role name implies this is the intent),
-but a least-privilege policy is preferable. Minimum action set:
+register, service update, SSM reads). `PowerUserAccess` works in a non-prod
+account; a least-privilege policy is preferable. Minimum action set:
 
 ```json
 {
@@ -306,8 +303,10 @@ Datadog FireLens logging additionally reads:
 - **`Unable to download cdk.env` / access denied** → `CICD_BUCKET` var wrong, the
   object isn't at `env/<tier>/forge2-tf/cdk.env`, or the role lacks `s3:GetObject`.
 - **Frontend container starts with an empty image / pull error** → the task def
-  expected `FRONTEND_IMAGE_LATEST`; confirm the app workflow exported it (it
-  does — this was a fix over the original fargate workflow).
+  references the immutable `FRONTEND_IMAGE` / `BACKEND_IMAGE` (`:<service>-<timestamp>`)
+  tags so each ECS revision (and any circuit-breaker rollback) pins an exact image;
+  confirm the app workflow exported them. `:<service>-latest` is still pushed for
+  build cache only.
 - **`This stack uses assets, so the toolkit stack must be deployed` (bootstrap)**
   → run `cdk bootstrap aws://<AWS_ACCOUNT_ID>/us-east-1` once.
 - **ALB rule priority conflict** → pick a unique `LISTENER_RULE_PRIORITY`.
