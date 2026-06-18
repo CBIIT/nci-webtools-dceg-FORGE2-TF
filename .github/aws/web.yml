@@ -18,9 +18,9 @@ volumes:
   - name: motif-logos
     efsVolumeConfiguration:
       fileSystemId: "${EFS_FILE_SYSTEM_ID}"
-      rootDirectory: "/${APP}/motif-logos"
       transitEncryption: ENABLED
       authorizationConfig:
+        accessPointId: "${EFS_MOTIF_LOGOS_ACCESS_POINT_ID}"
         iam: ENABLED
 containerDefinitions:
   # FireLens (fluent-bit) → Datadog

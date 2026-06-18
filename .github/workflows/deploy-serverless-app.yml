@@ -74,6 +74,7 @@ jobs:
             ["role_arn"]="ROLE_ARN"
             ["efs_file_system_id"]="EFS_FILE_SYSTEM_ID"
             ["efs_access_point_id"]="EFS_ACCESS_POINT_ID"
+            ["efs_motif_logos_access_point_id"]="EFS_MOTIF_LOGOS_ACCESS_POINT_ID"
           )
 
           for ssm_name in "${!PARAMS[@]}"; do

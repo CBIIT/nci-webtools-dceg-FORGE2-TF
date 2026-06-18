@@ -107,7 +107,9 @@ export class EcsAppStack extends cdk.Stack {
       }
     );
 
-    // EFS access point on the shared, platform-provisioned filesystem.
+    // EFS access points on the shared, platform-provisioned filesystem. The task
+    // role is scoped to these access points, so every EFS volume must mount via an
+    // access point (a raw rootDirectory mount is denied at mount time).
     const accessPoint = new efs.CfnAccessPoint(this, "DataAccessPoint", {
       fileSystemId: efsId,
       posixUser: { uid: posixUid.toString(), gid: posixGid.toString() },
@@ -116,7 +118,7 @@ export class EcsAppStack extends cdk.Stack {
         creationInfo: {
           ownerUid: posixUid.toString(),
           ownerGid: posixGid.toString(),
-          permissions: "0755",
+          permissions: "0777",
         },
       },
       accessPointTags: [
@@ -128,6 +130,33 @@ export class EcsAppStack extends cdk.Stack {
         { key: "ResourceFunction", value: "efs" },
       ],
     });
+
+    // Dedicated access point for the motif-logos subdirectory. The frontend mounts
+    // this read-only; without its own access point the volume can't authorize.
+    const motifLogosAccessPoint = new efs.CfnAccessPoint(
+      this,
+      "MotifLogosAccessPoint",
+      {
+        fileSystemId: efsId,
+        posixUser: { uid: posixUid.toString(), gid: posixGid.toString() },
+        rootDirectory: {
+          path: `/${appName}/motif-logos`,
+          creationInfo: {
+            ownerUid: posixUid.toString(),
+            ownerGid: posixGid.toString(),
+            permissions: "0777",
+          },
+        },
+        accessPointTags: [
+          { key: "Name", value: `${tier}-${appName}-motif-logos` },
+          { key: "ApplicationName", value: appName },
+          { key: "Project", value: "dceg-analysistools" },
+          { key: "CreatedBy", value: "cdk" },
+          { key: "EnvironmentTier", value: tier.toUpperCase() },
+          { key: "ResourceFunction", value: "efs" },
+        ],
+      }
+    );
 
     const logGroup = new logs.LogGroup(this, "WebLogGroup", {
       logGroupName: `/${appNamespace}/${tier}/${appName}/web`,
@@ -172,7 +201,8 @@ export class EcsAppStack extends cdk.Stack {
         enabled: true,
         path: healthCheckPath,
         port: String(props.containerPort),
-        healthyHttpCodes: "200-499",
+        // healthyHttpCodes omitted — defaults to "200" so a broken SPA returning
+        // 4xx is treated as unhealthy and pulled from rotation.
       },
     });
 
@@ -272,6 +302,11 @@ export class EcsAppStack extends cdk.Stack {
       stringValue: accessPoint.attrAccessPointId,
     });
 
+    new ssm.StringParameter(this, "SsmEfsMotifLogosAccessPointId", {
+      parameterName: `/${appNamespace}/${tier}/${appName}/efs_motif_logos_access_point_id`,
+      stringValue: motifLogosAccessPoint.attrAccessPointId,
+    });
+
     new cdk.CfnOutput(this, "WebServiceName", {
       value: service.serviceName,
       description: "ECS Service Name",
@@ -295,6 +330,11 @@ export class EcsAppStack extends cdk.Stack {
     new cdk.CfnOutput(this, "EfsAccessPointId", {
       value: accessPoint.attrAccessPointId,
       description: "EFS Access Point ID",
+    });
+
+    new cdk.CfnOutput(this, "EfsMotifLogosAccessPointId", {
+      value: motifLogosAccessPoint.attrAccessPointId,
+      description: "EFS motif-logos Access Point ID",
     });
   }
 }
