@@ -1,0 +1,89 @@
+name: Deploy Serverless Infrastructure
+
+# Provision the Fargate infrastructure (ECS service, EFS access point, ALB
+# target group/rule, log group, autoscaling, SSM params) via CDK (TypeScript).
+
+on:
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: "Environment to deploy to"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - qa
+          - stage
+          - prod
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-infrastructure:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.tier }}
+    env:
+      AWS_REGION: us-east-1
+      AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+      TIER: ${{ inputs.tier }}
+      CICD_ROLE_ARN: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/power-user-github-actions-cicd
+      CDK_DIR: infrastructure
+      CDK_EXEC: npx cdk
+      CDK_APP: npx ts-node bin/cdk.ts
+
+    steps:
+      - uses: "actions/checkout@v6.0.2"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6.0.0
+        with:
+          role-to-assume: ${{ env.CICD_ROLE_ARN }}
+          role-session-name: ${{ env.TIER }}-forge2-tf-infra-${{ github.run_id }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Download env file from S3
+        run: |
+          aws s3 cp \
+            "s3://${{ vars.CICD_BUCKET }}/env/${{ env.TIER }}/forge2-tf/cdk.env" \
+            "${{ env.CDK_DIR }}/cdk.env"
+
+      - name: Load CDK environment variables
+        working-directory: ${{ env.CDK_DIR }}
+        run: |
+          while IFS= read -r line || [ -n "$line" ]; do
+            case "$line" in ''|\#*) continue ;; esac
+            echo "$line" >> "$GITHUB_ENV"
+          done < cdk.env
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6.3.0
+        with:
+          node-version: "24"
+
+      - name: Install TypeScript dependencies
+        working-directory: ${{ env.CDK_DIR }}
+        run: npm ci
+
+      - name: CDK diff (preview changes)
+        working-directory: ${{ env.CDK_DIR }}
+        run: ${{ env.CDK_EXEC }} diff --app "${{ env.CDK_APP }}" || true
+
+      - name: CDK deploy
+        working-directory: ${{ env.CDK_DIR }}
+        run: ${{ env.CDK_EXEC }} deploy --app "${{ env.CDK_APP }}" --require-approval never
+
+      - name: Clean up env files
+        if: always()
+        working-directory: ${{ env.CDK_DIR }}
+        run: rm -f cdk.env
+
+      - name: Deployment Summary
+        run: |
+          echo "## Serverless Infrastructure Deployment Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${{ env.TIER }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Region:** ${{ env.AWS_REGION }}" >> $GITHUB_STEP_SUMMARY

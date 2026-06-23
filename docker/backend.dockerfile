@@ -65,7 +65,9 @@ RUN cd /tmp \
 # install R packages
 RUN Rscript -e "Sys.setenv(MAKEFLAGS = '-j2'); install.packages(c('optparse'), repos='https://cloud.r-project.org/')"
 
-RUN mkdir -p /deploy/server /deploy/logs
+ARG DATA_FOLDER=/deploy/data
+ARG TMP_FOLDER=/deploy/data/tmp
+RUN mkdir -p /deploy/server "$DATA_FOLDER" "$TMP_FOLDER"
 
 WORKDIR /deploy/server
 
@@ -77,4 +79,9 @@ RUN npm install
 # copy the rest of the application
 COPY . /deploy/
 
-CMD npm start
+COPY docker/backend-entrypoint.sh /usr/local/bin/backend-entrypoint.sh
+RUN chmod +x /usr/local/bin/backend-entrypoint.sh
+
+EXPOSE 8000
+
+CMD ["/usr/local/bin/backend-entrypoint.sh"]
