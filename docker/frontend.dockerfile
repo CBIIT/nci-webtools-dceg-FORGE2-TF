@@ -1,15 +1,13 @@
-FROM public.ecr.aws/amazonlinux/amazonlinux:2022
+# ---- build stage: compile the React app (build-only deps stay here) ----
+FROM public.ecr.aws/amazonlinux/amazonlinux:2022 AS build
 
 RUN dnf -y update \
  && dnf -y install \
     gcc-c++ \
-    httpd \
     make \
     nodejs \
     npm \
  && dnf clean all
-
-RUN mkdir /client
 
 WORKDIR /client
 
@@ -19,9 +17,19 @@ RUN npm install
 
 COPY client /client/
 
-RUN npm run build \
-    && mv /client/build /var/www/html/forge2-tf \
-    && chmod -R a+rX /var/www/html/forge2-tf
+RUN npm run build
+
+# ---- runtime stage: httpd serving the static build only (no node_modules/npm) ----
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023
+
+RUN dnf -y update \
+ && dnf -y install httpd \
+ && dnf clean all
+
+# Copy only the compiled static assets — build tooling never reaches the runtime image,
+# which removes every build-time npm CVE (rollup, webpack, babel, etc.) from the shipped image.
+COPY --from=build /client/build /var/www/html/forge2-tf
+RUN chmod -R a+rX /var/www/html/forge2-tf
 
 # Add custom httpd configuration
 COPY docker/httpd-forge2-tf.conf /etc/httpd/conf.d/httpd-forge2-tf.conf

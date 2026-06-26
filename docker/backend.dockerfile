@@ -3,7 +3,6 @@ FROM public.ecr.aws/amazonlinux/amazonlinux:2022
 RUN dnf -y update \
  && dnf -y install \
     gcc-c++ \
-    httpd \
     make \
     nodejs \
     npm \
@@ -27,6 +26,10 @@ RUN dnf -y update \
     tar \
  && dnf clean all
 
+# Upgrade the globally-installed npm so its bundled deps (tar, minimatch,
+# brace-expansion, etc.) pick up security fixes from the dnf-provided npm.
+RUN npm install -g npm@latest
+
 # Install latest version of SQLite
 # RUN curl https://www.sqlite.org/2021/sqlite-autoconf-3350500.tar.gz -o /tmp/sqlite-autoconf-3350500.tar.gz \
 #    && cd /tmp \
@@ -45,7 +48,8 @@ RUN dnf -y update \
 #    && LD_RUN_PATH=/usr/local/lib make install
 
 # Install Python packages
-RUN pip3 install boto3 simplejson numpy scipy patsy pandas statsmodels
+# -U pulls patched releases (urllib3, pip, boto3/botocore) to clear known CVEs.
+RUN pip3 install -U pip boto3 botocore urllib3 simplejson numpy scipy patsy pandas statsmodels
 
 # Download and install htslib-1.11 (tabix)
 RUN cd /tmp \
