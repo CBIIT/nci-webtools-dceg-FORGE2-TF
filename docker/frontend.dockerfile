@@ -1,5 +1,5 @@
 # ---- build stage: compile the React app (build-only deps stay here) ----
-FROM public.ecr.aws/amazonlinux/amazonlinux:2022 AS build
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023 AS build
 
 RUN dnf -y update \
  && dnf -y install \

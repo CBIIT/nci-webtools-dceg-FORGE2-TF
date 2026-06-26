@@ -1,4 +1,4 @@
-FROM public.ecr.aws/amazonlinux/amazonlinux:2022
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 
 RUN dnf -y update \
  && dnf -y install \
@@ -6,7 +6,6 @@ RUN dnf -y update \
     make \
     nodejs \
     npm \
-    R \
     bzip2 \
     bzip2-devel \
     libcurl-devel \
@@ -15,7 +14,7 @@ RUN dnf -y update \
     xz-devel \
     git \
     gcc \
-    libffi-devel \    
+    libffi-devel \
     sqlite \
     sqlite-devel \
     python3 \
@@ -24,28 +23,27 @@ RUN dnf -y update \
     python3-setuptools \
     python3-wheel \
     tar \
+    cairo \
+    libpng \
+    fontconfig \
  && dnf clean all
 
-# Install latest version of SQLite
-# RUN curl https://www.sqlite.org/2021/sqlite-autoconf-3350500.tar.gz -o /tmp/sqlite-autoconf-3350500.tar.gz \
-#    && cd /tmp \
-#    && tar xvfz sqlite-autoconf-3350500.tar.gz \
-#    && cd sqlite-autoconf-3350500 \
-#    && LD_RUN_PATH=/usr/local/lib ./configure \
-#    && make && make install 
+# Install R from the Posit RPM. AL2023 does not ship a usable 'R' dnf package, so
+# (matching Spatial Power) install R from cdn.posit.co and point CRAN at the Posit
+# binary mirror so package installs don't need to compile from source.
+ENV R_VER="4.5.3"
+ENV PATH="/opt/R/${R_VER}/bin:${PATH}"
+RUN ARCH=$(uname -m) \
+    && curl -O https://cdn.posit.co/r/rhel-9/pkgs/R-${R_VER}-1-1.${ARCH}.rpm \
+    && dnf install -y R-${R_VER}-1-1.${ARCH}.rpm \
+    && echo 'options(repos = c(CRAN = sprintf("https://packagemanager.posit.co/cran/latest/bin/linux/rhel9-%s/%s", R.version["arch"], substr(getRversion(), 1, 3))))' \
+       >> /opt/R/${R_VER}/lib/R/etc/Rprofile.site \
+    && rm -f R-${R_VER}-1-1.${ARCH}.rpm
 
-# # Install Python 
-# RUN curl https://www.python.org/ftp/python/3.6.8/Python-3.6.8.tgz -o /tmp/Python-3.6.8.tgz \
-#    && cd /tmp \
-#    && tar xvfz Python-3.6.8.tgz \
-#    && cd Python-3.6.8 \
-#    && LD_RUN_PATH=/usr/local/lib  ./configure --prefix=/usr --enable-optimizations \
-#    && LD_RUN_PATH=/usr/local/lib make \
-#    && LD_RUN_PATH=/usr/local/lib make install
-
-# Install Python packages
-# -U pulls patched releases (urllib3, pip, boto3/botocore) to clear known CVEs.
-RUN pip3 install -U pip boto3 botocore urllib3 simplejson numpy scipy patsy pandas statsmodels
+# Install Python packages. -U pulls patched releases (urllib3, boto3/botocore, etc.)
+# to clear known CVEs. pip itself is rpm-managed (no RECORD), so it is not in the -U
+# list — upgrading it here fails with "Cannot uninstall pip ... RECORD file not found".
+RUN pip3 install -U boto3 botocore urllib3 simplejson numpy scipy patsy pandas statsmodels
 
 # Download and install htslib-1.11 (tabix)
 RUN cd /tmp \
@@ -62,8 +60,8 @@ RUN cd /tmp \
    && gcc -s -O3 -Wall pts_lbsearch.c -o pts_lbsearch \
    && mv pts_lbsearch /usr/local/bin
 
-# install R packages
-RUN Rscript -e "Sys.setenv(MAKEFLAGS = '-j2'); install.packages(c('optparse'), repos='https://cloud.r-project.org/')"
+# install R packages (from the Posit binary mirror configured above)
+RUN Rscript -e "Sys.setenv(MAKEFLAGS = '-j2'); install.packages(c('optparse'))"
 
 ARG DATA_FOLDER=/deploy/data
 ARG TMP_FOLDER=/deploy/data/tmp
