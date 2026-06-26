@@ -22,6 +22,9 @@ RUN dnf -y update \
     python3-pip \
     python3-setuptools \
     python3-wheel \
+    python3.11 \
+    python3.11-pip \
+    python3.11-devel \
     tar \
     cairo \
     libpng \
@@ -40,10 +43,11 @@ RUN ARCH=$(uname -m) \
        >> /opt/R/${R_VER}/lib/R/etc/Rprofile.site \
     && rm -f R-${R_VER}-1-1.${ARCH}.rpm
 
-# Install Python packages. -U pulls patched releases (urllib3, boto3/botocore, etc.)
-# to clear known CVEs. pip itself is rpm-managed (no RECORD), so it is not in the -U
-# list — upgrading it here fails with "Cannot uninstall pip ... RECORD file not found".
-RUN pip3 install -U boto3 botocore urllib3 simplejson numpy scipy patsy pandas statsmodels
+# Install Python packages into python3.11. On python3.9, botocore caps urllib3<1.27,
+# so the app deps run under 3.11 where botocore allows urllib3>=2 (clears the urllib3
+# CVEs). The app points python-shell at this interpreter via PYTHON_BIN below.
+ENV PYTHON_BIN=python3.11
+RUN python3.11 -m pip install -U boto3 botocore urllib3 simplejson numpy scipy patsy pandas statsmodels
 
 # Download and install htslib-1.11 (tabix)
 RUN cd /tmp \
