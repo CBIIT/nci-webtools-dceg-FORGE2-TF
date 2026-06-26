@@ -26,10 +26,6 @@ RUN dnf -y update \
     tar \
  && dnf clean all
 
-# Upgrade the globally-installed npm so its bundled deps (tar, minimatch,
-# brace-expansion, etc.) pick up security fixes from the dnf-provided npm.
-RUN npm install -g npm@latest
-
 # Install latest version of SQLite
 # RUN curl https://www.sqlite.org/2021/sqlite-autoconf-3350500.tar.gz -o /tmp/sqlite-autoconf-3350500.tar.gz \
 #    && cd /tmp \
