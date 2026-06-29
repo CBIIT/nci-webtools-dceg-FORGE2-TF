@@ -17,14 +17,9 @@ RUN dnf -y update \
     libffi-devel \
     sqlite \
     sqlite-devel \
-    python3 \
-    python3-devel \
-    python3-pip \
-    python3-setuptools \
-    python3-wheel \
-    python3.11 \
-    python3.11-pip \
-    python3.11-devel \
+    python3.13 \
+    python3.13-pip \
+    python3.13-devel \
     tar \
     cairo \
     libpng \
@@ -43,11 +38,12 @@ RUN ARCH=$(uname -m) \
        >> /opt/R/${R_VER}/lib/R/etc/Rprofile.site \
     && rm -f R-${R_VER}-1-1.${ARCH}.rpm
 
-# Install Python packages into python3.11. On python3.9, botocore caps urllib3<1.27,
-# so the app deps run under 3.11 where botocore allows urllib3>=2 (clears the urllib3
-# CVEs). The app points python-shell at this interpreter via PYTHON_BIN below.
-ENV PYTHON_BIN=python3.11
-RUN python3.11 -m pip install -U boto3 botocore urllib3 simplejson numpy scipy patsy pandas statsmodels
+# Install Python packages into python3.13 (the app does not use the base python3.9,
+# whose dev packages are dropped above). Running under a current Python clears the
+# urllib3 CVEs (on 3.9 botocore caps urllib3<1.27). The app points python-shell at
+# this interpreter via PYTHON_BIN below.
+ENV PYTHON_BIN=python3.13
+RUN python3.13 -m pip install -U boto3 botocore urllib3 simplejson numpy scipy patsy pandas statsmodels
 
 # Download and install htslib-1.11 (tabix)
 RUN cd /tmp \
