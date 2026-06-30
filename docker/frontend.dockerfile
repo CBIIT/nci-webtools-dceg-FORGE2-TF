@@ -17,6 +17,12 @@ RUN npm install
 
 COPY client /client/
 
+# GA4 Measurement ID, injected by the deploy pipeline from SSM (prod only).
+# Baked into the static build via CRA's %REACT_APP_GTAG% substitution; empty/unset
+# leaves analytics disabled (see client/public/index.html).
+ARG REACT_APP_GTAG
+ENV REACT_APP_GTAG=${REACT_APP_GTAG}
+
 RUN npm run build
 
 # ---- runtime stage: httpd serving the static build only (no node_modules/npm) ----

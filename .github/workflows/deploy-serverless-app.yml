@@ -75,6 +75,7 @@ jobs:
             ["efs_file_system_id"]="EFS_FILE_SYSTEM_ID"
             ["efs_access_point_id"]="EFS_ACCESS_POINT_ID"
             ["efs_motif_logos_access_point_id"]="EFS_MOTIF_LOGOS_ACCESS_POINT_ID"
+            ["gtag"]="GA4_TAG"
           )
 
           for ssm_name in "${!PARAMS[@]}"; do
@@ -119,6 +120,8 @@ jobs:
           tags: |
             ${{ env.FRONTEND_IMAGE }}
             ${{ env.FRONTEND_IMAGE_LATEST }}
+          build-args: |
+            REACT_APP_GTAG=${{ env.GA4_TAG }}
           cache-from: type=registry,ref=${{ env.FRONTEND_IMAGE_LATEST }}
           cache-to: type=inline
 

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { NCIFooter } from "./controls/nci-footer/nci-footer";
 import "./main.scss";
 import { Navbar, Nav } from "react-bootstrap";
@@ -7,10 +7,22 @@ import {
   Route,
   NavLink,
   Redirect,
+  useLocation,
 } from "react-router-dom";
 import { Home } from "./pages/home/home";
 import FORGE2TF from "./pages/forge2-tf/forge2-tf";
 import Brand from "./pages/forge2-tf/panels/brand";
+import { trackPageView } from "../services/analytics";
+
+// Emits a GA4 page_view on every HashRouter route change (and the initial route).
+// No-op unless analytics was enabled at build time. Must render inside <Router>.
+function AnalyticsTracker() {
+  const location = useLocation();
+  useEffect(() => {
+    trackPageView(location.pathname);
+  }, [location.pathname]);
+  return null;
+}
 
 export function App() {
   const links = [
@@ -26,6 +38,7 @@ export function App() {
 
   return (
     <Router>
+      <AnalyticsTracker />
       <header className="bg-dark">
         <a
           href="#main"
