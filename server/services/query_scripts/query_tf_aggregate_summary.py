@@ -131,7 +131,7 @@ for sample in aggregate['samples']:
     else:
       vectorAggregate = map(add, vectorAggregate, signals)
   else:
-    error(404, 'could not find vector fn [%s]' % (vectorFn))
+    error(404, 'could not find vector fn [%s]' % (os.path.basename(vectorFn)))
 psl = float(len(vectorSignals))
 vectorAggregate = [x/psl for x in vectorAggregate]
 aggregate['vectors']['perSampleFns'] = vectorFns
