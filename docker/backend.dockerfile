@@ -4,8 +4,6 @@ RUN dnf -y update \
  && dnf -y install \
     gcc-c++ \
     make \
-    nodejs \
-    npm \
     bzip2 \
     bzip2-devel \
     libcurl-devel \
@@ -25,6 +23,20 @@ RUN dnf -y update \
     libpng \
     fontconfig \
  && dnf clean all
+
+# AL2023's own nodejs package doesn't track current majors, so pull Node 24
+# from NodeSource directly to guarantee the version regardless of AL2023's repo state.
+# The `node -v` assertion is required: AL2023's dnf.conf sets skip_if_unavailable=True
+# and the NodeSource setup script itself doesn't fail loudly if its repo is unreachable,
+# so without this check a transient NodeSource outage could silently fall back to
+# whatever (wrong) nodejs version AL2023's own repo happens to offer.
+RUN curl -fsSL https://rpm.nodesource.com/setup_24.x -o /tmp/nodesource_setup.sh \
+ && bash /tmp/nodesource_setup.sh \
+ && dnf -y install nodejs \
+ && dnf clean all \
+ && rm -f /tmp/nodesource_setup.sh \
+ && node -v | grep -qE '^v24\.' \
+ && npm -v
 
 # Install R from the Posit RPM. AL2023 does not ship a usable 'R' dnf package, so
 # (matching Spatial Power) install R from cdn.posit.co and point CRAN at the Posit
