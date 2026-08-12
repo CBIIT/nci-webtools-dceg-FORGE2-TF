@@ -11,7 +11,8 @@ RUN dnf -y update \
 # and the NodeSource setup script itself doesn't fail loudly if its repo is unreachable,
 # so without this check a transient NodeSource outage could silently fall back to
 # whatever (wrong) nodejs version AL2023's own repo happens to offer.
-RUN curl -fsSL https://rpm.nodesource.com/setup_24.x -o /tmp/nodesource_setup.sh \
+RUN curl -fsSL --proto '=https' --tlsv1.2 --retry 3 --retry-connrefused --retry-delay 2 \
+    https://rpm.nodesource.com/setup_24.x -o /tmp/nodesource_setup.sh \
  && bash /tmp/nodesource_setup.sh \
  && dnf -y install nodejs \
  && dnf clean all \

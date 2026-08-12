@@ -14,7 +14,7 @@
   "author": "Alex Reynolds",
   "license": "ISC",
   "engines": {
-    "node": ">=24"
+    "node": ">=24 <25"
   },
   "dependencies": {
     "axios": "^0.27.2",
