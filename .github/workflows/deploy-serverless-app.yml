@@ -48,7 +48,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v6.0.0
         with:
           role-to-assume: ${{ env.CICD_ROLE_ARN }}
-          role-session-name: ${{ env.TIER }}-${{ env.APP }}-deploy-${{ github.ref_name }}
+          role-session-name: ${{ env.TIER }}-${{ env.APP }}-deploy-${{ inputs.tier }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Set dynamic environment variables
@@ -56,10 +56,10 @@ jobs:
           TIMESTAMP=$(date +"%Y%m%d%H%M%S")
           REPO=${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.$AWS_REGION.amazonaws.com/$APP
           echo "IMAGE_REPOSITORY=$REPO" >> $GITHUB_ENV
-          echo "FRONTEND_IMAGE=$REPO:frontend-${{ github.ref_name }}-$TIMESTAMP" >> $GITHUB_ENV
-          echo "FRONTEND_IMAGE_LATEST=$REPO:frontend-${{ github.ref_name }}-latest" >> $GITHUB_ENV
-          echo "BACKEND_IMAGE=$REPO:backend-${{ github.ref_name }}-$TIMESTAMP" >> $GITHUB_ENV
-          echo "BACKEND_IMAGE_LATEST=$REPO:backend-${{ github.ref_name }}-latest" >> $GITHUB_ENV
+          echo "FRONTEND_IMAGE=$REPO:frontend-${{ inputs.tier }}-$TIMESTAMP" >> $GITHUB_ENV
+          echo "FRONTEND_IMAGE_LATEST=$REPO:frontend-${{ inputs.tier }}-latest" >> $GITHUB_ENV
+          echo "BACKEND_IMAGE=$REPO:backend-${{ inputs.tier }}-$TIMESTAMP" >> $GITHUB_ENV
+          echo "BACKEND_IMAGE_LATEST=$REPO:backend-${{ inputs.tier }}-latest" >> $GITHUB_ENV
           echo "PARAMETER_PATH=/analysistools/${TIER}/${APP}" >> $GITHUB_ENV
           echo "ENVIRONMENT_TIER=${TIER^^}" >> $GITHUB_ENV
 
