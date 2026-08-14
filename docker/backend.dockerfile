@@ -58,8 +58,8 @@ ENV PYTHON_BIN=python3.13
 # pip is upgraded last: `pip install -U pip` installs the new pip under /usr/local but
 # leaves the RPM-owned copy in /usr/lib, so both versions remain on disk. Removing the
 # now-superseded RPM keeps only the upgraded pip, which stays fully usable.
-RUN python3.13 -m pip install -U boto3 botocore urllib3 simplejson numpy scipy patsy pandas statsmodels \
- && python3.13 -m pip install -U pip \
+RUN python3.13 -m pip install --no-cache-dir -U boto3 botocore urllib3 simplejson numpy scipy patsy pandas statsmodels \
+ && python3.13 -m pip install --no-cache-dir -U pip \
  && dnf -y remove python3.13-pip \
  && dnf clean all \
  && python3.13 -m pip --version \
