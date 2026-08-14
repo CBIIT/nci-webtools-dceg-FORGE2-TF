@@ -55,7 +55,16 @@ RUN ARCH=$(uname -m) \
 # urllib3 CVEs (on 3.9 botocore caps urllib3<1.27). The app points python-shell at
 # this interpreter via PYTHON_BIN below.
 ENV PYTHON_BIN=python3.13
-RUN python3.13 -m pip install -U boto3 botocore urllib3 simplejson numpy scipy patsy pandas statsmodels
+# pip is upgraded last: `pip install -U pip` installs the new pip under /usr/local but
+# leaves the RPM-owned copy in /usr/lib, so both versions remain on disk. Removing the
+# now-superseded RPM keeps only the upgraded pip, which stays fully usable.
+RUN python3.13 -m pip install -U boto3 botocore urllib3 simplejson numpy scipy patsy pandas statsmodels \
+ && python3.13 -m pip install -U pip \
+ && dnf -y remove python3.13-pip \
+ && dnf clean all \
+ && python3.13 -m pip --version \
+ && test ! -e /usr/lib/python3.13/site-packages/pip \
+ && python3.13 -c "import boto3, botocore, urllib3, simplejson, numpy, scipy, patsy, pandas, statsmodels"
 
 # Download and install htslib-1.11 (tabix)
 RUN cd /tmp \
