@@ -22,21 +22,20 @@ RUN dnf -y update \
     cairo \
     libpng \
     fontconfig \
+    nodejs24 \
  && dnf clean all
 
-# AL2023's own nodejs package doesn't track current majors, so pull Node 24
-# from NodeSource directly to guarantee the version regardless of AL2023's repo state.
-# The `node -v` assertion is required: AL2023's dnf.conf sets skip_if_unavailable=True
-# and the NodeSource setup script itself doesn't fail loudly if its repo is unreachable,
-# so without this check a transient NodeSource outage could silently fall back to
-# whatever (wrong) nodejs version AL2023's own repo happens to offer.
-RUN curl -fsSL --proto '=https' --tlsv1.2 --retry 3 --retry-connrefused --retry-delay 2 \
-    https://rpm.nodesource.com/setup_24.x -o /tmp/nodesource_setup.sh \
- && bash /tmp/nodesource_setup.sh \
- && dnf -y install nodejs \
- && dnf clean all \
- && rm -f /tmp/nodesource_setup.sh \
- && node -v | grep -qE '^v24\.' \
+# AL2023 ships versioned Node packages; nodejs24 provides Node 24.x. The unversioned
+# 'nodejs' package is Node 18, which is why the version is pinned in the name above.
+# The `node -v` assertion guards a real trap: AL2023 registers every nodejs major in
+# `alternatives` at the same priority, so if another nodejs package is ever installed
+# alongside this one, /usr/bin/node keeps pointing at whichever was installed first.
+# Assert before upgrading npm so a wrong Node fails the build loudly instead of
+# silently building the app against the wrong major.
+RUN node -v | grep -qE '^v24\.' \
+ && npm install -g npm@latest \
+ && npm update -g \
+ && node -v \
  && npm -v
 
 # Install R from the Posit RPM. AL2023 does not ship a usable 'R' dnf package, so
@@ -56,7 +55,9 @@ RUN ARCH=$(uname -m) \
 # urllib3 CVEs (on 3.9 botocore caps urllib3<1.27). The app points python-shell at
 # this interpreter via PYTHON_BIN below.
 ENV PYTHON_BIN=python3.13
-RUN python3.13 -m pip install -U boto3 botocore urllib3 simplejson numpy scipy patsy pandas statsmodels
+# --no-cache-dir keeps pip's download cache (~89 MB) out of the shipped image; it is
+# only useful for repeat installs during the build, and each package is installed once.
+RUN python3.13 -m pip install --no-cache-dir -U boto3 botocore urllib3 simplejson numpy scipy patsy pandas statsmodels
 
 # Download and install htslib-1.11 (tabix)
 RUN cd /tmp \
