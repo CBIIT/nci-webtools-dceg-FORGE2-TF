@@ -1,0 +1,79 @@
+# Local development compose file.
+#
+# This mirrors the single-task Fargate topology (frontend + backend on a shared
+# network) so local behavior matches production:
+#   - the two containers talk over a user-defined bridge network
+#   - the frontend reverse-proxies /forge2-tf/api -> the backend via API_HOST
+#   - the in-project ./data folder stands in for the EFS mounts used on Fargate
+#   - config.json is rendered at start from env by docker/backend-entrypoint.sh
+#
+# The containers read their reference data from the project's ./data folder
+# (overridable with DATA_DIR). Inside the backend it is mounted at /deploy/data,
+# which is exactly what config.json's data.folder points to.
+#
+# Usage:
+#   mkdir -p data/motif-logos data/tmp logs        # stage reference data in ./data
+#   docker compose -f docker-compose-local.yml up --build
+#   open http://localhost:8102/forge2-tf/
+services:
+  forge2-tf-backend:
+    build:
+      context: .
+      dockerfile: docker/backend.dockerfile
+    container_name: forge2-tf-backend-fargate
+    expose:
+      - "8000"
+    environment:
+      - NODE_ENV=production
+      - SERVER_PORT=8000
+      - DATA_FOLDER=/deploy/data
+      - TMP_FOLDER=/deploy/tmp
+      - LOGS_FOLDER=/deploy/logs
+      - LOG_LEVEL=debug
+      - AWS_REGION=us-east-1
+      # Bucket holding the tabix archives. The query path is:
+      #   s3://${S3_BUCKET}/${S3_SUBFOLDER}/data/All/...
+      # This matches the data/All symlink target (.../nci-cbiit-dceg-data-nonprod/forge2-tf/data/All).
+      - S3_BUCKET=nci-cbiit-dceg-data-nonprod
+      - S3_SUBFOLDER=forge2-tf
+      # The query scripts read tabix archives from S3 (only the .tbi indexes are
+      # local), so AWS credentials are REQUIRED for queries to work locally.
+      # These pass through from your host shell; export them before `up`, e.g.:
+      #   eval "$(aws configure export-credentials --format env)"
+      # TEST_ENV=LOCAL enables session-token (SSO/ASIA...) auth in the scripts
+      # and surfaces real S3 errors instead of masking them as "file not found".
+      - TEST_ENV=LOCAL
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN:-}
+    volumes:
+      # Project data folder -> container data folder the app reads from.
+      - ${DATA_DIR:-./data}:/deploy/data
+      - ${DATA_DIR:-./data}/tmp:/deploy/tmp
+      - ./logs:/deploy/logs
+      # If data/All is a symlink to an external path, mount its target at the
+      # SAME absolute path so the symlink resolves inside the container.
+      # run-docker.sh sets DATA_ALL_TARGET; defaults to a harmless /tmp no-op.
+      - ${DATA_ALL_TARGET:-/tmp}:${DATA_ALL_TARGET:-/tmp}:ro
+    networks:
+      - forge2-tf-network
+
+  forge2-tf-frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.dockerfile
+    container_name: forge2-tf-frontend-fargate
+    ports:
+      - "8102:80"
+    environment:
+      - API_HOST=http://forge2-tf-backend:8000
+    volumes:
+      - ${DATA_DIR:-./data}/motif-logos:/var/www/html/forge2-tf/assets/motif-logos:ro
+    depends_on:
+      - forge2-tf-backend
+    networks:
+      - forge2-tf-network
+
+networks:
+  forge2-tf-network:
+    driver: bridge

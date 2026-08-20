@@ -41,13 +41,22 @@ const queryTfAggregateSummaryValidation = [
   body("tf_aggregate_summary.sample")
     .isString()
     .matches(/^[A-Za-z0-9_.\-]+$/)
-    .withMessage("Invalid TF model name")
+    .withMessage("Invalid sample name")
     .trim()
     .escape(),
+  body("tf_aggregate_summary.tfModel")
+    .isString()
+    .matches(/^[A-Za-z0-9_.\-]+$/)
+    .withMessage("Invalid TF model name")
+    .trim(),
 ];
 
 const queryTfProbeOverlapSummaryValidation = [
-  body("tf_probe_overlap_summary.tfModel").isString().trim().escape(),
+  body("tf_probe_overlap_summary.tfModel")
+    .isString()
+    .matches(/^[A-Za-z0-9_.\-]+$/)
+    .withMessage("Invalid TF model name")
+    .trim(),
 ];
 
 module.exports = {

@@ -1,13 +1,9 @@
-FROM public.ecr.aws/amazonlinux/amazonlinux:2022
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 
 RUN dnf -y update \
  && dnf -y install \
     gcc-c++ \
-    httpd \
     make \
-    nodejs \
-    npm \
-    R \
     bzip2 \
     bzip2-devel \
     libcurl-devel \
@@ -16,36 +12,52 @@ RUN dnf -y update \
     xz-devel \
     git \
     gcc \
-    libffi-devel \    
+    libffi-devel \
     sqlite \
     sqlite-devel \
-    python3 \
-    python3-devel \
-    python3-pip \
-    python3-setuptools \
-    python3-wheel \
+    python3.13 \
+    python3.13-pip \
+    python3.13-devel \
     tar \
+    cairo \
+    libpng \
+    fontconfig \
+    nodejs24 \
  && dnf clean all
 
-# Install latest version of SQLite
-# RUN curl https://www.sqlite.org/2021/sqlite-autoconf-3350500.tar.gz -o /tmp/sqlite-autoconf-3350500.tar.gz \
-#    && cd /tmp \
-#    && tar xvfz sqlite-autoconf-3350500.tar.gz \
-#    && cd sqlite-autoconf-3350500 \
-#    && LD_RUN_PATH=/usr/local/lib ./configure \
-#    && make && make install 
+# AL2023 ships versioned Node packages; nodejs24 provides Node 24.x. The unversioned
+# 'nodejs' package is Node 18, which is why the version is pinned in the name above.
+# The `node -v` assertion guards a real trap: AL2023 registers every nodejs major in
+# `alternatives` at the same priority, so if another nodejs package is ever installed
+# alongside this one, /usr/bin/node keeps pointing at whichever was installed first.
+# Assert before upgrading npm so a wrong Node fails the build loudly instead of
+# silently building the app against the wrong major.
+RUN node -v | grep -qE '^v24\.' \
+ && npm install -g npm@latest \
+ && npm update -g \
+ && node -v \
+ && npm -v
 
-# # Install Python 
-# RUN curl https://www.python.org/ftp/python/3.6.8/Python-3.6.8.tgz -o /tmp/Python-3.6.8.tgz \
-#    && cd /tmp \
-#    && tar xvfz Python-3.6.8.tgz \
-#    && cd Python-3.6.8 \
-#    && LD_RUN_PATH=/usr/local/lib  ./configure --prefix=/usr --enable-optimizations \
-#    && LD_RUN_PATH=/usr/local/lib make \
-#    && LD_RUN_PATH=/usr/local/lib make install
+# Install R from the Posit RPM. AL2023 does not ship a usable 'R' dnf package, so
+# (matching Spatial Power) install R from cdn.posit.co and point CRAN at the Posit
+# binary mirror so package installs don't need to compile from source.
+ENV R_VER="4.5.3"
+ENV PATH="/opt/R/${R_VER}/bin:${PATH}"
+RUN ARCH=$(uname -m) \
+    && curl -O https://cdn.posit.co/r/rhel-9/pkgs/R-${R_VER}-1-1.${ARCH}.rpm \
+    && dnf install -y R-${R_VER}-1-1.${ARCH}.rpm \
+    && echo 'options(repos = c(CRAN = sprintf("https://packagemanager.posit.co/cran/latest/bin/linux/rhel9-%s/%s", R.version["arch"], substr(getRversion(), 1, 3))))' \
+       >> /opt/R/${R_VER}/lib/R/etc/Rprofile.site \
+    && rm -f R-${R_VER}-1-1.${ARCH}.rpm
 
-# Install Python packages
-RUN pip3 install boto3 simplejson numpy scipy patsy pandas statsmodels
+# Install Python packages into python3.13 (the app does not use the base python3.9,
+# whose dev packages are dropped above). Running under a current Python clears the
+# urllib3 CVEs (on 3.9 botocore caps urllib3<1.27). The app points python-shell at
+# this interpreter via PYTHON_BIN below.
+ENV PYTHON_BIN=python3.13
+# --no-cache-dir keeps pip's download cache (~89 MB) out of the shipped image; it is
+# only useful for repeat installs during the build, and each package is installed once.
+RUN python3.13 -m pip install --no-cache-dir -U boto3 botocore urllib3 simplejson numpy scipy patsy pandas statsmodels
 
 # Download and install htslib-1.11 (tabix)
 RUN cd /tmp \
@@ -62,10 +74,12 @@ RUN cd /tmp \
    && gcc -s -O3 -Wall pts_lbsearch.c -o pts_lbsearch \
    && mv pts_lbsearch /usr/local/bin
 
-# install R packages
-RUN Rscript -e "Sys.setenv(MAKEFLAGS = '-j2'); install.packages(c('optparse'), repos='https://cloud.r-project.org/')"
+# install R packages (from the Posit binary mirror configured above)
+RUN Rscript -e "Sys.setenv(MAKEFLAGS = '-j2'); install.packages(c('optparse'))"
 
-RUN mkdir -p /deploy/server /deploy/logs
+ARG DATA_FOLDER=/deploy/data
+ARG TMP_FOLDER=/deploy/data/tmp
+RUN mkdir -p /deploy/server "$DATA_FOLDER" "$TMP_FOLDER"
 
 WORKDIR /deploy/server
 
@@ -77,4 +91,9 @@ RUN npm install
 # copy the rest of the application
 COPY . /deploy/
 
-CMD npm start
+COPY docker/backend-entrypoint.sh /usr/local/bin/backend-entrypoint.sh
+RUN chmod +x /usr/local/bin/backend-entrypoint.sh
+
+EXPOSE 8000
+
+CMD ["/usr/local/bin/backend-entrypoint.sh"]

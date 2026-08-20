@@ -52,7 +52,7 @@ export function Home() {
                 target="_blank"
                 style={{ color: "#0062cc" }}
               >
-                FORGE2
+                <u>FORGE2</u>
               </a>
               {` `}
               GWAS analysis tool. FORGE2-TF enables the analysis of DNase-seq TF
