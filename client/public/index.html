@@ -21,16 +21,17 @@
     <script src="https://assets.adobedtm.com/f1bfa9f7170c81b1a9a9ecdcc6c5215ee0b03c84/satelliteLib-4b219b82c4737db0e1797b6c511cf10c802c95cb.js"></script>
     <!-- Google Analytics (GA4) -->
     <!--
-      The Measurement ID is injected at build time from REACT_APP_GTAG (CRA replaces
-      %REACT_APP_GTAG%). That value is sourced from SSM and only set for prod, so this
-      block self-disables in dev/qa/stage and local builds: it loads gtag.js and sends
-      requests ONLY when a real GA4 ID (G-XXXXXXXXXX) is present. page_views are emitted
-      by the SPA router (see app/services/analytics.js) to cover HashRouter route changes,
-      so send_page_view is disabled here to avoid a double-count on the landing route.
+      The Measurement ID is hardcoded. Every tier uses the same real ID; non-prod
+      traffic is excluded from prod reporting by the GA4 hostname Data Filter, not by
+      build-time gating. (Previously this read %REACT_APP_GTAG%, which no workflow ever
+      set, so the guard below rejected it and analytics never loaded in any tier.)
+      page_views are emitted by the SPA router (see app/services/analytics.js) to cover
+      HashRouter route changes, so send_page_view is disabled here to avoid a
+      double-count on the landing route.
     -->
     <script>
       (function () {
-        var GA_ID = "%REACT_APP_GTAG%";
+        var GA_ID = "G-L9H6MHJPEL";
         if (!/^G-[A-Z0-9]+$/.test(GA_ID)) return;
         window.dataLayer = window.dataLayer || [];
         function gtag() { dataLayer.push(arguments); }
