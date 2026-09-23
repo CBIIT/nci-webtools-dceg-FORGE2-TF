@@ -5,6 +5,7 @@ import Viewer from "./panels/viewer";
 import { Row, Col } from "react-bootstrap";
 import * as AppConst from "../../../appConstants";
 import { ErrorModal } from "../../controls/error-modal/error-modal";
+import { trackEvent } from "../../../services/analytics";
 
 export default class FORGE2TF extends React.Component {
   constructor(props) {
@@ -84,6 +85,15 @@ export default class FORGE2TF extends React.Component {
   }
 
   updateSettings(settings) {
+    // Key event: user applied analysis settings. Only controlled enum/numeric values
+    // are sent — no PII.
+    trackEvent("apply_settings", {
+      array: settings.array,
+      sample: settings.sample,
+      padding: settings.padding,
+      smoothing: settings.smoothing,
+      probes_count: settings.probesCount,
+    });
     this.setState(
       {
         settingsChangeStart: true,
@@ -152,6 +162,8 @@ export default class FORGE2TF extends React.Component {
   }
 
   updateShowErrorModal() {
+    // Key event: an error was surfaced to the user.
+    trackEvent("app_error", { location: "forge2-tf" });
     this.setState(
       {
         errorModal: true,

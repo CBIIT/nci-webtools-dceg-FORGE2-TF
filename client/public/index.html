@@ -19,14 +19,30 @@
     </script>
     <!-- Analytics -->
     <script src="https://assets.adobedtm.com/f1bfa9f7170c81b1a9a9ecdcc6c5215ee0b03c84/satelliteLib-4b219b82c4737db0e1797b6c511cf10c802c95cb.js"></script>
-    <!-- Global site tag (gtag.js) - Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-62346354-29"></script>
+    <!-- Google Analytics (GA4) -->
+    <!--
+      The Measurement ID is injected at build time from REACT_APP_GTAG (CRA replaces
+      %REACT_APP_GTAG%). That value is sourced from SSM and only set for prod, so this
+      block self-disables in dev/qa/stage and local builds: it loads gtag.js and sends
+      requests ONLY when a real GA4 ID (G-XXXXXXXXXX) is present. page_views are emitted
+      by the SPA router (see app/services/analytics.js) to cover HashRouter route changes,
+      so send_page_view is disabled here to avoid a double-count on the landing route.
+    -->
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'UA-62346354-29');
+      (function () {
+        var GA_ID = "%REACT_APP_GTAG%";
+        if (!/^G-[A-Z0-9]+$/.test(GA_ID)) return;
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        window.gtag = gtag;
+        window.GA_MEASUREMENT_ID = GA_ID;
+        gtag('js', new Date());
+        gtag('config', GA_ID, { send_page_view: false });
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID;
+        document.head.appendChild(s);
+      })();
     </script>
 
   </head>

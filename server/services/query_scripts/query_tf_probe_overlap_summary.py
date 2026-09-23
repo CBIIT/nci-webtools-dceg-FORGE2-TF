@@ -57,9 +57,13 @@ tf_databases = [
 # query
 #
 
-cmd = "%s -p %s %s | head -1 | cut -f2-" % (pts_bin, offsets_fn, tfModel)
+cmd = [pts_bin, '-p', offsets_fn, tfModel]
 try:
-  overlap_result = subprocess.check_output(cmd, shell=True).decode('utf-8')
+  # Replaces shell pipes `| head -1 | cut -f2-`: take the first line, then drop
+  # its first tab-delimited field.
+  raw = subprocess.check_output(cmd).decode('utf-8')
+  first_line = raw.split('\n', 1)[0]
+  overlap_result = '\t'.join(first_line.split('\t')[1:])
   if overlap_result:
     elems = overlap_result.rstrip('\n').split('\t')
     if len(elems) != 1:

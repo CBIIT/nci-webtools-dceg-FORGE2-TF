@@ -520,6 +520,16 @@ footer {
   background-color: #343a40 !important;
 }
 
+/* Bootstrap's default navbar-dark link color (rgba(255,255,255,.5)) fails
+   AA contrast against #343a40. Brighten it to meet the 4.5:1 threshold. */
+.bg-navbar-dark.navbar-dark .navbar-nav .nav-link {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.bg-navbar-dark.navbar-dark .navbar-nav .nav-link.active {
+  color: #ffffff !important;
+}
+
 .btn-primary {
   background-color: #0062cc !important;
   border-color: #0062cc !important;

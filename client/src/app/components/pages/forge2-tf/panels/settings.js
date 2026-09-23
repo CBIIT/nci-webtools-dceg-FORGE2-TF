@@ -109,14 +109,26 @@ class Settings extends React.Component {
   }
 
   componentDidMount() {
-    $("#settings-panel-padding-slider")
+    var paddingSlider = $("#settings-panel-padding-slider")
       .slider({})
       .on("slideStop", this.handleSlideStop)
       .data("slider");
-    $("#settings-panel-smoothing-slider")
+    var smoothingSlider = $("#settings-panel-smoothing-slider")
       .slider({})
       .on("slideStop", this.handleSlideStop)
       .data("slider");
+    // Give the generated slider handles (role="slider") accessible names so
+    // each ARIA input field has an accessible name (WCAG 4.1.2 / 508).
+    if (paddingSlider && paddingSlider.getElement) {
+      $(paddingSlider.getElement())
+        .find(".slider-handle")
+        .attr("aria-label", "Padding (nucleotides) around the SNP genomic location");
+    }
+    if (smoothingSlider && smoothingSlider.getElement) {
+      $(smoothingSlider.getElement())
+        .find(".slider-handle")
+        .attr("aria-label", "Smoothing window padding (nucleotides)");
+    }
   }
 
   handleSlideStop(event) {
@@ -422,8 +434,9 @@ class Settings extends React.Component {
         data-slider-min="0"
         data-slider-max="4"
         data-slider-step="1"
-        data-slider-value={AppConst.settings.paddings.indexOf(
-          this.state.padding
+        data-slider-value={Math.max(
+          0,
+          AppConst.settings.paddings.indexOf(this.state.padding)
         )}
         data-slider-tooltip="hide"
       />
@@ -442,10 +455,11 @@ class Settings extends React.Component {
           "[" + AppConst.settings.smoothings.toString() + "]"
         }
         data-slider-min="0"
-        data-slider-max={Math.max(AppConst.settings.smoothings).toString()}
+        data-slider-max={(AppConst.settings.smoothings.length - 1).toString()}
         data-slider-step="1"
-        data-slider-value={AppConst.settings.smoothings.indexOf(
-          this.state.smoothing
+        data-slider-value={Math.max(
+          0,
+          AppConst.settings.smoothings.indexOf(this.state.smoothing)
         )}
         data-slider-tooltip="hide"
       />
@@ -715,7 +729,7 @@ class Settings extends React.Component {
             title="Support"
             style={{ color: "#0062cc" }}
           >
-            email
+            <u>email</u>
           </a>
           .<p className="spacer"></p>
         </div>

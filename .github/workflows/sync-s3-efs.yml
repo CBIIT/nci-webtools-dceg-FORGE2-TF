@@ -1,0 +1,156 @@
+name: Sync S3 to EFS
+
+# Register and run a one-shot Fargate task that mounts the data and motif-logos EFS
+# access points and syncs analysis data + motif-logos from S3. Consumes SSM params
+# published by the infrastructure deploy.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: "Sync environment"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - qa
+          - stage
+          - prod
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  sync-s3-efs:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.tier }}
+    env:
+      APP: forge2-tf
+      TZ: America/New_York
+      AWS_REGION: us-east-1
+      TASK_DEFINITION_TEMPLATE_PATH: .github/aws
+      S3_BUCKET: ${{ vars.S3_BUCKET }}
+      TIER: ${{ inputs.tier }}
+      CICD_ROLE_ARN: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/power-user-github-actions-cicd
+
+    steps:
+      - uses: "actions/checkout@v6.0.2"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6.0.0
+        with:
+          role-to-assume: ${{ env.CICD_ROLE_ARN }}
+          role-session-name: ${{ env.TIER }}-${{ env.APP }}-efs-sync-${{ github.run_id }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set dynamic environment variables
+        run: |
+          echo "SYNC_TASK=${TIER}-${APP}-sync" >> $GITHUB_ENV
+          echo "ENVIRONMENT_TIER=${TIER^^}" >> $GITHUB_ENV
+
+      - name: Retrieve SSM parameters
+        run: |
+          PARAMETER_PATH="/analysistools/${TIER}/${APP}"
+
+          declare -A PARAMS=(
+            ["ecs_cluster"]="ECS_CLUSTER"
+            ["ecs_web_service"]="ECS_WEB_SERVICE"
+            ["role_arn"]="ROLE_ARN"
+            ["efs_file_system_id"]="EFS_FILE_SYSTEM_ID"
+            ["efs_access_point_id"]="EFS_ACCESS_POINT_ID"
+            ["efs_motif_logos_access_point_id"]="EFS_MOTIF_LOGOS_ACCESS_POINT_ID"
+          )
+
+          for ssm_name in "${!PARAMS[@]}"; do
+            env_var="${PARAMS[$ssm_name]}"
+            value=$(aws ssm get-parameter \
+              --name "${PARAMETER_PATH}/${ssm_name}" \
+              --with-decryption \
+              --query "Parameter.Value" \
+              --output text)
+            echo "${env_var}=${value}" >> $GITHUB_ENV
+            echo "Retrieved ${ssm_name} -> ${env_var}"
+          done
+
+      - name: Resolve S3 source URIs
+        run: |
+          echo "DATA_S3_URI=s3://${S3_BUCKET}/${APP}/data/" >> $GITHUB_ENV
+          echo "MOTIF_LOGOS_S3_URI=s3://${S3_BUCKET}/${APP}/motif-logos/" >> $GITHUB_ENV
+          echo "Data sync source:        s3://${S3_BUCKET}/${APP}/data/ -> /data/"
+          echo "Motif-logos sync source: s3://${S3_BUCKET}/${APP}/motif-logos/ -> /motif-logos/"
+
+      - name: Resolve network configuration
+        run: |
+          # Reuse the web service's network configuration so the sync task lands in the
+          # same subnets/security groups and can reach the EFS mount targets.
+          NET=$(aws ecs describe-services \
+            --cluster "$ECS_CLUSTER" \
+            --services "$ECS_WEB_SERVICE" \
+            --query 'services[0].networkConfiguration.awsvpcConfiguration' \
+            --output json)
+
+          SUBNET_IDS=$(echo "$NET" | jq -r '.subnets | join(",")')
+          SECURITY_GROUP_IDS=$(echo "$NET" | jq -r '.securityGroups | join(",")')
+
+          if [[ -z "$SUBNET_IDS" || "$SUBNET_IDS" == "null" ]]; then
+            echo "::error::Could not resolve subnets from service $ECS_WEB_SERVICE"
+            exit 1
+          fi
+
+          echo "SUBNET_IDS=$SUBNET_IDS" >> $GITHUB_ENV
+          echo "SECURITY_GROUP_IDS=$SECURITY_GROUP_IDS" >> $GITHUB_ENV
+          echo "Subnets:         $SUBNET_IDS"
+          echo "Security groups: $SECURITY_GROUP_IDS"
+
+      - name: Render sync task definition
+        run: |
+          envsubst < $TASK_DEFINITION_TEMPLATE_PATH/sync.yml > sync.yml
+
+          echo "=== Sync Task Definition ==="
+          cat sync.yml
+
+      - name: Register sync task definition
+        run: |
+          aws ecs register-task-definition --cli-input-yaml file://sync.yml
+
+      - name: Run sync task
+        id: run-task
+        run: |
+          NETWORK_CONFIG=$(jq -n \
+            --arg subnets "$SUBNET_IDS" \
+            --arg sgs "$SECURITY_GROUP_IDS" \
+            '{
+              awsvpcConfiguration: {
+                subnets: ($subnets | split(",") | map(gsub("^\\s+|\\s+$";""))),
+                securityGroups: ($sgs | split(",") | map(gsub("^\\s+|\\s+$";""))),
+                assignPublicIp: "DISABLED"
+              }
+            }')
+
+          TASK_ARN=$(aws ecs run-task \
+            --cluster "$ECS_CLUSTER" \
+            --launch-type FARGATE \
+            --task-definition "$SYNC_TASK" \
+            --network-configuration "$NETWORK_CONFIG" \
+            --query 'tasks[0].taskArn' \
+            --output text)
+
+          if [[ -z "$TASK_ARN" || "$TASK_ARN" == "None" ]]; then
+            echo "::error::run-task did not return a task ARN"
+            exit 1
+          fi
+
+          echo "Started task: $TASK_ARN"
+          echo "TASK_ARN=$TASK_ARN" >> $GITHUB_ENV
+
+      - name: Sync summary
+        run: |
+          echo "## S3 → EFS Sync Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **App:** ${{ env.APP }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tier:** ${{ env.TIER }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Data source:** ${{ env.DATA_S3_URI }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Motif-logos source:** ${{ env.MOTIF_LOGOS_S3_URI }}" >> $GITHUB_STEP_SUMMARY

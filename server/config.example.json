@@ -18,7 +18,7 @@
         "aws_access_key_id": "",
         "aws_secret_access_key": "",
         "s3": {
-            "bucket": "nci-cbiit-dceg-dev",
+            "bucket": "nci-cbiit-dceg-data-nonprod",
             "subFolder": "forge2-tf"
           }
     }

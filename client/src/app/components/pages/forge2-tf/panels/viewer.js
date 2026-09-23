@@ -489,6 +489,9 @@ class Viewer extends React.Component {
         className="viewer-container"
         ref="viewerContainer"
         id={this.props.id}
+        tabIndex="0"
+        role="region"
+        aria-label="Results viewer"
       >
         {this.renderContent()}
       </div>

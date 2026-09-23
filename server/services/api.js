@@ -26,6 +26,9 @@ const numProcesses = config.numProcesses || 8;
 PythonShell.defaultOptions = {
   mode: "json",
   scriptPath: "services/query_scripts/",
+  // Use the interpreter that has the app's boto3/urllib3 (python3.13 in the
+  // container, where botocore allows urllib3>=2). Falls back to python3 locally.
+  pythonPath: process.env.PYTHON_BIN || "python3",
   // pythonOptions: ['-u'], // get print results in real-time
 };
 
