@@ -1,10 +1,9 @@
 // Google Analytics (GA4) helpers.
 //
-// gtag is bootstrapped in public/index.html ONLY when a real GA4 Measurement ID
-// (G-XXXXXXXXXX) is injected at build time via REACT_APP_GTAG. That value comes from
-// SSM (/analysistools/<tier>/forge2-tf/gtag) and is only set for prod, so analytics is
-// inert in dev/qa/stage and during local development. Every helper here is a no-op
-// unless that bootstrap ran, so call sites never need to know the environment.
+// gtag is bootstrapped in public/index.html from a hardcoded Measurement ID, the same
+// one in every tier; non-prod traffic is excluded from prod reporting by the GA4
+// hostname Data Filter. Every helper here is a no-op unless that bootstrap ran, so call
+// sites never need to know the environment.
 //
 // PII policy: never pass user-identifying values, free-text input, or query strings to
 // these functions. Stick to controlled enum values (array/sample names, numeric knobs)
