@@ -1,15 +1,11 @@
 FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 
+# spal-release enables the AL2023 SPAL (Semi-Permanent Additional Libraries) repo,
+# which carries htslib. The repo has to be enabled before htslib-tools can resolve,
+# hence the second dnf install.
 RUN dnf -y update \
  && dnf -y install \
     gcc-c++ \
-    make \
-    bzip2 \
-    bzip2-devel \
-    libcurl-devel \
-    openssl-devel \
-    zlib-devel \
-    xz-devel \
     git \
     gcc \
     libffi-devel \
@@ -23,7 +19,16 @@ RUN dnf -y update \
     libpng \
     fontconfig \
     nodejs24 \
+    spal-release \
+ && dnf -y install htslib-tools \
  && dnf clean all
+
+# htslib-tools provides tabix (used by the query scripts, including `tabix -D` reads
+# from S3) as a distro package instead of a source build. The `tabix` call below
+# fails the build if the S3/HTTPS hfile plugins are missing (it would say
+# "Protocol not supported"); with the plugins present it reports a credentials error.
+RUN tabix --version | head -1 \
+ && ! tabix -D s3://example-bucket/x.gz chr1:1-2 2>&1 | grep -q 'Protocol not supported'
 
 # AL2023 ships versioned Node packages; nodejs24 provides Node 24.x. The unversioned
 # 'nodejs' package is Node 18, which is why the version is pinned in the name above.
@@ -72,14 +77,6 @@ RUN python3.13 -m pip install --no-cache-dir -U pip \
            /usr/bin/pip3.13 /usr/bin/pip-3.13 \
  && python3.13 -c "import boto3, numpy, scipy, pandas, statsmodels, simplejson" \
  && ! python3.13 -m pip --version 2>/dev/null
-
-# Download and install htslib-1.11 (tabix)
-WORKDIR /tmp/htslib-build
-RUN curl -L https://github.com/samtools/htslib/releases/download/1.11/htslib-1.11.tar.bz2 | tar xj --strip-components=1 \
-   && ./configure --enable-libcurl --prefix=/tmp/htslib-1.11 \
-   && make && make install \
-   && mv /tmp/htslib-1.11/bin/* /usr/local/bin \
-   && rm -rf /tmp/htslib-build /tmp/htslib-1.11
 
 # Download and install pts_lbsearch
 WORKDIR /tmp/pts-build
