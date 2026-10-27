@@ -53,8 +53,12 @@ services:
       - ./logs:/deploy/logs
       # If data/All is a symlink to an external path, mount its target at the
       # SAME absolute path so the symlink resolves inside the container.
-      # run-docker.sh sets DATA_ALL_TARGET; defaults to a harmless /tmp no-op.
-      - ${DATA_ALL_TARGET:-/tmp}:${DATA_ALL_TARGET:-/tmp}:ro
+      # run-docker.sh sets DATA_ALL_TARGET (host path) and DATA_ALL_TARGET_MOUNT
+      # (container path, normally identical). When there is no symlink the
+      # fallback mounts the project's data/tmp at an unused container path.
+      # Do NOT fall back to /tmp:/tmp - that bind-mounts the host /tmp read-only
+      # over the container's /tmp and breaks R and Python temp files.
+      - ${DATA_ALL_TARGET:-./data/tmp}:${DATA_ALL_TARGET_MOUNT:-/mnt/data-all-noop}:ro
     networks:
       - forge2-tf-network
 

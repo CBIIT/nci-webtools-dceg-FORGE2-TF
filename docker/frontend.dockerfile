@@ -23,7 +23,7 @@ WORKDIR /client
 
 COPY client/package*.json /client/
 
-RUN npm install
+RUN npm ci
 
 COPY client /client/
 
@@ -59,6 +59,13 @@ ENV API_HOST=http://localhost:8000
 
 EXPOSE 80
 EXPOSE 443
+
+# httpd must bind port 80 (the ALB target group and the ECS task definition expose 80),
+# so the master process stays root; httpd itself drops worker processes to the
+# 'apache' user. Moving to a non-root master would mean listening above 1024 and
+# changing WEB_CONTAINER_PORT / web.yml, which is a deployment change, not an image one.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -fsS http://localhost/forge2-tf/ >/dev/null || exit 1
 
 CMD rm -rf /run/httpd/* /tmp/httpd* \
  && exec /usr/sbin/httpd -DFOREGROUND
