@@ -49,4 +49,5 @@ EOF
   echo "Rendered $CONFIG_PATH from environment."
 fi
 
-exec npm start
+# Start node directly: npm is removed from the runtime image (see backend.dockerfile).
+exec node app.js
