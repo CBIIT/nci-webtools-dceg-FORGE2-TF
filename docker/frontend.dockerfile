@@ -36,6 +36,12 @@ RUN dnf -y update \
  && dnf -y install httpd \
  && dnf clean all
 
+# python3 (3.9) cannot be removed from the base image (dnf depends on it) and AL2023 ships no
+# build that clears the application-level CVE-2025-12781 finding ("No Fix Planned"). Agreed
+# mitigation (same as the other AT images): make the interpreter executable by root only so
+# the httpd worker processes (user apache) cannot invoke it. Nothing at runtime uses python.
+RUN chmod 700 /usr/bin/python3.9
+
 # Copy only the compiled static assets — build tooling never reaches the runtime image,
 # which removes every build-time npm CVE (rollup, webpack, babel, etc.) from the shipped image.
 COPY --from=build /client/build /var/www/html/forge2-tf

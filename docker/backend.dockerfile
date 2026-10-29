@@ -124,7 +124,15 @@ RUN chmod +x /usr/local/bin/backend-entrypoint.sh
 # app user owns /deploy.
 RUN groupadd -g 1000 app && useradd -u 1000 -g 1000 -m -s /sbin/nologin app \
  && chown -R app:app /deploy
+
+# python3 (3.9) cannot be removed from the base image (dnf depends on it) and AL2023 ships no
+# build that clears the application-level CVE-2025-12781 finding ("No Fix Planned"). Agreed
+# mitigation (same as the other AT images): make the interpreter executable by root only so
+# the app user cannot invoke it. The app runs on python3.13 (PYTHON_BIN above).
+RUN chmod 700 /usr/bin/python3.9
 USER app
+# fails the build if the app user can still execute the base interpreter
+RUN ! python3.9 -c 1 2>/dev/null
 
 EXPOSE 8000
 
