@@ -23,7 +23,7 @@ WORKDIR /client
 
 COPY client/package*.json /client/
 
-RUN npm install
+RUN npm ci
 
 COPY client /client/
 
@@ -35,6 +35,12 @@ FROM public.ecr.aws/amazonlinux/amazonlinux:2023
 RUN dnf -y update \
  && dnf -y install httpd \
  && dnf clean all
+
+# python3 (3.9) cannot be removed from the base image (dnf depends on it) and AL2023 ships no
+# build that clears the application-level CVE-2025-12781 finding ("No Fix Planned"). Agreed
+# mitigation (same as the other AT images): make the interpreter executable by root only so
+# the httpd worker processes (user apache) cannot invoke it. Nothing at runtime uses python.
+RUN chmod 700 /usr/bin/python3.9
 
 # Copy only the compiled static assets — build tooling never reaches the runtime image,
 # which removes every build-time npm CVE (rollup, webpack, babel, etc.) from the shipped image.
@@ -53,6 +59,13 @@ ENV API_HOST=http://localhost:8000
 
 EXPOSE 80
 EXPOSE 443
+
+# httpd must bind port 80 (the ALB target group and the ECS task definition expose 80),
+# so the master process stays root; httpd itself drops worker processes to the
+# 'apache' user. Moving to a non-root master would mean listening above 1024 and
+# changing WEB_CONTAINER_PORT / web.yml, which is a deployment change, not an image one.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -fsS http://localhost/forge2-tf/ >/dev/null || exit 1
 
 CMD rm -rf /run/httpd/* /tmp/httpd* \
  && exec /usr/sbin/httpd -DFOREGROUND

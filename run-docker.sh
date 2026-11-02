@@ -32,18 +32,22 @@ export DATA_DIR="$(pwd)/data"
 # cache). Bind mounts pass symlinks through verbatim, so the link's TARGET must
 # also be visible inside the container at the same absolute path for the link to
 # resolve. Detect data/All's target and expose it (compose mounts it at the
-# identical path). If data/All is a real dir (no symlink), this is a harmless
-# no-op mount of /tmp.
+# identical path). If data/All is a real dir (no symlink), mount the project's
+# data/tmp at an unused container path instead so the compose entry stays valid.
+# (Never fall back to /tmp:/tmp - it mounts the host /tmp read-only over the
+# container's /tmp and breaks R and Python temp files.)
 if [ -L "$DATA_DIR/All" ]; then
   _all_target="$(readlink "$DATA_DIR/All")"
   case "$_all_target" in
     /*) DATA_ALL_TARGET="$_all_target" ;;            # absolute symlink target
     *)  DATA_ALL_TARGET="$DATA_DIR/$_all_target" ;;  # relative -> make absolute
   esac
+  DATA_ALL_TARGET_MOUNT="$DATA_ALL_TARGET"
 else
-  DATA_ALL_TARGET="/tmp"
+  DATA_ALL_TARGET="$DATA_DIR/tmp"
+  DATA_ALL_TARGET_MOUNT="/mnt/data-all-noop"
 fi
-export DATA_ALL_TARGET
+export DATA_ALL_TARGET DATA_ALL_TARGET_MOUNT
 
 # Resolve the docker compose command (v2 plugin vs legacy v1 binary).
 if docker compose version >/dev/null 2>&1; then
@@ -74,7 +78,7 @@ case "${1:-up}" in
     # Preflight: show exactly what will be mounted at /deploy/data and warn if the
     # expected reference data is missing (the #1 cause of "could not find ... fn").
     echo "Mounting data dir -> /deploy/data : $DATA_DIR"
-    if [ "$DATA_ALL_TARGET" != "/tmp" ]; then
+    if [ -L "$DATA_DIR/All" ]; then
       echo "data/All symlink target (mounted at same path): $DATA_ALL_TARGET"
     fi
     SAMPLE_MD="$DATA_DIR/All/fp/filtered_sample_aggregates.json"

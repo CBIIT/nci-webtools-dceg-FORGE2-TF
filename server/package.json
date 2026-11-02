@@ -18,8 +18,7 @@
     "express-validator": "^7.2.1",
     "express-xss-sanitizer": "^2.0.2",
     "python-shell": "^5.0.0",
-    "winston": "^3.3.3",
-    "winston-daily-rotate-file": "^4.5.0"
+    "winston": "^3.3.3"
   },
   "overrides": {
     "qs": "^6.15.2",
