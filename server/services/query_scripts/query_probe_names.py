@@ -9,61 +9,84 @@ array_ids = {
   'All' : 1
 }
 
-form = json.load(sys.stdin)
-
 def error(code, message):
-  raise SystemExit(json.dumps({
+  print(json.dumps({
     "code": code,
     "message": message
-  }))
-if not 'dataDir' in form:
-  error(400, 'Data directory not specified')
-data_dir = form['dataDir']
+  }), file=sys.stderr)
+  sys.exit(code if 1 <= code <= 255 else 1)
 
-if not 'settings' in form:
-  error(400, 'Settings not specified [%s]' % (form))
-settings = form['settings']
+def query_values(database, column, table, where, values):
+  if not values:
+    return []
 
-if not 'array' in settings:
-  error(400, 'Array not specified [%s]' % (settings))
-array = settings['array']
+  try:
+    with sqlite3.connect(database) as conn:
+      query = "SELECT %s FROM %s WHERE %s IN (%s)" % (
+        column,
+        table,
+        where,
+        ','.join('?' * len(values))
+      )
+      return [row[0] for row in conn.execute(query, values).fetchall()]
+  except sqlite3.Error as exc:
+    error(500, 'failed to query SQL database file [%s]: %s' % (database, exc))
 
-if not 'probes' in settings:
-  error(400, 'Array not specified [%s]' % (settings))
-probes = settings['probes']
+def main():
+  try:
+    form = json.load(sys.stdin)
+  except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+    error(400, 'Invalid JSON request: %s' % (exc))
 
-# snp filter db
-sqlite_filter_fn = os.path.join(data_dir, 'rsids-filter.db')
-if not os.path.exists(sqlite_filter_fn):
-  error(400, 'could not find snp filter SQL database file [%s]' % (sqlite_filter_fn))
+  if not isinstance(form, dict):
+    error(400, 'JSON request must be an object')
 
-# only filter snps if snpFilter flag = true
-if settings['snpFilter']:
-  conn = sqlite3.connect(sqlite_filter_fn)
-  table_name = 'rsids'
-  c = conn.cursor()
-  query = "SELECT rsid FROM %s WHERE rsid IN (%s)" % (table_name, ','.join('?' * len(probes)))
-  c.execute(query, probes)
-  filtered_probes = [item for sublist in c.fetchall() for item in sublist]
-  conn.close()
-else:
+  if 'dataDir' not in form:
+    error(400, 'Data directory not specified')
+  data_dir = form['dataDir']
+
+  if 'settings' not in form or not isinstance(form['settings'], dict):
+    error(400, 'Settings not specified')
+  settings = form['settings']
+
+  if 'array' not in settings:
+    error(400, 'Array not specified')
+  array_name = settings['array']
+  if array_name not in array_ids:
+    error(400, 'Unsupported array [%s]' % (array_name))
+
+  if 'probes' not in settings or not isinstance(settings['probes'], list):
+    error(400, 'Probes must be an array')
+  probes = settings['probes']
+
+  if 'snpFilter' not in settings or not isinstance(settings['snpFilter'], bool):
+    error(400, 'snpFilter must be a boolean')
+
   filtered_probes = probes
+  if settings['snpFilter']:
+    sqlite_filter_fn = os.path.join(data_dir, 'rsids-filter.db')
+    if not os.path.isfile(sqlite_filter_fn):
+      error(500, 'could not find SNP filter SQL database file [%s]' % (sqlite_filter_fn))
+    filtered_probes = query_values(
+      sqlite_filter_fn,
+      'rsid',
+      'rsids',
+      'rsid',
+      probes
+    )
 
-sqlite_fn = os.path.join(data_dir, array, 'probes', 'probes.db')
-if not os.path.exists(sqlite_fn):
-  error(400, 'could not find probes SQL database file [%s]' % (sqlite_fn))
-  
-conn = sqlite3.connect(sqlite_fn)
-array_id = array_ids[array]
-table_name = 'probes'
-c = conn.cursor()
-query = "SELECT probe_name FROM %s WHERE array_id = %d AND probe_name IN (%s)" % (table_name, array_id, ','.join('?' * len(filtered_probes)))
-c.execute(query, filtered_probes)
-query_result = c.fetchall()
-conn.close()
+  sqlite_fn = os.path.join(data_dir, array_name, 'probes', 'probes.db')
+  if not os.path.isfile(sqlite_fn):
+    error(500, 'could not find probes SQL database file [%s]' % (sqlite_fn))
 
-result = {'probes' : [item for sublist in query_result for item in sublist]}
+  query_result = query_values(
+    sqlite_fn,
+    'probe_name',
+    'probes',
+    'array_id = %d AND probe_name' % (array_ids[array_name]),
+    filtered_probes
+  )
+  print(json.dumps({'probes': query_result}))
 
-print(json.dumps(result))
-sys.exit(0)
-
+if __name__ == '__main__':
+  main()

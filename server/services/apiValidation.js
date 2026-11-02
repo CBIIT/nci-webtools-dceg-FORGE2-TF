@@ -5,6 +5,9 @@ const availableArrays = ["All"];
 
 const queryProbeNamesValidation = [
   body("settings.array").isString().isIn(availableArrays).trim().escape(),
+  body("settings.probes").isArray(),
+  body("settings.probes.*").isString(),
+  body("settings.snpFilter").isBoolean(),
 ];
 
 const queryAggregateValidation = [

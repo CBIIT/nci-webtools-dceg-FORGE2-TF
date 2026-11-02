@@ -7,6 +7,7 @@ const path = require("path");
 const fs = require("fs");
 const { validationResult } = require("express-validator");
 const { xss } = require("express-xss-sanitizer");
+const { runPythonJson } = require("./pythonJsonHandler");
 const {
   queryProbeNamesValidation,
   queryAggregateValidation,
@@ -69,19 +70,13 @@ apiRouter.post(
   handleValidation,
   ({ body }, response) => {
     logger.debug("Execute /query-probe-names");
-    const pythonProcess = new PythonShell("query_probe_names.py");
-    pythonProcess.send({ ...body, dataDir });
-    pythonProcess.on("message", (results) => {
-      if (results) {
-        logger.debug("/query-probe-names", results);
-        response.status(200).json(results);
-      }
-    });
-    pythonProcess.end((err, code, signal) => {
-      if (err) {
-        logger.error(err);
-        response.status(400).json(err);
-      }
+    runPythonJson({
+      PythonShell,
+      script: "query_probe_names.py",
+      payload: { ...body, dataDir },
+      route: "/query-probe-names",
+      response,
+      logger,
     });
   }
 );
