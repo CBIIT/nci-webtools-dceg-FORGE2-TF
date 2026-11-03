@@ -5,6 +5,30 @@ import os
 import json
 import subprocess
 
+
+def cut_fields(text, indices):
+  # Mimic `cut -f<indices>` on tab-delimited text: keep the given 0-based field
+  # indices per line, preserving line order.
+  out_lines = []
+  for line in text.split('\n'):
+    if line == '':
+      continue
+    fields = line.split('\t')
+    out_lines.append('\t'.join(fields[i] for i in indices if i < len(fields)))
+  return '\n'.join(out_lines)
+
+
+def cut_from(text, start_index):
+  # Mimic `cut -f<start_index+1>-` on tab-delimited text: keep all fields from
+  # start_index onward per line, preserving line order.
+  out_lines = []
+  for line in text.split('\n'):
+    if line == '':
+      continue
+    out_lines.append('\t'.join(line.split('\t')[start_index:]))
+  return '\n'.join(out_lines)
+
+
 root_dir = '/var/www/eforge/forge2-tf/browser/src/client/assets/services'
 data_dir = os.path.join(root_dir, 'data')
 pts_bin = os.path.join(root_dir, 'pts-line-bisect', 'pts_lbsearch')
@@ -91,9 +115,10 @@ window = {}
 probes_fn = os.path.join(data_dir, array, 'probes', probe_fns[array])
 if not os.path.exists(probes_fn):
   error(400, 'could not find id-sorted probes BED file [%s]' % (probes_fn))
-cmd = "%s -p %s %s | cut -f2-" % (pts_bin, probes_fn, probe_name)
+cmd = [pts_bin, '-p', probes_fn, probe_name]
 try:
-  position_result = subprocess.check_output(cmd, shell=True)
+  # Replaces shell pipe `| cut -f2-`: drop the first tab-delimited field.
+  position_result = cut_from(subprocess.check_output(cmd).decode('utf-8'), 1)
   if position_result:
     elems = position_result.rstrip().split()
     if len(elems) != 3:
@@ -121,9 +146,10 @@ sequences_fn = os.path.join(data_dir, array, 'sequence', 'sequences.probe.gz')
 if not os.path.exists(sequences_fn):
   error(400, 'could not find sequences archive file [%s]' % (sequences_fn)) 
 #cmd = "echo -e '%s\t%s\t%s' | %s -e 1 --chrom %s %s - | cut -f1,6-8" % (position['chromosome'], position['start'], position['stop'], bedops_bin, position['chromosome'], sequences_fn)
-cmd = "%s %s %s:%d-%d | cut -f1,6-8" % (tabix_bin, sequences_fn, position['chromosome'], position['start'], position['stop'])
+cmd = [tabix_bin, sequences_fn, "%s:%d-%d" % (position['chromosome'], position['start'], position['stop'])]
 try:
-  sequence_result = subprocess.check_output(cmd, shell=True)
+  # Replaces shell pipe `| cut -f1,6-8`: keep tab-delimited fields 1,6,7,8.
+  sequence_result = cut_fields(subprocess.check_output(cmd).decode('utf-8'), [0, 5, 6, 7])
   if sequence_result:
     elems = sequence_result.rstrip().split()
     window['range'] = {}
@@ -151,9 +177,10 @@ signal_fn = os.path.join(data_dir, array, 'signal', sample, 'reduced.probe.gz')
 if not os.path.exists(signal_fn):
   error(400, 'could not find signal archive file [%s]' % (signal_fn))
 #cmd = "echo -e '%s\t%s\t%s' | %s -e 1 --chrom %s %s - | cut -f1,6-8" % (position['chromosome'], position['start'], position['stop'], bedops_bin, position['chromosome'], signal_fn)
-cmd = "%s %s %s:%d-%d | cut -f1,6-8" % (tabix_bin, signal_fn, position['chromosome'], position['start'], position['stop'])
+cmd = [tabix_bin, signal_fn, "%s:%d-%d" % (position['chromosome'], position['start'], position['stop'])]
 try:
-  signal_result = subprocess.check_output(cmd, shell=True)
+  # Replaces shell pipe `| cut -f1,6-8`: keep tab-delimited fields 1,6,7,8.
+  signal_result = cut_fields(subprocess.check_output(cmd).decode('utf-8'), [0, 5, 6, 7])
   if signal_result:
     elems = signal_result.rstrip().split()
     try:
@@ -185,10 +212,10 @@ for db_name in tf_databases:
   if not os.path.exists(db_fn):
     error(400, 'could not find TF archive [%s]' % (db_fn))
   #cmd = "echo -e '%s\t%s\t%s' | %s -e 1 --chrom %s %s - " % (position['chromosome'], position['start'], position['stop'], bedops_bin, position['chromosome'], db_fn)
-  cmd = "%s %s %s:%d-%d" % (tabix_bin, db_fn, position['chromosome'], position['start'], position['stop'])
+  cmd = [tabix_bin, db_fn, "%s:%d-%d" % (position['chromosome'], position['start'], position['stop'])]
   try:
     probe['tf_overlaps'][db_name] = []
-    db_query_result = subprocess.check_output(cmd, shell=True)
+    db_query_result = subprocess.check_output(cmd).decode('utf-8')
     if db_query_result:
       elems = db_query_result.rstrip().split('|')
       hits = elems[1]
@@ -227,10 +254,10 @@ probe_fp_fn = 'probe.fp.%d.gz' % (int(padding))
 fp_fn = os.path.join(data_dir, array, 'fp', sample, probe_fp_fn)
 if not os.path.exists(fp_fn):
   error(400, 'could not find footprint archive file [%s]' % (fp_fn))
-cmd = "%s %s %s:%d-%d" % (tabix_bin, fp_fn, position['chromosome'], position['start'], position['stop'])
+cmd = [tabix_bin, fp_fn, "%s:%d-%d" % (position['chromosome'], position['start'], position['stop'])]
 try:
   probe['fp_overlaps'] = []
-  fp_result = subprocess.check_output(cmd, shell=True)
+  fp_result = subprocess.check_output(cmd).decode('utf-8')
   if fp_result:
     try:
       elems = fp_result.rstrip().split('|')

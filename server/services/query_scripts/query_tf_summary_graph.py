@@ -36,9 +36,9 @@ tf_bin = os.path.join(os.getcwd(), 'services', 'query_scripts', 'query_tf_summar
 
 strict = 0.01
 marginal = 0.05
-cmd = "%s --input=%s --output=%s --strict=%f --marginal=%f" % (tf_bin, tf_summary_fn, tf_summary_output_fn, strict, marginal)
+cmd = [tf_bin, '--input=%s' % tf_summary_fn, '--output=%s' % tf_summary_output_fn, '--strict=%f' % strict, '--marginal=%f' % marginal]
 try:
-  tf_result = subprocess.check_output(cmd, shell=True)
+  tf_result = subprocess.check_output(cmd)
 except subprocess.CalledProcessError as cpe:
   error(400, 'could not perform PDF conversion')
 finally:

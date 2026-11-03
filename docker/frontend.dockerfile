@@ -1,34 +1,71 @@
-FROM public.ecr.aws/amazonlinux/amazonlinux:2022
+# ---- build stage: compile the React app (build-only deps stay here) ----
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023 AS build
 
 RUN dnf -y update \
- && dnf -y install \
-    gcc-c++ \
-    httpd \
-    make \
-    nodejs \
-    npm \
+ && dnf -y install gcc-c++ make nodejs24 \
  && dnf clean all
 
-RUN mkdir /client
+# AL2023 ships versioned Node packages; nodejs24 provides Node 24.x. The unversioned
+# 'nodejs' package is Node 18, which is why the version is pinned in the name above.
+# The `node -v` assertion guards a real trap: AL2023 registers every nodejs major in
+# `alternatives` at the same priority, so if another nodejs package is ever installed
+# alongside this one, /usr/bin/node keeps pointing at whichever was installed first.
+# npm is upgraded here only to keep the build toolchain current and symmetric with
+# backend.dockerfile — unlike the backend, npm never reaches the runtime stage below,
+# so this has no effect on the shipped image's CVE surface.
+RUN node -v | grep -qE '^v24\.' \
+ && npm install -g npm@latest \
+ && npm update -g \
+ && node -v \
+ && npm -v
 
 WORKDIR /client
 
 COPY client/package*.json /client/
 
-RUN npm install
+RUN npm ci
 
 COPY client /client/
 
-RUN npm run build \
-    && mv /client/build /var/www/html/forge2-tf
+RUN npm run build
+
+# ---- runtime stage: httpd serving the static build only (no node_modules/npm) ----
+FROM public.ecr.aws/amazonlinux/amazonlinux:2023
+
+RUN dnf -y update \
+ && dnf -y install httpd \
+ && dnf clean all
+
+# python3 (3.9) cannot be removed from the base image (dnf depends on it) and AL2023 ships no
+# build that clears the application-level CVE-2025-12781 finding ("No Fix Planned"). Agreed
+# mitigation (same as the other AT images): make the interpreter executable by root only so
+# the httpd worker processes (user apache) cannot invoke it. Nothing at runtime uses python.
+RUN chmod 700 /usr/bin/python3.9
+
+# Copy only the compiled static assets — build tooling never reaches the runtime image,
+# which removes every build-time npm CVE (rollup, webpack, babel, etc.) from the shipped image.
+COPY --from=build /client/build /var/www/html/forge2-tf
+RUN chmod -R a+rX /var/www/html/forge2-tf
 
 # Add custom httpd configuration
 COPY docker/httpd-forge2-tf.conf /etc/httpd/conf.d/httpd-forge2-tf.conf
 
 WORKDIR /var/www/html
 
+# In the single-task Fargate topology the backend runs as a sibling container in
+# the same task, reachable over the shared network namespace at localhost:8000.
+# The task definition may override API_HOST; this is the default.
+ENV API_HOST=http://localhost:8000
+
 EXPOSE 80
 EXPOSE 443
+
+# httpd must bind port 80 (the ALB target group and the ECS task definition expose 80),
+# so the master process stays root; httpd itself drops worker processes to the
+# 'apache' user. Moving to a non-root master would mean listening above 1024 and
+# changing WEB_CONTAINER_PORT / web.yml, which is a deployment change, not an image one.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -fsS http://localhost/forge2-tf/ >/dev/null || exit 1
 
 CMD rm -rf /run/httpd/* /tmp/httpd* \
  && exec /usr/sbin/httpd -DFOREGROUND

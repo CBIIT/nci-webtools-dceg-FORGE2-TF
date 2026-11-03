@@ -42,9 +42,9 @@ probes_fn = os.path.join(tmp_dir, os.path.basename(tmp.name))
 with open(probes_fn, 'w') as f:
   json.dump(probes_obj, f)
 
-cmd = "python3 %s %s %d %f %d %s" % (tf_bin, probes_fn, count, fdr_threshold, n_tests, data_dir)
+cmd = [sys.executable, tf_bin, probes_fn, str(count), str(fdr_threshold), str(n_tests), data_dir]
 try:
-  pvals_result = subprocess.check_output(cmd, shell=True).decode('utf-8')
+  pvals_result = subprocess.check_output(cmd).decode('utf-8')
 except subprocess.CalledProcessError as cpe:
   error(400, 'could not perform p-value/q-value query [%s] [%s] [%s]' % (cmd, probes_fn, cpe))
 finally:

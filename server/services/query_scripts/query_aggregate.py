@@ -12,6 +12,35 @@ from multiprocessing import Pool
 tabix_bin = os.path.join('tabix')
 pts_bin = os.path.join('pts_lbsearch')
 
+
+def cut_fields(text, indices):
+  # Mimic `cut -f<indices>` on tab-delimited text: keep the given 0-based field
+  # indices per line, preserving line order.
+  out_lines = []
+  for line in text.split('\n'):
+    if line == '':
+      continue
+    fields = line.split('\t')
+    out_lines.append('\t'.join(fields[i] for i in indices if i < len(fields)))
+  return '\n'.join(out_lines)
+
+
+def cut_from(text, start_index):
+  # Mimic `cut -f<start_index+1>-` on tab-delimited text: keep all fields from
+  # start_index onward per line, preserving line order.
+  out_lines = []
+  for line in text.split('\n'):
+    if line == '':
+      continue
+    out_lines.append('\t'.join(line.split('\t')[start_index:]))
+  return '\n'.join(out_lines)
+
+# Local-run flag. When TEST_ENV is set to "LOCAL" (case-insensitive), use
+# session-token-aware S3 auth so temporary SSO credentials (ASIA...) work, and
+# surface S3 auth/permission errors instead of masking them as "file not found".
+# When unset/other, behavior is identical to the original deployed code path.
+LOCAL_TEST_ENV = os.environ.get('TEST_ENV', '').strip().upper() == 'LOCAL'
+
 probe_fns = {
   'All' : 'probes.bed.idsort.txt'
 }
@@ -81,37 +110,56 @@ def error(code, message):
 
 def checkS3File(bucket, filePath):
   if ('aws_access_key_id' in aws_info and len(aws_info['aws_access_key_id']) > 0 and 'aws_secret_access_key' in aws_info and len(aws_info['aws_secret_access_key']) > 0):
-    session = boto3.Session(
-      aws_access_key_id=aws_info['aws_access_key_id'],
-      aws_secret_access_key=aws_info['aws_secret_access_key'],
-    )
+    if LOCAL_TEST_ENV:
+      # Pass the session token so temporary (ASIA...) SSO creds authenticate.
+      session = boto3.Session(
+        aws_access_key_id=aws_info['aws_access_key_id'],
+        aws_secret_access_key=aws_info['aws_secret_access_key'],
+        aws_session_token=aws_info.get('aws_session_token') or None,
+      )
+    else:
+      session = boto3.Session(
+        aws_access_key_id=aws_info['aws_access_key_id'],
+        aws_secret_access_key=aws_info['aws_secret_access_key'],
+      )
     s3 = session.resource('s3')
-  else: 
+  else:
     s3 = boto3.resource('s3')
   try:
     s3.Object(bucket, filePath).load()
   except botocore.exceptions.ClientError as e:
-    if e.response['Error']['Code'] == "404":
-      return False
-    else:
-      return False
-  else: 
+    if LOCAL_TEST_ENV and e.response['Error']['Code'] != "404":
+      # Real auth/permission error, not a missing file -- surface it instead of
+      # reporting a misleading "could not find ... file".
+      error(400, 'S3 access error (not a missing object) for [s3://%s/%s]: %s' % (bucket, filePath, e))
+    return False
+  else:
     return True
 
 if ('aws_access_key_id' in aws_info and len(aws_info['aws_access_key_id']) > 0 and 'aws_secret_access_key' in aws_info and len(aws_info['aws_secret_access_key']) > 0):
-  export_s3_keys = "export AWS_ACCESS_KEY_ID=%s; export AWS_SECRET_ACCESS_KEY=%s;" % (aws_info['aws_access_key_id'], aws_info['aws_secret_access_key'])
+  s3_env = dict(os.environ)
+  s3_env['AWS_ACCESS_KEY_ID'] = aws_info['aws_access_key_id']
+  s3_env['AWS_SECRET_ACCESS_KEY'] = aws_info['aws_secret_access_key']
+  if LOCAL_TEST_ENV and aws_info.get('aws_session_token'):
+    # tabix reads these creds from the environment; temporary creds need the token.
+    s3_env['AWS_SESSION_TOKEN'] = aws_info['aws_session_token']
 else:
   # retrieve aws credentials here
   session = boto3.Session()
   credentials = session.get_credentials().get_frozen_credentials()
-  export_s3_keys = "export AWS_ACCESS_KEY_ID=%s; export AWS_SECRET_ACCESS_KEY=%s; export AWS_SESSION_TOKEN=%s;" % (credentials.access_key, credentials.secret_key, credentials.token)
+  s3_env = dict(os.environ)
+  s3_env['AWS_ACCESS_KEY_ID'] = credentials.access_key
+  s3_env['AWS_SECRET_ACCESS_KEY'] = credentials.secret_key
+  s3_env['AWS_SESSION_TOKEN'] = credentials.token
 
-def tabix_call(cmd):
+def tabix_call(job):
+  # job is a (argv, cwd) tuple; env is the shared s3_env with AWS creds.
+  argv, cwd = job
   try:
-    return subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT).decode('utf-8')
+    return subprocess.check_output(argv, cwd=cwd, env=s3_env, stderr=subprocess.STDOUT).decode('utf-8')
   except subprocess.CalledProcessError as cpe:
     return None
-    # error(400, 'could not perform signal archive query [%s] [%s]' % (cmd, cpe))
+    # error(400, 'could not perform signal archive query [%s] [%s]' % (argv, cpe))
 
 #
 # for processing samples in aggregate, we:
@@ -158,9 +206,10 @@ probes_fn = os.path.join(data_dir, array, 'probes', probe_fns[array])
 if not os.path.exists(probes_fn):
   error(400, 'could not find id-sorted probes BED file [%s]' % (probes_fn))
 # cmd = "%s -p %s %s | cut -f2-" % (pts_bin, probes_fn, probe_name)
-cmd = "%s -p %s %s | cut -f2-" % (pts_bin, probes_fn, probe_name)
+cmd = [pts_bin, '-p', probes_fn, probe_name]
 try:
-  position_result = subprocess.check_output(cmd, shell=True).decode('utf-8')
+  # Replaces shell pipe `| cut -f2-`: drop the first tab-delimited field.
+  position_result = cut_from(subprocess.check_output(cmd).decode('utf-8'), 1)
   if position_result:
     elems = position_result.rstrip().split()
     if len(elems) < 3:
@@ -192,9 +241,10 @@ if not checkS3File(aws_info['s3']['bucket'], sequences_filePath):
 sequences_idx_filePath = os.path.join(data_dir, array, 'sequence') 
 
 #cmd = "echo -e '%s\t%s\t%s' | %s -e 1 --chrom %s %s - | cut -f1,6-8" % (position['chromosome'], position['start'], position['stop'], bedops_bin, position['chromosome'], sequences_fn)
-cmd = "(%s cd %s; %s %s %s:%d-%d %s | cut -f1,6-8)" % (export_s3_keys, sequences_idx_filePath, tabix_bin, sequences_fn, position['chromosome'], position['start'], position['stop'], '-D')
+cmd = [tabix_bin, sequences_fn, "%s:%d-%d" % (position['chromosome'], position['start'], position['stop']), '-D']
 try:
-  sequence_result = subprocess.check_output(cmd, shell=True).decode('utf-8')
+  # Replaces shell pipe `| cut -f1,6-8`: keep tab-delimited fields 1,6,7,8.
+  sequence_result = cut_fields(subprocess.check_output(cmd, cwd=sequences_idx_filePath, env=s3_env).decode('utf-8'), [0, 5, 6, 7])
   if sequence_result:
     elems = sequence_result.rstrip().split()
     window['range'] = {}
@@ -229,7 +279,7 @@ for per_experiment_sample in per_experiment_samples:
     error(400, 'could not find signal archive file [%s]' % (signal_fn))
   signal_idx_filePath = os.path.join(data_dir, array, 'signal', per_experiment_sample) 
 
-  cmd = "(%s cd %s; %s %s %s:%d-%d %s| cut -f1,6-8)" % (export_s3_keys, signal_idx_filePath, tabix_bin, signal_fn, position['chromosome'], position['start'], position['stop'], '-D')
+  cmd = ([tabix_bin, signal_fn, "%s:%d-%d" % (position['chromosome'], position['start'], position['stop']), '-D'], signal_idx_filePath)
   cmd_list.append(cmd)
   
 with Pool(numProcesses) as p:
@@ -239,6 +289,8 @@ for i, per_experiment_sample in enumerate(per_experiment_samples):
   # try:
   signal_result = signal_result_pooled[i]
   if signal_result and signal_result is not None:
+    # Replaces shell pipe `| cut -f1,6-8`: keep tab-delimited fields 1,6,7,8.
+    signal_result = cut_fields(signal_result, [0, 5, 6, 7])
     elems = signal_result.rstrip().split()
     try:
       signal = [float(x) for x in elems[3].split(",")]
@@ -284,7 +336,7 @@ for db_name in tf_databases:
   db_idx_filePath = os.path.join(data_dir, array, 'tf', db_name) 
 
   #cmd = "echo -e '%s\t%s\t%s' | %s -e 1 --chrom %s %s - " % (position['chromosome'], position['start'], position['stop'], bedops_bin, position['chromosome'], db_fn)
-  cmd = "(%s cd %s; %s %s %s:%d-%d %s)" % (export_s3_keys, db_idx_filePath, tabix_bin, db_fn, position['chromosome'], position['start'], position['stop'], '-D')
+  cmd = ([tabix_bin, db_fn, "%s:%d-%d" % (position['chromosome'], position['start'], position['stop']), '-D'], db_idx_filePath)
   cmd_list.append(cmd)
 
 with Pool(numProcesses) as p:
@@ -341,7 +393,7 @@ for per_experiment_sample in per_experiment_samples:
     error(400, 'could not find footprint archive file [%s]' % (fp_fn))
   fp_idx_filePath = os.path.join(data_dir, array, 'fp', per_experiment_sample) 
 
-  cmd = "(%s cd %s; %s %s %s:%d-%d %s)" % (export_s3_keys, fp_idx_filePath, tabix_bin, fp_fn, position['chromosome'], position['start'], position['stop'], '-D')
+  cmd = ([tabix_bin, fp_fn, "%s:%d-%d" % (position['chromosome'], position['start'], position['stop']), '-D'], fp_idx_filePath)
   cmd_list.append(cmd)
 
 with Pool(numProcesses) as p:
